@@ -302,36 +302,108 @@ Campus navigation/
 ├── assets/                     # Media, icons, and styling stylesheets
 │   └── .gitkeep
 │
-└── tests/                      # Automated unit test suite
-    ├── __init__.py
-    ├── test_campus_map.py      # Campus map parsing and data validation tests
-    ├── test_bfs.py             # BFS routing and hop-count optimality tests
-    ├── test_dijkstra.py        # Dijkstra distance/time optimization tests
-    ├── test_route_finder.py    # Multi-modal routing & alternative route tests
-    ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
-    ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
-    ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
-    ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
-    └── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
+├── scripts/                    # Demonstration & operational utilities
+│   └── demo_setup.py           # Idempotent demo credentials initialization script
+│
+├── tests/                      # Automated unit & integration test suites
+│   ├── __init__.py
+│   ├── test_campus_map.py      # Campus map parsing and data validation tests
+│   ├── test_bfs.py             # BFS routing and hop-count optimality tests
+│   ├── test_dijkstra.py        # Dijkstra distance/time optimization tests
+│   ├── test_route_finder.py    # Multi-modal routing & alternative route tests
+│   ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
+│   ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
+│   ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
+│   ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
+│   ├── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
+│   └── test_demo_workflow.py   # 8-step complete academic demonstration workflow verification
 ```
 
 ---
 
 ## 🧪 Running Automated Tests
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of 81 automated tests:
+All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **82 automated tests** across 10 test suites:
 
 ```powershell
-& ".venv\Scripts\python.exe" -m unittest discover tests
+& ".venv\Scripts\python.exe" -m unittest discover tests -v
 ```
 
 To run individual test suites:
 ```powershell
-& ".venv\Scripts\python.exe" -m unittest tests/test_security_audit.py
-& ".venv\Scripts\python.exe" -m unittest tests/test_auth_rbac.py
-& ".venv\Scripts\python.exe" -m unittest tests/test_obstacle_manager.py
-& ".venv\Scripts\python.exe" -m unittest tests/test_route_finder.py
+& ".venv\Scripts\python.exe" -m unittest tests/test_demo_workflow.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_security_audit.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_auth_rbac.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_indoor_map.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_obstacle_manager.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_route_finder.py -v
 ```
+
+---
+
+## 🎓 Academic Demonstration Guide (8-Step Live Walkthrough)
+
+To support seamless project presentations and live academic evaluation, the system includes pre-configured, labeled demonstration credentials and an end-to-end operational script.
+
+### Pre-Configured Demonstration Accounts
+
+Run the idempotent setup script to ensure all demonstration credentials exist with active status:
+```powershell
+& ".venv\Scripts\python.exe" scripts/demo_setup.py
+```
+
+| Role | Username | Password | Intended Workflow |
+|:---|:---|:---|:---|
+| **Student / Campus User** | `demo_student` | `DemoStudent2026!` | Explore map, calculate routes, submit field obstacle reports. |
+| **Field Staff** | `demo_staff` | `DemoStaff2026!` | Review pending report queue, verify hazards (auto-block), resolve with notes. |
+| **Administrator** | `demo_admin` | `DemoAdmin2026!` | User management, role elevation/demotion, inspect immutable audit trail. |
+
+---
+
+### Step-by-Step Live Demonstration Script
+
+1. **Step 1: Campus Dashboard & Metric Overview**
+   - Navigate to **Dashboard**. Observe real-time KPI cards reflecting actual graph nodes (15), connections (17), and current database obstacle metrics.
+   - Point out the Plotly charts showcasing pathway classifications and current obstacle status.
+
+2. **Step 2: Cross-Floor Accessible Route Planning**
+   - Navigate to **Find Accessible Route**.
+   - Select Origin: `LOC_01 (Main Campus Entrance, Floor 0)` and Destination: `LOC_14 (Faculty Office Suite, Floor 1)`.
+   - Select **Dijkstra** algorithm optimized for **Distance**, with **Wheelchair Accessible** enabled.
+   - Point out how the route avoids vertical stairs (`LOC_05 -> LOC_11`) and safely routes via the elevator (`LOC_04 -> LOC_10`), achieving a *Fully Accessible* classification score.
+
+3. **Step 3: Multi-Floor Interactive Campus Map Exploration**
+   - Navigate to **Campus Map**.
+   - Toggle between **Ground Floor (Floor 0)**, **First Floor (Floor 1)**, and **All Floors (Architectural Overview)**.
+   - Show how the planned route overlays in gold with start pin, destination flag, and automated elevator transfer instructions.
+
+4. **Step 4: Field Obstacle Reporting (as Student)**
+   - Sign in via **Account & Sign In** using `demo_student` / `DemoStudent2026!`.
+   - Navigate to **Obstacle Reports**.
+   - Expand **Report an Obstacle or Accessibility Issue**.
+   - Report a barrier on pathway `Main Campus Entrance (LOC_01)` to `Central Reception & Info Desk (LOC_02)`, category `Blocked pathway`, severity `High`.
+   - Submit report. Confirm initial status is `Pending` and pathway remains open on the graph until verified.
+
+5. **Step 5: Inspection & Verification (as Field Staff)**
+   - Sign out and sign in using `demo_staff` / `DemoStaff2026!`.
+   - Navigate to **Obstacle Reports**. Observe the newly visible **Field Staff Verification Queue**.
+   - Click **Verify & Block Route**. The report transitions to `Verified`, and the edge is dynamically blocked in the live navigation graph.
+
+6. **Step 6: Dynamic Route Avoidance Verification**
+   - Navigate back to **Find Accessible Route**.
+   - Attempt routing between `LOC_01` and `LOC_02`.
+   - Observe that the navigation engine detects the active obstruction and avoids the blocked corridor.
+
+7. **Step 7: Maintenance Resolution & Route Restoration**
+   - Return to **Obstacle Reports** as Field Staff.
+   - Enter mandatory resolution notes: *"Barricades removed; flooring cleared for pedestrian use."*
+   - Click **Resolve & Clear Obstacle**.
+   - Confirm status transitions to `Resolved` and the pathway immediately returns to `open` status.
+
+8. **Step 8: Administrative Governance & Audit Trail Verification**
+   - Sign out and sign in using `demo_admin` / `DemoAdmin2026!`.
+   - Open the **Admin Console** (accessible exclusively to administrators).
+   - Review user account statuses, role assignments, and the immutable **Administrative Audit Log** documenting every user creation, verification, and resolution event.
 
 ---
 
@@ -347,7 +419,12 @@ To run individual test suites:
    & ".venv\Scripts\python.exe" -m pip install -r requirements.txt
    ```
 
-3. **Launch the Streamlit Web Application:**
+3. **Seed Demonstration Accounts:**
+   ```powershell
+   & ".venv\Scripts\python.exe" scripts/demo_setup.py
+   ```
+
+4. **Launch the Streamlit Web Application:**
    ```powershell
    & ".venv\Scripts\python.exe" -m streamlit run main.py
    ```
