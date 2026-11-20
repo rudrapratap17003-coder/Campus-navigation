@@ -290,32 +290,32 @@ def create_indoor_map_figure(
 
         # Determine line styling and color based on accessibility
         if status in ("blocked", "closed", "maintenance", "under_maintenance"):
-            line_color = "#e63946"  # Red
+            line_color = "#F87171"  # Error Red
             line_dash = "dash"
             line_width = 3.5
             edge_desc = "⛔ Blocked Pathway"
         elif has_elevator:
-            line_color = "#2a9d8f"  # Teal
+            line_color = "#60A5FA"  # Info Blue/Teal
             line_dash = "solid"
             line_width = 4.0
             edge_desc = "🛗 Elevator Connection"
         elif has_stairs and not is_acc:
-            line_color = "#e76f51"  # Orange
+            line_color = "#F5B942"  # Warning Amber/Orange
             line_dash = "dot"
             line_width = 3.0
             edge_desc = "🪜 Staircase (Inaccessible)"
         elif has_ramp:
-            line_color = "#40916c"  # Darker Green
+            line_color = "#35D99A"  # Accent Green
             line_dash = "solid"
             line_width = 3.5
             edge_desc = "♿ Accessible Ramp"
         elif is_acc:
-            line_color = "#52b788"  # Green
+            line_color = "#16A36A"  # Primary Green
             line_dash = "solid"
             line_width = 3.0
             edge_desc = "🟢 Accessible Corridor"
         else:
-            line_color = "#6c757d"  # Grey
+            line_color = "#9CAFA5"  # Secondary Text Grey
             line_dash = "dashdot"
             line_width = 2.5
             edge_desc = "⚪ Unknown Accessibility"
@@ -416,11 +416,11 @@ def create_indoor_map_figure(
                 marker=dict(
                     size=15,
                     color=cat_color,
-                    line=dict(width=2, color="#ffffff"),
+                    line=dict(width=2, color="#07130F"),
                 ),
                 text=[loc["id"] for loc in loc_list],
                 textposition="top center",
-                textfont=dict(size=10, color="#1b4332"),
+                textfont=dict(size=10, color="#F8FAFC"),
                 name=cat.capitalize(),
                 hoverinfo="text",
                 hovertext=hover_texts,
@@ -440,13 +440,13 @@ def create_indoor_map_figure(
                     mode="markers+text",
                     marker=dict(
                         size=24,
-                        color="#2d6a4f",
+                        color="#16A36A",
                         symbol="circle",
-                        line=dict(width=3, color="#ffd166"),
+                        line=dict(width=3, color="#35D99A"),
                     ),
                     text=["🟢 Origin"],
                     textposition="bottom center",
-                    textfont=dict(size=11, color="#1b4332"),
+                    textfont=dict(size=11, color="#35D99A"),
                     name="Route Origin",
                     hoverinfo="text",
                     hovertext=f"<b>Route Starting Point:</b> {campus_map.get_location(start_id)['name']}",
@@ -464,13 +464,13 @@ def create_indoor_map_figure(
                     mode="markers+text",
                     marker=dict(
                         size=24,
-                        color="#e63946",
+                        color="#F87171",
                         symbol="star",
-                        line=dict(width=3, color="#ffffff"),
+                        line=dict(width=3, color="#FFFFFF"),
                     ),
                     text=["🏁 Destination"],
                     textposition="bottom center",
-                    textfont=dict(size=11, color="#1b4332"),
+                    textfont=dict(size=11, color="#F87171"),
                     name="Route Destination",
                     hoverinfo="text",
                     hovertext=f"<b>Route Destination:</b> {campus_map.get_location(dest_id)['name']}",
@@ -490,9 +490,9 @@ def create_indoor_map_figure(
                     mode="markers",
                     marker=dict(
                         size=28,
-                        color="rgba(131, 56, 236, 0.25)",
+                        color="rgba(53, 217, 154, 0.25)",
                         symbol="circle",
-                        line=dict(width=3, color="#8338ec"),
+                        line=dict(width=3, color="#35D99A"),
                     ),
                     name="Selected Location",
                     hoverinfo="text",
@@ -513,8 +513,8 @@ def create_indoor_map_figure(
                 y0=5,
                 x1=60,
                 y1=50,
-                line=dict(color="#b7e4c7", width=1.5, dash="dot"),
-                fillcolor="rgba(240, 247, 243, 0.35)",
+                line=dict(color="rgba(53, 217, 154, 0.4)", width=1.5, dash="dot"),
+                fillcolor="rgba(18, 40, 32, 0.45)",
                 layer="below",
             )
         )
@@ -523,7 +523,7 @@ def create_indoor_map_figure(
                 x=30,
                 y=52,
                 text="<b>Ground Floor (Floor 0) Plate</b>",
-                font=dict(size=13, color="#1b4332"),
+                font=dict(size=13, color="#35D99A"),
                 showarrow=False,
             )
         )
@@ -536,8 +536,8 @@ def create_indoor_map_figure(
                 y0=5,
                 x1=125,
                 y1=50,
-                line=dict(color="#a8dadc", width=1.5, dash="dot"),
-                fillcolor="rgba(241, 250, 254, 0.35)",
+                line=dict(color="rgba(96, 165, 250, 0.4)", width=1.5, dash="dot"),
+                fillcolor="rgba(13, 31, 24, 0.45)",
                 layer="below",
             )
         )
@@ -546,7 +546,7 @@ def create_indoor_map_figure(
                 x=95,
                 y=52,
                 text="<b>First Floor (Floor 1) Plate</b>",
-                font=dict(size=13, color="#1d3557"),
+                font=dict(size=13, color="#60A5FA"),
                 showarrow=False,
             )
         )
@@ -561,7 +561,7 @@ def create_indoor_map_figure(
                 x=30,
                 y=48,
                 text=f"<b>{floor_name} - Schematic Indoor Layout</b>",
-                font=dict(size=13, color="#1b4332"),
+                font=dict(size=13, color="#35D99A"),
                 showarrow=False,
             )
         )
@@ -575,16 +575,20 @@ def create_indoor_map_figure(
             title="Schematic X Position",
             range=x_range,
             showgrid=True,
-            gridcolor="#f0f7f3",
+            gridcolor="rgba(53, 217, 154, 0.08)",
             zeroline=False,
+            title_font=dict(color="#9CAFA5", size=11),
+            tickfont=dict(color="#9CAFA5", size=10),
         ),
         yaxis=dict(
             title="Schematic Y Position",
             range=y_range,
             showgrid=True,
-            gridcolor="#f0f7f3",
+            gridcolor="rgba(53, 217, 154, 0.08)",
             zeroline=False,
             scaleanchor="x",
+            title_font=dict(color="#9CAFA5", size=11),
+            tickfont=dict(color="#9CAFA5", size=10),
         ),
         shapes=shapes,
         annotations=annotations,
@@ -594,10 +598,10 @@ def create_indoor_map_figure(
             y=-0.28,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, color="#1b4332"),
+            font=dict(size=11, color="#F8FAFC"),
         ),
-        plot_bgcolor="#ffffff",
-        paper_bgcolor="#ffffff",
+        plot_bgcolor="#07130F",
+        paper_bgcolor="rgba(13, 31, 24, 0.75)",
     )
 
     return fig

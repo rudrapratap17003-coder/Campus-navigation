@@ -4,7 +4,17 @@ from __future__ import annotations
 
 import streamlit as st
 
-from modules.ui_theme import apply_custom_theme, get_app_services
+from modules.ui_theme import (
+    ACCENT_GREEN,
+    ERROR,
+    PRIMARY_GREEN,
+    SECONDARY_TEXT,
+    WARNING,
+    WHITE,
+    apply_custom_theme,
+    get_app_services,
+    render_kpi_card,
+)
 
 apply_custom_theme()
 services = get_app_services()
@@ -13,10 +23,17 @@ cmap = services["campus_map"]
 route_finder = services["route_finder"]
 acc_engine = services["accessibility_engine"]
 
-st.title("🧭 Accessible Route Planner")
-st.write(
-    "Calculate optimal, step-free navigation routes across campus buildings, "
-    "evaluating elevator availability, ramps, and real-time active obstacles."
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">🧭 Accessible Route Planner</div>
+        <div class="hero-subtitle">
+            Calculate barrier-free pedestrian routes across campus facilities.
+            Automatically avoids stairways and active hazard reports while utilizing code-compliant ramps and elevators.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 locations = cmap.get_all_locations()
@@ -26,9 +43,10 @@ location_options = {
     for loc in sorted(locations, key=lambda x: (x["floor"], x["name"]))
 }
 
-# --- ROUTE INPUT FORM ---
+# --- ROUTE INPUT FORM CARD ---
 with st.container():
-    st.subheader("Route Configuration")
+    st.markdown('<div class="ui-card">', unsafe_allow_html=True)
+    st.markdown("#### ⚙️ Route Configuration & Criteria")
     c1, c2 = st.columns(2)
 
     with c1:
@@ -40,10 +58,9 @@ with st.container():
         source_id = location_options[start_label]
 
     with c2:
-        # Default destination: Faculty Office Suite (Floor 1) or Computer Science Lab
         dest_default_idx = min(len(location_options) - 1, 13)
         dest_label = st.selectbox(
-            "Destination:",
+            "Destination Location:",
             options=list(location_options.keys()),
             index=dest_default_idx,
         )
@@ -56,7 +73,7 @@ with st.container():
             "Routing Algorithm:",
             options=["Dijkstra's Algorithm", "Breadth-First Search (BFS)"],
             index=0,
-            help="Dijkstra optimizes continuous metrics like distance and time. BFS minimizes the number of transitions.",
+            help="Dijkstra optimizes continuous metrics like distance and time. BFS minimizes the total number of transitions.",
         )
         algo_key = "dijkstra" if "Dijkstra" in algorithm else "bfs"
 
@@ -77,16 +94,17 @@ with st.container():
             help="Enforces step-free routing. Automatically avoids staircases and routes exclusively through ramps and elevators.",
         )
 
-    calculate_btn = st.button("🚀 Calculate Accessible Route", use_container_width=True)
+    calculate_btn = st.button("🚀 Calculate Accessible Route", type="primary", use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
 # --- CALCULATION AND DISPLAY ---
 if calculate_btn:
     if source_id == dest_id:
-        st.warning("Starting location and destination are identical. Distance: 0 meters.")
+        st.warning("⚠️ Starting location and destination are identical. Distance: 0 meters.")
     else:
-        with st.spinner("Computing optimal route..."):
+        with st.spinner("Computing optimal step-free path..."):
             route_result = route_finder.find_route(
                 source=source_id,
                 destination=dest_id,
@@ -100,15 +118,14 @@ if calculate_btn:
             if wheelchair_mode:
                 st.info(
                     "💡 Tip: If an elevator or access ramp is currently unavailable or blocked, "
-                    "a strictly step-free route may be impossible. Check the Obstacle Reports page or uncheck wheelchair restriction to view emergency stairs."
+                    "a strictly step-free route may be impossible. Check Obstacle Reports or uncheck wheelchair restriction to view emergency stairs."
                 )
         else:
-            # Perform accessibility assessment
             acc_eval = acc_engine.evaluate_route_accessibility(route_result)
 
-            st.success(f"Route found successfully via **{algorithm}**!")
+            st.success(f"Optimal route computed successfully via **{algorithm}**!")
 
-            # --- ROUTE SUMMARY METRICS ---
+            # --- ROUTE SUMMARY METRICS (5-COL CARDS) ---
             m1, m2, m3, m4, m5 = st.columns(5)
             with m1:
                 st.metric("Total Distance", f"{route_result.total_distance:.1f} m")
@@ -118,7 +135,7 @@ if calculate_btn:
                 time_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
                 st.metric("Est. Travel Time", time_str)
             with m3:
-                st.metric("Path Transitions", f"{route_result.edge_count} hops")
+                st.metric("Path Transitions", f"{route_result.edge_count} Hops")
             with m4:
                 st.metric("Classification", acc_eval.overall_classification)
             with m5:
@@ -129,29 +146,29 @@ if calculate_btn:
                 for w in acc_eval.warnings:
                     st.warning(f"⚠️ {w}")
 
-            # Infrastructure features
+            # Infrastructure highlights chips
             feat_badges = []
             if acc_eval.has_elevator:
-                feat_badges.append("🛗 Elevator Transition Included")
+                feat_badges.append('<span class="hero-chip">🛗 Elevator Transition Included</span>')
             if acc_eval.has_ramp:
-                feat_badges.append("♿ Access Ramp Included")
+                feat_badges.append('<span class="hero-chip">♿ Access Ramp Included</span>')
             if not acc_eval.has_elevator and not acc_eval.has_ramp:
-                feat_badges.append("🚶 Flat Ground/Corridor Walkway")
+                feat_badges.append('<span class="hero-chip">🚶 Flat Ground Corridor Walkway</span>')
 
             st.markdown(
-                f"<div style='margin-bottom: 14px;'><b>Infrastructure Highlights:</b> {' · '.join(feat_badges)}</div>",
+                f"<div style='margin: 12px 0 18px 0;'><b>Infrastructure Highlights:</b> {' '.join(feat_badges)}</div>",
                 unsafe_allow_html=True,
             )
 
             # --- TURN-BY-TURN GUIDANCE ---
-            st.subheader("📋 Turn-by-Turn Navigation Sequence")
+            st.markdown("### 📋 Step-by-Step Navigation Sequence")
 
             for step in route_result.steps:
                 icon = "🚶"
                 badge = "Corridor"
                 if step.has_elevator:
                     icon = "🛗"
-                    badge = "Elevator"
+                    badge = "Elevator Hub"
                 elif step.has_stairs:
                     icon = "🪜"
                     badge = "Stairway (Inaccessible)"
@@ -168,7 +185,7 @@ if calculate_btn:
                     <div class="step-box">
                         <div class="step-header">{icon} Step {step.step_number}: {step.from_name} ➔ {step.to_name}</div>
                         <div class="step-instruction">{step.instruction}</div>
-                        <div class="step-meta">Segment: {step.distance:.1f} m · Est. Time: {t_str} · Type: <b>{badge}</b></div>
+                        <div class="step-meta">Segment: <b>{step.distance:.1f} m</b> · Est. Transit: <b>{t_str}</b> · Link Type: <b>{badge}</b></div>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -184,10 +201,16 @@ if calculate_btn:
             )
 
             if alt_routes:
-                with st.expander(f"🔄 View Alternative Routes ({len(alt_routes)} available)"):
+                with st.expander(f"🔄 View Distinct Alternative Routes ({len(alt_routes)} Available)"):
                     for idx, alt in enumerate(alt_routes, 1):
                         alt_names = [cmap.get_location(nid)["name"] for nid in alt.path]
                         st.markdown(
-                            f"**Alternative {idx}:** {' ➔ '.join(alt_names)}  \n"
-                            f"*Distance: {alt.total_distance:.1f} m · Est. Time: {alt.total_time:.1f} s*"
+                            f"""
+                            <div class="ui-card" style="margin-bottom: 8px; padding: 12px 16px;">
+                                <div style="font-weight: 700; color: #35D99A; margin-bottom: 4px;">Alternative Route #{idx}</div>
+                                <div style="color: #F8FAFC; font-size: 0.9rem;">{' ➔ '.join(alt_names)}</div>
+                                <div style="color: #9CAFA5; font-size: 0.8rem; margin-top: 4px;">Distance: {alt.total_distance:.1f} m · Est. Time: {alt.total_time:.1f} s</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
                         )

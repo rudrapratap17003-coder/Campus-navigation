@@ -7,7 +7,19 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from modules.ui_theme import apply_custom_theme, get_app_services
+from modules.ui_theme import (
+    ACCENT_GREEN,
+    ERROR,
+    INFO,
+    PRIMARY_GREEN,
+    SECONDARY_TEXT,
+    WARNING,
+    WHITE,
+    apply_custom_theme,
+    apply_plotly_dark_theme,
+    get_app_services,
+    render_kpi_card,
+)
 
 apply_custom_theme()
 services = get_app_services()
@@ -15,12 +27,6 @@ services = get_app_services()
 cmap = services["campus_map"]
 acc_engine = services["accessibility_engine"]
 obs_manager = services["obstacle_manager"]
-
-st.title("📊 Campus Accessibility & Navigation Dashboard")
-st.write(
-    "Live operational status of campus pedestrian infrastructure, accessibility coverage, "
-    "and active obstacle management."
-)
 
 # Fetch actual data from live campus graph and SQLite database
 acc_summary = acc_engine.get_accessibility_summary()
@@ -31,98 +37,118 @@ active_count = obs_stats["active_obstacles_count"]
 pending_count = obs_stats["status_counts"].get("Pending", 0)
 resolved_count = obs_stats["status_counts"].get("Resolved", 0)
 
+# --- HERO WELCOME BANNER ---
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">🧭 Campus Accessibility & Navigation Intelligence</div>
+        <div class="hero-subtitle">
+            Real-time multi-floor pedestrian intelligence platform empowering students, staff, and visitors
+            with barrier-free route calculations, topological indoor maps, and live community hazard management.
+        </div>
+        <div class="hero-chips">
+            <span class="hero-chip">🟢 Step-Free Dijkstra & BFS</span>
+            <span class="hero-chip">🏢 Multi-Level Indoor Cartography</span>
+            <span class="hero-chip">🛡️ Active Barrier Detours</span>
+            <span class="hero-chip">🔒 RBAC & OWASP Hashing</span>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 # --- TOP ROW: CAMPUS INFRASTRUCTURE KPIS ---
-st.markdown("#### 🏛️ Campus Infrastructure & Accessibility Metrics")
+st.markdown("### 🏛️ Infrastructure & Network Coverage")
 kpi_c1, kpi_c2, kpi_c3 = st.columns(3)
 
 with kpi_c1:
     st.markdown(
-        f"""
-        <div class="ui-card">
-            <div class="ui-card-title">Campus Locations</div>
-            <div class="ui-card-value">{acc_summary["total_locations"]}</div>
-            <div class="ui-card-desc">Ground (Floor 0) & First Floor (Floor 1) Nodes</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Campus Locations",
+            value=acc_summary["total_locations"],
+            desc="Ground (Floor 0) & First Floor (Floor 1) Spatial Nodes",
+            border_accent=PRIMARY_GREEN,
+            value_color=WHITE,
+        ),
         unsafe_allow_html=True,
     )
 
 with kpi_c2:
     st.markdown(
-        f"""
-        <div class="ui-card">
-            <div class="ui-card-title">Total Pathways</div>
-            <div class="ui-card-value">{acc_summary["total_pathways"]}</div>
-            <div class="ui-card-desc">{acc_summary["accessible_pathways"]} Accessible · {acc_summary["inaccessible_pathways"]} Inaccessible (Stairs)</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Total Pathways",
+            value=acc_summary["total_pathways"],
+            desc=f"{acc_summary['accessible_pathways']} Accessible · {acc_summary['inaccessible_pathways']} Inaccessible (Stairs)",
+            border_accent=ACCENT_GREEN,
+            value_color=WHITE,
+        ),
         unsafe_allow_html=True,
     )
 
 with kpi_c3:
     network_pct = acc_summary["network_accessibility_percentage"]
     st.markdown(
-        f"""
-        <div class="ui-card">
-            <div class="ui-card-title">Network Accessibility Rate</div>
-            <div class="ui-card-value">{network_pct}%</div>
-            <div class="ui-card-desc">Average Heuristic Score: {acc_summary["average_pathway_score"]} / 100</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Network Accessibility Rate",
+            value=f"{network_pct}%",
+            desc=f"Average Heuristic Score: {acc_summary['average_pathway_score']} / 100",
+            border_accent=PRIMARY_GREEN,
+            value_color=ACCENT_GREEN,
+        ),
         unsafe_allow_html=True,
     )
 
 # --- SECOND ROW: OPERATIONAL OBSTACLE STATUS KPIS ---
-st.markdown("#### ⚠️ Operational Obstacle & Hazard Status")
+st.markdown("### ⚠️ Active Obstacles & Maintenance Status")
 obs_c1, obs_c2, obs_c3 = st.columns(3)
 
 with obs_c1:
-    active_color = "#e63946" if active_count > 0 else "#2d6a4f"
-    active_status_text = "Affecting Active Routing" if active_count > 0 else "All Pathways Operational"
+    active_color = ERROR if active_count > 0 else PRIMARY_GREEN
+    active_status_text = "Affecting Live Routing Detours" if active_count > 0 else "All Corridors Fully Operational"
     st.markdown(
-        f"""
-        <div class="ui-card" style="border-top: 3px solid {active_color};">
-            <div class="ui-card-title">Active Verified Obstacles</div>
-            <div class="ui-card-value" style="color: {active_color};">{active_count}</div>
-            <div class="ui-card-desc">{active_status_text}</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Active Verified Obstacles",
+            value=active_count,
+            desc=active_status_text,
+            border_accent=active_color,
+            value_color=active_color,
+        ),
         unsafe_allow_html=True,
     )
 
 with obs_c2:
-    pending_color = "#e76f51" if pending_count > 0 else "#4b6354"
+    pending_color = WARNING if pending_count > 0 else SECONDARY_TEXT
     st.markdown(
-        f"""
-        <div class="ui-card" style="border-top: 3px solid {pending_color};">
-            <div class="ui-card-title">Pending Obstacle Reports</div>
-            <div class="ui-card-value" style="color: {pending_color};">{pending_count}</div>
-            <div class="ui-card-desc">Filed & Awaiting Administrative Verification</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Pending Obstacle Reports",
+            value=pending_count,
+            desc="Submitted by Users · Awaiting Staff Inspection",
+            border_accent=pending_color,
+            value_color=pending_color,
+        ),
         unsafe_allow_html=True,
     )
 
 with obs_c3:
     st.markdown(
-        f"""
-        <div class="ui-card" style="border-top: 3px solid #52b788;">
-            <div class="ui-card-title">Resolved Reports</div>
-            <div class="ui-card-value" style="color: #2d6a4f;">{resolved_count}</div>
-            <div class="ui-card-desc">Repairs Completed & Pathway Access Restored</div>
-        </div>
-        """,
+        render_kpi_card(
+            title="Resolved Obstacles",
+            value=resolved_count,
+            desc="Repairs Completed · Pathway Access Fully Restored",
+            border_accent=ACCENT_GREEN,
+            value_color=ACCENT_GREEN,
+        ),
         unsafe_allow_html=True,
     )
 
 st.markdown("---")
 
 # --- CHARTS SECTION ---
+st.markdown("### 📈 Visual Analytics & Pathway Distribution")
 c_left, c_right = st.columns(2)
 
 with c_left:
-    st.subheader("🚶 Pathway Accessibility Breakdown")
-    # Real data from actual classification counts in graph
+    st.markdown("##### 🚶 Pathway Accessibility Breakdown")
     class_counts = acc_summary["classification_counts"]
     df_pathways = pd.DataFrame(
         [
@@ -133,39 +159,38 @@ with c_left:
     )
 
     color_map = {
-        "Fully Accessible": "#2d6a4f",
-        "Accessible with Assistance": "#52b788",
-        "Not Wheelchair Accessible": "#e63946",
-        "Temporarily Blocked": "#d90429",
-        "Unknown Accessibility": "#adb5bd",
+        "Fully Accessible": PRIMARY_GREEN,
+        "Accessible with Assistance": ACCENT_GREEN,
+        "Not Wheelchair Accessible": ERROR,
+        "Temporarily Blocked": "#DC2626",
+        "Unknown Accessibility": SECONDARY_TEXT,
     }
 
     fig_pathways = px.pie(
         df_pathways,
         names="Classification",
         values="Count",
-        hole=0.52,
+        hole=0.58,
         color="Classification",
         color_discrete_map=color_map,
     )
+    apply_plotly_dark_theme(fig_pathways, height=330)
     fig_pathways.update_layout(
-        margin=dict(t=15, b=15, l=15, r=15),
         legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.15,
+            y=-0.12,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, color="#1b4332"),
+            font=dict(size=11, color=WHITE),
         ),
-        height=320,
         annotations=[
             dict(
-                text=f"<b>{acc_summary['total_pathways']}</b><br>Paths",
+                text=f"<b>{acc_summary['total_pathways']}</b><br><span style='font-size:11px;color:#9CAFA5'>Paths</span>",
                 x=0.5,
                 y=0.5,
-                font_size=16,
-                font_color="#1b4332",
+                font_size=18,
+                font_color=WHITE,
                 showarrow=False,
             )
         ],
@@ -173,17 +198,16 @@ with c_left:
     st.plotly_chart(fig_pathways, use_container_width=True)
 
 with c_right:
-    st.subheader("⚠️ Obstacle Reports Distribution")
+    st.markdown("##### ⚠️ Obstacle Reports Distribution")
 
-    # Empty-state check: If no reports exist in SQLite database, show clean professional empty-state
     if obs_stats["total_reports"] == 0:
         st.markdown(
             """
-            <div style="background-color: #ffffff; border: 1px dashed #b7e4c7; border-radius: 10px; padding: 42px 20px; text-align: center; margin-top: 10px;">
-                <div style="font-size: 2.5rem; margin-bottom: 8px;">🛡️</div>
-                <div style="font-weight: 700; color: #1b4332; font-size: 1.05rem;">No Obstacle Reports Recorded</div>
-                <div style="color: #4b6354; font-size: 0.88rem; max-width: 380px; margin: 6px auto 0 auto; line-height: 1.45;">
-                    All 17 surveyed campus pathways are currently operating under baseline conditions. When hazards or maintenance closures are filed, their status distribution will display here.
+            <div class="ui-card" style="text-align: center; padding: 48px 24px;">
+                <div style="font-size: 2.6rem; margin-bottom: 8px;">🛡️</div>
+                <div style="font-weight: 700; color: #F8FAFC; font-size: 1.1rem;">Zero Active Obstacle Reports</div>
+                <div style="color: #9CAFA5; font-size: 0.88rem; max-width: 400px; margin: 8px auto 0 auto; line-height: 1.45;">
+                    All 17 surveyed campus pathways are currently operating under baseline conditions. Filed incident reports and maintenance logs will display here.
                 </div>
             </div>
             """,
@@ -196,10 +220,10 @@ with c_right:
         )
 
         status_color_map = {
-            "Pending": "#f4a261",
-            "Verified": "#e63946",
-            "Resolved": "#2d6a4f",
-            "Rejected": "#6c757d",
+            "Pending": WARNING,
+            "Verified": ERROR,
+            "Resolved": ACCENT_GREEN,
+            "Rejected": SECONDARY_TEXT,
         }
 
         fig_status = px.bar(
@@ -210,26 +234,23 @@ with c_right:
             color_discrete_map=status_color_map,
             text="Reports",
         )
+        apply_plotly_dark_theme(fig_status, height=330)
         max_y = max(1, max(status_counts.values()))
         fig_status.update_layout(
-            margin=dict(t=25, b=25, l=45, r=20),
-            height=320,
             showlegend=False,
             yaxis=dict(
                 title="Number of Reports",
                 dtick=1,
                 tick0=0,
                 range=[0, max_y + 1],
-                gridcolor="#f0f7f3",
-                title_font=dict(size=12, color="#4b6354"),
-                tickfont=dict(size=11, color="#1b4332"),
+                gridcolor="rgba(53, 217, 154, 0.08)",
+                title_font=dict(size=12, color=SECONDARY_TEXT),
+                tickfont=dict(size=11, color=WHITE),
             ),
             xaxis=dict(
                 title="",
-                tickfont=dict(size=12, color="#1b4332", family="sans-serif"),
+                tickfont=dict(size=12, color=WHITE),
             ),
-            plot_bgcolor="#ffffff",
-            paper_bgcolor="#ffffff",
         )
         st.plotly_chart(fig_status, use_container_width=True)
 
@@ -239,28 +260,28 @@ st.markdown("---")
 inf_col, action_col = st.columns([3, 2])
 
 with inf_col:
-    st.subheader("🏢 Accessibility Infrastructure Features")
+    st.markdown("### 🏢 Assistive Infrastructure Assets")
     col_a, col_b, col_c = st.columns(3)
     with col_a:
-        st.metric("Elevator Transitions", acc_summary["elevator_pathways"])
+        st.metric("Elevator Hubs", f"{acc_summary['elevator_pathways']} Links")
     with col_b:
-        st.metric("Dedicated Ramps", acc_summary["ramp_pathways"])
+        st.metric("Dedicated Ramps", f"{acc_summary['ramp_pathways']} Ramps")
     with col_c:
-        st.metric("Stairway Connectors", acc_summary["stairs_pathways"])
+        st.metric("Stairway Links", f"{acc_summary['stairs_pathways']} Stairs")
 
     st.markdown(
         """
         <div class="disclaimer-banner">
-            <b>Algorithmic Heuristic Notice:</b> Accessibility scores and classifications are calculated
-            heuristically to assist routing decisions. They do not constitute official building-code or ADA regulatory certifications.
+            <b>⚖️ Algorithmic Heuristic Notice:</b> Accessibility scores (0–100) and classifications are computed
+            heuristically based on surveyed slope, step-free status, and elevator availability. They do not constitute official building-code or ADA regulatory certifications.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 with action_col:
-    st.subheader("⚡ Quick Actions")
-    st.write("Jump straight to key workflows:")
+    st.markdown("### ⚡ Quick Navigation Actions")
+    st.write("Instant access to core platform services:")
     if st.button("🧭 Plan an Accessible Route", use_container_width=True):
         st.switch_page("pages/navigation.py")
     if st.button("🗺️ Explore Interactive Campus Map", use_container_width=True):
@@ -271,7 +292,7 @@ with action_col:
 st.markdown("---")
 
 # --- RECENT OBSTACLE REPORTS ---
-st.subheader("📋 Recent Obstacle & Hazard Reports")
+st.markdown("### 📋 Recent Obstacle & Hazard Reports")
 if all_reports:
     df_recent = pd.DataFrame(all_reports[:5])[
         ["report_id", "obstacle_category", "severity", "status", "reported_at", "reporter_name"]

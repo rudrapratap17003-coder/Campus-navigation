@@ -5,7 +5,19 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from modules.ui_theme import apply_custom_theme, get_app_services, get_current_user
+from modules.ui_theme import (
+    ACCENT_GREEN,
+    ERROR,
+    INFO,
+    PRIMARY_GREEN,
+    SECONDARY_TEXT,
+    WARNING,
+    WHITE,
+    apply_custom_theme,
+    get_app_services,
+    get_current_user,
+    render_kpi_card,
+)
 
 apply_custom_theme()
 services = get_app_services()
@@ -17,10 +29,17 @@ current_user = get_current_user()
 user_role = current_user.get("role") if current_user else None
 is_staff_or_admin = user_role in ("Field Staff", "Administrator")
 
-st.title("⚠️ Obstacle & Hazard Reports")
-st.write(
-    "Central repository of campus accessibility obstructions, construction barricades, "
-    "and pathway maintenance reports stored persistently via SQLite."
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">⚠️ Campus Barrier & Hazard Management</div>
+        <div class="hero-subtitle">
+            Community incident reporting, field staff inspection queues, and real-time obstacle avoidance.
+            Verified barriers dynamically detour active navigation routes.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 # Fetch stats and reports from SQLite
@@ -30,18 +49,52 @@ all_reports = obs_manager.get_all_reports()
 # --- TOP STATS ROW ---
 c1, c2, c3, c4 = st.columns(4)
 with c1:
-    st.metric("Total Filed Reports", stats["total_reports"])
+    st.markdown(
+        render_kpi_card(
+            title="Total Filed Reports",
+            value=stats["total_reports"],
+            desc="All Lifetime Incident Logs",
+            border_accent=PRIMARY_GREEN,
+            value_color=WHITE,
+        ),
+        unsafe_allow_html=True,
+    )
 with c2:
-    st.metric("Pending Review", stats["status_counts"].get("Pending", 0))
+    pending_num = stats["status_counts"].get("Pending", 0)
+    st.markdown(
+        render_kpi_card(
+            title="Pending Review",
+            value=pending_num,
+            desc="Awaiting Staff Inspection",
+            border_accent=WARNING if pending_num > 0 else SECONDARY_TEXT,
+            value_color=WARNING if pending_num > 0 else WHITE,
+        ),
+        unsafe_allow_html=True,
+    )
 with c3:
-    st.metric(
-        "Active & Verified Obstacles",
-        stats["active_obstacles_count"],
-        delta="- Affecting Routing" if stats["active_obstacles_count"] > 0 else "None",
-        delta_color="inverse",
+    act_num = stats["active_obstacles_count"]
+    st.markdown(
+        render_kpi_card(
+            title="Active Blockages",
+            value=act_num,
+            desc="Detouring Live Routing" if act_num > 0 else "All Corridors Open",
+            border_accent=ERROR if act_num > 0 else PRIMARY_GREEN,
+            value_color=ERROR if act_num > 0 else ACCENT_GREEN,
+        ),
+        unsafe_allow_html=True,
     )
 with c4:
-    st.metric("Resolved Issues", stats["status_counts"].get("Resolved", 0))
+    res_num = stats["status_counts"].get("Resolved", 0)
+    st.markdown(
+        render_kpi_card(
+            title="Resolved Issues",
+            value=res_num,
+            desc="Repairs Verified & Cleared",
+            border_accent=ACCENT_GREEN,
+            value_color=ACCENT_GREEN,
+        ),
+        unsafe_allow_html=True,
+    )
 
 st.markdown("---")
 
@@ -49,18 +102,17 @@ st.markdown("---")
 # STAFF / ADMIN VERIFICATION & RESOLUTION ACTIONS (FIELD STAFF & ADMIN ONLY)
 # =============================================================================
 if is_staff_or_admin:
-    st.subheader("🛠️ Field Operations Queue")
+    st.markdown("### 🛠️ Field Operations Queue")
     staff_tab1, staff_tab2 = st.tabs(["📋 Pending Review Queue", "🔧 Resolve Active Obstacles"])
 
     with staff_tab1:
         pending_list = [r for r in all_reports if r["status"] == "Pending"]
         if not pending_list:
-            st.success("✅ No reports currently require verification.")
+            st.success("✅ Verification queue is clear. No reports currently awaiting field inspection.")
         else:
-            st.write(f"**{len(pending_list)}** reports awaiting inspection and verification:")
+            st.markdown(f"<div style='margin-bottom:12px;color:#9CAFA5;'><b>{len(pending_list)}</b> report(s) awaiting verification:</div>", unsafe_allow_html=True)
             for p in pending_list:
                 with st.expander(f"Pending #{p['report_id']} - {p['obstacle_category']} ({p['severity']})", expanded=True):
-                    # Target description
                     if p["target_type"] == "pathway":
                         s_loc = cmap.get_location(p["source_location_id"])
                         d_loc = cmap.get_location(p["destination_location_id"])
@@ -69,7 +121,7 @@ if is_staff_or_admin:
                         loc = cmap.get_location(p["location_id"])
                         tgt_name = f"Location: {loc['name'] if loc else p['location_id']}"
 
-                    st.markdown(f"**Target:** {tgt_name} | **Severity:** {p['severity']} | **Filed by:** {p['reporter_name']}")
+                    st.markdown(f"**Target:** `{tgt_name}` | **Severity:** `{p['severity']}` | **Filed by:** `{p['reporter_name']}`")
                     st.markdown(f"**Description:** {p['description']}")
 
                     act_col1, act_col2 = st.columns([1, 2])
@@ -83,8 +135,8 @@ if is_staff_or_admin:
                                 st.error(f"Failed to verify report: {ex}")
 
                     with act_col2:
-                        with st.popover(f"❌ Reject Report"):
-                            rej_input = st.text_input("Rejection Reason:", key=f"obs_rej_reason_{p['report_id']}", placeholder="e.g. Duplicate or obstruction cleared")
+                        with st.popover("❌ Reject Report"):
+                            rej_input = st.text_input("Rejection Reason:", key=f"obs_rej_reason_{p['report_id']}", placeholder="e.g. Cleared before inspection")
                             if st.button("Confirm Rejection", key=f"obs_confirm_rej_{p['report_id']}"):
                                 try:
                                     obs_manager.reject_report(p["report_id"], rejection_reason=rej_input, actor_user=current_user)
@@ -98,7 +150,7 @@ if is_staff_or_admin:
         if not verified_list:
             st.info("No active verified obstacles currently blocking navigation.")
         else:
-            st.write(f"**{len(verified_list)}** active obstacles currently blocking navigation routes:")
+            st.markdown(f"<div style='margin-bottom:12px;color:#9CAFA5;'><b>{len(verified_list)}</b> active barrier(s) currently blocking routes:</div>", unsafe_allow_html=True)
             for v in verified_list:
                 with st.expander(f"Active Obstacle #{v['report_id']} - {v['obstacle_category']} ({v['severity']})", expanded=False):
                     if v["target_type"] == "pathway":
@@ -109,7 +161,7 @@ if is_staff_or_admin:
                         loc = cmap.get_location(v["location_id"])
                         tgt_name = f"Location: {loc['name'] if loc else v['location_id']}"
 
-                    st.markdown(f"**Target:** {tgt_name} | **Status:** <span style='color:red;'><b>ACTIVE BLOCKAGE</b></span>", unsafe_allow_html=True)
+                    st.markdown(f"**Target:** `{tgt_name}` | <span class='badge badge-verified'>Active Blockage</span>", unsafe_allow_html=True)
                     st.markdown(f"**Description:** {v['description']}")
 
                     with st.form(f"resolve_form_{v['report_id']}"):
@@ -130,7 +182,7 @@ if is_staff_or_admin:
 # =============================================================================
 # FILTERING CONTROLS
 # =============================================================================
-st.subheader("🔍 Browse Incident Log")
+st.markdown("### 🔍 Browse Incident Log")
 f_col1, f_col2, f_col3 = st.columns(3)
 
 with f_col1:
@@ -163,7 +215,6 @@ if severity_filter != "All Severities":
 if category_filter != "All Categories":
     filtered_reports = [r for r in filtered_reports if r["obstacle_category"] == category_filter]
 
-# If user is a student, offer a checkbox to view only their submitted reports
 if current_user and not is_staff_or_admin:
     only_my_reports = st.checkbox("Show only my filed reports", value=False)
     if only_my_reports:
@@ -173,7 +224,7 @@ if current_user and not is_staff_or_admin:
             or r.get("reporter_name") == current_user["full_name"]
         ]
 
-st.markdown(f"**Found {len(filtered_reports)} matching reports**")
+st.markdown(f"<div style='color:#9CAFA5;margin-bottom:10px;'>Found <b>{len(filtered_reports)}</b> matching incident record(s)</div>", unsafe_allow_html=True)
 
 if not filtered_reports:
     st.info(
@@ -183,7 +234,6 @@ if not filtered_reports:
 else:
     table_data = []
     for r in filtered_reports:
-        # Determine target display string
         if r["target_type"] == "pathway":
             src_name = cmap.get_location(r["source_location_id"])
             dst_name = cmap.get_location(r["destination_location_id"])
@@ -195,7 +245,6 @@ else:
             loc_str = loc["name"] if loc else r["location_id"]
             target_str = f"Location: {loc_str}"
 
-        # Clean timestamp
         reported_ts = str(r["reported_at"])[:19].replace("T", " ")
 
         table_data.append(

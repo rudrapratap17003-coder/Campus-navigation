@@ -3,11 +3,21 @@
 from __future__ import annotations
 
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 from modules.accessibility import AccessibilityClassification
-from modules.ui_theme import apply_custom_theme, get_app_services
+from modules.ui_theme import (
+    ACCENT_GREEN,
+    ERROR,
+    INFO,
+    PRIMARY_GREEN,
+    SECONDARY_TEXT,
+    WARNING,
+    WHITE,
+    apply_custom_theme,
+    get_app_services,
+    render_kpi_card,
+)
 
 apply_custom_theme()
 services = get_app_services()
@@ -16,10 +26,17 @@ cmap = services["campus_map"]
 acc_engine = services["accessibility_engine"]
 summary = acc_engine.get_accessibility_summary()
 
-st.title("♿ Accessibility Intelligence & Infrastructure Audit")
-st.write(
-    "Comprehensive accessibility evaluation across campus routes, pathway classifications, "
-    "and assistive infrastructure."
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">♿ Accessibility Intelligence & Infrastructure Audit</div>
+        <div class="hero-subtitle">
+            Comprehensive heuristic accessibility evaluation across all surveyed campus pathways,
+            architectural connectors, and assistive mobility infrastructure.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 # Mandatory Disclaimer
@@ -35,15 +52,15 @@ st.markdown(
 )
 
 # --- CLASSIFICATION TAXONOMY CARDS ---
-st.subheader("📚 Standardized Accessibility Classification Framework")
+st.markdown("### 📚 Standardized Accessibility Classification Framework")
 
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(
         """
-        <div class="ui-card" style="border-left: 5px solid #2d6a4f;">
-            <div style="font-weight: 700; color: #2d6a4f; margin-bottom: 4px;">🟢 Fully Accessible</div>
-            <div style="font-size: 0.85rem; color: #4a5568;">
+        <div class="ui-card" style="border-left: 4px solid #35D99A;">
+            <div style="font-weight: 700; color: #35D99A; margin-bottom: 6px; font-size: 1rem;">🟢 Fully Accessible</div>
+            <div style="font-size: 0.84rem; color: #9CAFA5; line-height: 1.5;">
                 Step-free, flat, or equipped with code-compliant access ramps or elevators. Completely barrier-free for independent wheelchair users.
             </div>
         </div>
@@ -53,9 +70,9 @@ with col1:
 with col2:
     st.markdown(
         """
-        <div class="ui-card" style="border-left: 5px solid #f4a261;">
-            <div style="font-weight: 700; color: #e76f51; margin-bottom: 4px;">🟡 Accessible with Assistance</div>
-            <div style="font-size: 0.85rem; color: #4a5568;">
+        <div class="ui-card" style="border-left: 4px solid #F5B942;">
+            <div style="font-weight: 700; color: #F5B942; margin-bottom: 6px; font-size: 1rem;">🟡 Accessible with Assistance</div>
+            <div style="font-size: 0.84rem; color: #9CAFA5; line-height: 1.5;">
                 Passable for wheelchairs, but features steep ramp gradients, heavy manual doors, or long continuous runs requiring assistance.
             </div>
         </div>
@@ -65,9 +82,9 @@ with col2:
 with col3:
     st.markdown(
         """
-        <div class="ui-card" style="border-left: 5px solid #e63946;">
-            <div style="font-weight: 700; color: #e63946; margin-bottom: 4px;">🔴 Not Wheelchair Accessible</div>
-            <div style="font-size: 0.85rem; color: #4a5568;">
+        <div class="ui-card" style="border-left: 4px solid #F87171;">
+            <div style="font-weight: 700; color: #F87171; margin-bottom: 6px; font-size: 1rem;">🔴 Not Wheelchair Accessible</div>
+            <div style="font-size: 0.84rem; color: #9CAFA5; line-height: 1.5;">
                 Contains physical steps or staircases without an elevator or ramp alternative. Impassable for wheeled mobility devices.
             </div>
         </div>
@@ -79,10 +96,10 @@ col4, col5 = st.columns(2)
 with col4:
     st.markdown(
         """
-        <div class="ui-card" style="border-left: 5px solid #d90429;">
-            <div style="font-weight: 700; color: #d90429; margin-bottom: 4px;">⛔ Temporarily Blocked</div>
-            <div style="font-size: 0.85rem; color: #4a5568;">
-                Pathway is currently closed or blocked due to active maintenance, construction work, or hazard reports.
+        <div class="ui-card" style="border-left: 4px solid #EF4444;">
+            <div style="font-weight: 700; color: #EF4444; margin-bottom: 6px; font-size: 1rem;">⛔ Temporarily Blocked</div>
+            <div style="font-size: 0.84rem; color: #9CAFA5; line-height: 1.5;">
+                Pathway is currently closed or impassable due to active maintenance, construction work, or verified hazard reports.
             </div>
         </div>
         """,
@@ -91,9 +108,9 @@ with col4:
 with col5:
     st.markdown(
         """
-        <div class="ui-card" style="border-left: 5px solid #adb5bd;">
-            <div style="font-weight: 700; color: #6c757d; margin-bottom: 4px;">⚪ Unknown Accessibility</div>
-            <div style="font-size: 0.85rem; color: #4a5568;">
+        <div class="ui-card" style="border-left: 4px solid #9CAFA5;">
+            <div style="font-weight: 700; color: #9CAFA5; margin-bottom: 6px; font-size: 1rem;">⚪ Unknown Accessibility</div>
+            <div style="font-size: 0.84rem; color: #9CAFA5; line-height: 1.5;">
                 Accessibility status is unverified or missing required physical attribute surveys in the dataset.
             </div>
         </div>
@@ -104,21 +121,21 @@ with col5:
 st.markdown("---")
 
 # --- NETWORK ACCESSIBILITY SUMMARY ---
-st.subheader("📊 Campus Infrastructure Overview")
+st.markdown("### 📊 Campus Infrastructure Overview")
 m1, m2, m3, m4 = st.columns(4)
 with m1:
-    st.metric("Overall Accessibility Score", f"{summary['average_pathway_score']}/100")
+    st.metric("Overall Accessibility Score", f"{summary['average_pathway_score']} / 100")
 with m2:
     st.metric("Accessible Pathways", f"{summary['accessible_pathways']} / {summary['total_pathways']}")
 with m3:
-    st.metric("Elevator Connectors", summary["elevator_pathways"])
+    st.metric("Elevator Connectors", f"{summary['elevator_pathways']} Hubs")
 with m4:
-    st.metric("Access Ramps", summary["ramp_pathways"])
+    st.metric("Dedicated Access Ramps", f"{summary['ramp_pathways']} Ramps")
 
 st.markdown("---")
 
 # --- DETAILED PATHWAYS TABLE ---
-st.subheader("🔍 Complete Pathway Accessibility Inventory")
+st.markdown("### 🔍 Complete Pathway Accessibility Inventory")
 
 pathway_records = []
 for u, v, data in cmap.graph.edges(data=True):
@@ -147,19 +164,19 @@ st.dataframe(df_pathways, use_container_width=True, hide_index=True)
 st.markdown("---")
 
 # --- INDIVIDUAL LOCATION INSPECTOR ---
-st.subheader("🎯 Single Location Accessibility Inspector")
+st.markdown("### 🎯 Single Location Accessibility Inspector")
 loc_options = {
     f"[{loc['id']}] {loc['name']} (Floor {loc['floor']})": loc["id"]
     for loc in cmap.get_all_locations()
 }
-selected_loc_label = st.selectbox("Inspect Location:", options=list(loc_options.keys()))
+selected_loc_label = st.selectbox("Select Target Location to Inspect:", options=list(loc_options.keys()))
 inspected_id = loc_options[selected_loc_label]
 
 loc_assessment = acc_engine.check_location_accessibility(inspected_id)
 
 col_info1, col_info2, col_info3 = st.columns(3)
 with col_info1:
-    st.metric("Location Score", f"{loc_assessment.score}/100")
+    st.metric("Location Score", f"{loc_assessment.score} / 100")
 with col_info2:
     st.metric("Classification", loc_assessment.classification)
 with col_info3:

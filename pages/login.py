@@ -6,42 +6,62 @@ import streamlit as st
 
 from database.db_manager import SecurityLockoutError
 from modules.ui_theme import (
+    ACCENT_GREEN,
+    PRIMARY_GREEN,
+    WHITE,
     apply_custom_theme,
     get_app_services,
     get_current_user,
     login_user,
     logout_user,
+    render_kpi_card,
 )
 
 apply_custom_theme()
 services = get_app_services()
 db_manager = services["db_manager"]
 
-st.title("🔐 Access & Authentication")
-st.write(
-    "Secure identity management for Accessible Campus Navigator. Log in to report obstacles, "
-    "or manage verification and administrative operations."
-)
-
 current_user = get_current_user()
 
 if current_user:
-    st.success(f"You are currently signed in as **{current_user['full_name']}** (@{current_user['username']}).")
+    st.markdown(
+        """
+        <div class="hero-banner">
+            <div class="hero-title">👤 Account Profile & Session Management</div>
+            <div class="hero-subtitle">
+                Authenticated session with active role privileges and administrative routing access.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([3, 2])
     with col1:
+        role = current_user.get("role", "Student")
+        role_badges = {
+            "Administrator": '<span class="badge" style="background:rgba(139,92,246,0.2);color:#A78BFA;border:1px solid rgba(139,92,246,0.4);">🛡️ Administrator</span>',
+            "Field Staff": '<span class="badge" style="background:rgba(217,119,6,0.2);color:#FBBF24;border:1px solid rgba(217,119,6,0.4);">🛠️ Field Staff</span>',
+            "Student": '<span class="badge" style="background:rgba(22,163,106,0.2);color:#35D99A;border:1px solid rgba(53,217,154,0.4);">🎓 Campus User</span>',
+        }
+        role_badge = role_badges.get(role, f'<span class="badge">{role}</span>')
+
         st.markdown(
             f"""
             <div class="ui-card">
-                <div class="ui-card-title">Active Account Profile</div>
-                <div style="font-size: 1.15rem; font-weight: 700; color: #1b4332;">{current_user['full_name']}</div>
-                <div style="font-size: 0.85rem; color: #4a5568; margin-bottom: 12px;">User ID: <code>{current_user['user_id']}</code></div>
-                <table style="width: 100%; font-size: 0.9rem; line-height: 1.8;">
-                    <tr><td style="color: #6c757d; width: 140px;">Username:</td><td><b>@{current_user['username']}</b></td></tr>
-                    <tr><td style="color: #6c757d;">Assigned Role:</td><td><span style="background: #e2ece6; color: #1b4332; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{current_user['role']}</span></td></tr>
-                    <tr><td style="color: #6c757d;">Account Status:</td><td><b style="color: green;">{current_user['account_status']}</b></td></tr>
-                    <tr><td style="color: #6c757d;">Registered:</td><td>{current_user.get('created_at', 'N/A')[:19].replace('T', ' ')} UTC</td></tr>
-                </table>
+                <div class="ui-card-title">Identity Credentials</div>
+                <div style="font-size: 1.4rem; font-weight: 800; color: #F8FAFC; margin-bottom: 2px;">{current_user['full_name']}</div>
+                <div style="font-size: 0.85rem; color: #9CAFA5; margin-bottom: 16px;">User ID: <code>{current_user['user_id']}</code></div>
+                <div style="display: grid; grid-template-columns: 140px 1fr; gap: 10px; font-size: 0.9rem; border-top: 1px solid rgba(53,217,154,0.12); padding-top: 14px;">
+                    <div style="color: #9CAFA5;">Username:</div>
+                    <div><b style="color: #F8FAFC;">@{current_user['username']}</b></div>
+                    <div style="color: #9CAFA5;">Assigned Role:</div>
+                    <div>{role_badge}</div>
+                    <div style="color: #9CAFA5;">Account Status:</div>
+                    <div><b style="color: #35D99A;">{current_user['account_status']}</b></div>
+                    <div style="color: #9CAFA5;">Provisioned:</div>
+                    <div style="color: #F8FAFC;">{current_user.get('created_at', 'N/A')[:19].replace('T', ' ')} UTC</div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -51,16 +71,16 @@ if current_user:
         st.markdown(
             """
             <div class="ui-card">
-                <div class="ui-card-title">Session Security</div>
-                <p style="font-size: 0.82rem; color: #6c757d;">
-                    All sensitive obstacle actions are verified against your assigned role.
-                    Always sign out when using shared workstations.
+                <div class="ui-card-title">Session Security Guidelines</div>
+                <p style="font-size: 0.85rem; color: #9CAFA5; line-height: 1.5; margin-top: 6px;">
+                    Operational barrier verification, route blocking, and user administration are cryptographically gated by your assigned role.
+                    Always sign out when using shared campus lab terminals.
                 </p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        if st.button("🚪 Sign Out of Session", type="primary", use_container_width=True):
+        if st.button("🚪 Terminate Session & Sign Out", type="primary", use_container_width=True):
             logout_user()
             st.info("You have been signed out.")
             st.rerun()
@@ -69,105 +89,142 @@ else:
     has_admin = db_manager.has_admin_user()
 
     if not has_admin:
-        st.warning(
-            "⚠️ **Initial System Setup Required**: No active Administrator account exists in the database. "
-            "Please create the primary Administrator account now to initialize system governance."
+        st.markdown(
+            """
+            <div class="hero-banner">
+                <div class="hero-title">🛡️ Initial System Setup Required</div>
+                <div class="hero-subtitle">
+                    No active Administrator account was detected in the database.
+                    Please initialize the primary Administrator account below to establish system governance.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        with st.form("admin_bootstrap_form"):
-            st.subheader("🛡️ Initialize Primary Administrator")
-            full_name = st.text_input("Administrator Full Name:", placeholder="e.g. Lead Facilities Manager")
-            username = st.text_input("Administrator Username:", placeholder="e.g. admin")
-            password = st.text_input("Master Password:", type="password", placeholder="Min 8 characters")
-            confirm_pwd = st.text_input("Confirm Master Password:", type="password")
+        center_col1, center_col2, center_col3 = st.columns([1, 2, 1])
+        with center_col2:
+            st.markdown(
+                """
+                <div class="ui-card">
+                    <div class="ui-card-title">Bootstrap Wizard</div>
+                    <div style="font-weight: 700; color: #F8FAFC; margin-bottom: 12px;">Create Lead Administrator Account</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.form("admin_bootstrap_form"):
+                full_name = st.text_input("Administrator Full Name:", placeholder="e.g. Lead Facilities Manager")
+                username = st.text_input("Administrator Username:", placeholder="e.g. admin")
+                password = st.text_input("Master Password (min 8 chars):", type="password", placeholder="••••••••")
+                confirm_pwd = st.text_input("Confirm Master Password:", type="password", placeholder="••••••••")
 
-            submitted = st.form_submit_button("Initialize Administrator Account", type="primary")
-
-            if submitted:
-                if not full_name.strip() or not username.strip():
-                    st.error("Please enter a full name and username.")
-                elif len(password) < 8:
-                    st.error("Master password must be at least 8 characters long.")
-                elif password != confirm_pwd:
-                    st.error("Passwords do not match.")
-                else:
-                    try:
-                        admin_user = db_manager.create_user(
-                            full_name=full_name.strip(),
-                            username=username.strip(),
-                            password=password,
-                            role="Administrator",
-                            account_status="Active",
-                        )
-                        login_user(admin_user)
-                        st.success("Primary Administrator account initialized successfully! You are now logged in.")
-                        st.rerun()
-                    except Exception as exc:
-                        st.error(f"Initialization failed: {exc}")
-
-    else:
-        tab_login, tab_register = st.tabs(["🔑 Sign In", "📝 Register New Account"])
-
-        with tab_login:
-            st.subheader("Sign In with Your Credentials")
-            with st.form("login_form"):
-                username = st.text_input("Username:", placeholder="Enter your username")
-                password = st.text_input("Password:", type="password", placeholder="Enter your password")
-                submitted = st.form_submit_button("Sign In", type="primary")
+                submitted = st.form_submit_button("Initialize Administrator Account", type="primary", use_container_width=True)
 
                 if submitted:
-                    if not username.strip() or not password:
-                        st.error("Please enter both username and password.")
-                    else:
-                        try:
-                            authenticated = db_manager.authenticate_user(username.strip(), password)
-                            if not authenticated:
-                                st.error("Invalid username or password. Please check your credentials.")
-                            elif authenticated.get("account_status") != "Active":
-                                st.error("Your account has been deactivated. Please contact an Administrator.")
-                            else:
-                                login_user(authenticated)
-                                st.success(f"Welcome back, {authenticated['full_name']}!")
-                                st.rerun()
-                        except SecurityLockoutError as lock_exc:
-                            st.error(f"⛔ {lock_exc}")
-
-        with tab_register:
-            st.subheader("Student / Campus User Registration")
-            st.info(
-                "Self-registration provisions a **Student / Campus User** account with permission to "
-                "browse maps, plan accessible routes, and file obstacle reports. Elevated roles (Field Staff, "
-                "Administrator) must be assigned by an Administrator."
-            )
-
-            with st.form("student_registration_form"):
-                reg_name = st.text_input("Full Name:", placeholder="e.g. Alex Johnson")
-                reg_username = st.text_input("Desired Username:", placeholder="e.g. alex_j")
-                reg_password = st.text_input("Password (min 8 chars, letters & numbers):", type="password")
-                reg_confirm = st.text_input("Confirm Password:", type="password")
-
-                reg_submitted = st.form_submit_button("Create Campus Account", type="primary")
-
-                if reg_submitted:
-                    if not reg_name.strip() or not reg_username.strip():
-                        st.error("Please fill in all required fields.")
-                    elif len(reg_password) < 8:
-                        st.error("Password must be at least 8 characters long.")
-                    elif not any(c.isdigit() for c in reg_password) or not any(c.isalpha() for c in reg_password):
-                        st.error("Password must contain at least one letter and one number.")
-                    elif reg_password != reg_confirm:
+                    if not full_name.strip() or not username.strip():
+                        st.error("Please enter a full name and username.")
+                    elif len(password) < 8:
+                        st.error("Master password must be at least 8 characters long.")
+                    elif password != confirm_pwd:
                         st.error("Passwords do not match.")
                     else:
                         try:
-                            new_user = db_manager.create_user(
-                                full_name=reg_name.strip(),
-                                username=reg_username.strip(),
-                                password=reg_password,
-                                role="Student",
+                            admin_user = db_manager.create_user(
+                                full_name=full_name.strip(),
+                                username=username.strip(),
+                                password=password,
+                                role="Administrator",
                                 account_status="Active",
                             )
-                            login_user(new_user)
-                            st.success("Account created successfully! You are now logged in.")
+                            login_user(admin_user)
+                            st.success("Primary Administrator account initialized successfully! You are now logged in.")
                             st.rerun()
                         except Exception as exc:
-                            st.error(f"Registration failed: {exc}")
+                            st.error(f"Initialization failed: {exc}")
+
+    else:
+        st.markdown(
+            """
+            <div class="hero-banner" style="text-align: center;">
+                <div style="font-size: 2.4rem; margin-bottom: 8px;">🔐</div>
+                <div class="hero-title">Accessible Campus Navigator</div>
+                <div class="hero-subtitle" style="margin: 0 auto;">
+                    Secure identity and role-based access control. Sign in to submit barrier reports,
+                    verify field obstacles, or access administrative governance.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        center_col1, center_col2, center_col3 = st.columns([1, 2, 1])
+        with center_col2:
+            tab_login, tab_register = st.tabs(["🔑 Sign In", "📝 Create Account"])
+
+            with tab_login:
+                with st.form("login_form"):
+                    st.markdown("<div style='font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #F8FAFC;'>Authenticate to Your Session</div>", unsafe_allow_html=True)
+                    username = st.text_input("Username:", placeholder="Enter your username")
+                    password = st.text_input("Password:", type="password", placeholder="Enter your password")
+                    submitted = st.form_submit_button("Sign In to Portal", type="primary", use_container_width=True)
+
+                    if submitted:
+                        if not username.strip() or not password:
+                            st.error("Please enter both username and password.")
+                        else:
+                            try:
+                                authenticated = db_manager.authenticate_user(username.strip(), password)
+                                if not authenticated:
+                                    st.error("Invalid username or password. Please check your credentials.")
+                                elif authenticated.get("account_status") != "Active":
+                                    st.error("Your account has been deactivated. Please contact an Administrator.")
+                                else:
+                                    login_user(authenticated)
+                                    st.success(f"Welcome back, {authenticated['full_name']}!")
+                                    st.rerun()
+                            except SecurityLockoutError as lock_exc:
+                                st.error(f"⛔ {lock_exc}")
+
+            with tab_register:
+                st.markdown(
+                    """
+                    <div style="font-size: 0.82rem; color: #9CAFA5; margin-bottom: 12px; line-height: 1.45;">
+                        Self-registration provisions a <b>Student / Campus User</b> account with permission to browse maps,
+                        calculate accessible routes, and file obstacle reports.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                with st.form("student_registration_form"):
+                    reg_name = st.text_input("Full Name:", placeholder="e.g. Alex Johnson")
+                    reg_username = st.text_input("Desired Username:", placeholder="e.g. alex_j")
+                    reg_password = st.text_input("Password (min 8 chars, letters & numbers):", type="password")
+                    reg_confirm = st.text_input("Confirm Password:", type="password")
+
+                    reg_submitted = st.form_submit_button("Create Campus Account", type="primary", use_container_width=True)
+
+                    if reg_submitted:
+                        if not reg_name.strip() or not reg_username.strip():
+                            st.error("Please fill in all required fields.")
+                        elif len(reg_password) < 8:
+                            st.error("Password must be at least 8 characters long.")
+                        elif not any(c.isdigit() for c in reg_password) or not any(c.isalpha() for c in reg_password):
+                            st.error("Password must contain at least one letter and one number.")
+                        elif reg_password != reg_confirm:
+                            st.error("Passwords do not match.")
+                        else:
+                            try:
+                                new_user = db_manager.create_user(
+                                    full_name=reg_name.strip(),
+                                    username=reg_username.strip(),
+                                    password=reg_password,
+                                    role="Student",
+                                    account_status="Active",
+                                )
+                                login_user(new_user)
+                                st.success("Account created successfully! You are now logged in.")
+                                st.rerun()
+                            except Exception as exc:
+                                st.error(f"Registration failed: {exc}")

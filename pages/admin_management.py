@@ -5,7 +5,19 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from modules.ui_theme import apply_custom_theme, get_app_services, get_current_user
+from modules.ui_theme import (
+    ACCENT_GREEN,
+    ERROR,
+    INFO,
+    PRIMARY_GREEN,
+    SECONDARY_TEXT,
+    WARNING,
+    WHITE,
+    apply_custom_theme,
+    get_app_services,
+    get_current_user,
+    render_kpi_card,
+)
 
 apply_custom_theme()
 services = get_app_services()
@@ -13,12 +25,6 @@ services = get_app_services()
 db_manager = services["db_manager"]
 obs_manager = services["obstacle_manager"]
 cmap = services["campus_map"]
-
-st.title("🛡️ Administrative Management Console")
-st.write(
-    "Central governance panel for campus user accounts, operational permissions, "
-    "hazard verification queues, and system audit logs."
-)
 
 current_user = get_current_user()
 
@@ -31,19 +37,32 @@ if current_user.get("account_status") != "Active":
     st.error("⛔ **Access Denied**: Your Administrator account is currently inactive. Please contact system support.")
     st.stop()
 
+st.markdown(
+    """
+    <div class="hero-banner">
+        <div class="hero-title">🛡️ Administrative Governance & Security Console</div>
+        <div class="hero-subtitle">
+            Enterprise management dashboard for campus user identities, role permissions, field inspection queues,
+            and immutable audit trail verification.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Aggregate statistics directly from database
 user_stats = db_manager.get_user_statistics()
 obs_stats = obs_manager.get_obstacle_statistics()
 
 # --- TOP METRIC ROW ---
-st.subheader("📊 System Governance Overview")
+st.markdown("### 📊 System Governance Overview")
 u_col1, u_col2, u_col3, u_col4, u_col5 = st.columns(5)
 with u_col1:
-    st.metric("Total Registered Users", user_stats["total_users"])
+    st.metric("Total Users", user_stats["total_users"])
 with u_col2:
     st.metric("Active Accounts", user_stats["active_users"])
 with u_col3:
-    st.metric("Campus Users (Students)", user_stats["role_counts"].get("Student", 0))
+    st.metric("Campus Users", user_stats["role_counts"].get("Student", 0))
 with u_col4:
     st.metric("Field Staff", user_stats["role_counts"].get("Field Staff", 0))
 with u_col5:
@@ -53,7 +72,7 @@ o_col1, o_col2, o_col3, o_col4 = st.columns(4)
 with o_col1:
     st.metric("Pending Reports", obs_stats["status_counts"].get("Pending", 0))
 with o_col2:
-    st.metric("Verified Active Obstacles", obs_stats["active_obstacles_count"])
+    st.metric("Verified Active", obs_stats["active_obstacles_count"])
 with o_col3:
     st.metric("Resolved Obstacles", obs_stats["status_counts"].get("Resolved", 0))
 with o_col4:
@@ -62,16 +81,16 @@ with o_col4:
 st.markdown("---")
 
 tab_users, tab_queue, tab_audit = st.tabs([
-    "👥 User Management & Roles",
+    "👥 User Directory & Roles",
     "⚠️ Obstacle Verification Queue",
-    "📜 Administrative Audit Trail",
+    "📜 Immutable Audit Trail",
 ])
 
 # =============================================================================
 # TAB 1: USER MANAGEMENT
 # =============================================================================
 with tab_users:
-    st.subheader("👥 Registered User Directory")
+    st.markdown("### 👥 Registered User Directory")
     all_users = db_manager.get_all_users()
 
     if not all_users:
@@ -91,6 +110,7 @@ with tab_users:
         df_users = pd.DataFrame(user_rows)
         st.dataframe(df_users, use_container_width=True, hide_index=True)
 
+    st.markdown("---")
     st.markdown("### 🔧 Modify User Role or Account Status")
     with st.expander("Update Existing Account Permissions", expanded=False):
         user_options = {
@@ -173,7 +193,7 @@ with tab_users:
 # TAB 2: OBSTACLE QUEUE
 # =============================================================================
 with tab_queue:
-    st.subheader("⚠️ Pending Obstacle Verification Queue")
+    st.markdown("### ⚠️ Pending Obstacle Verification Queue")
     pending_reports = obs_manager.get_reports_by_status("Pending")
 
     if not pending_reports:
@@ -185,12 +205,12 @@ with tab_queue:
             with st.container():
                 st.markdown(
                     f"""
-                    <div class="ui-card" style="border-left: 5px solid #d97706;">
+                    <div class="ui-card" style="border-left: 4px solid #F5B942;">
                         <div class="ui-card-title">Pending Report #{r['report_id']}</div>
-                        <div style="font-size: 1rem; font-weight: 700; color: #1b4332;">{r['obstacle_category']} - Severity: {r['severity']}</div>
-                        <div style="font-size: 0.85rem; color: #4a5568; margin-top: 4px;">{r['description']}</div>
-                        <div style="font-size: 0.78rem; color: #718096; margin-top: 6px;">
-                            Reported by: <b>{r['reporter_name']}</b> | Filed: {str(r['reported_at'])[:19].replace('T', ' ')} UTC
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">{r['obstacle_category']} - Severity: {r['severity']}</div>
+                        <div style="font-size: 0.88rem; color: #9CAFA5; margin-top: 4px;">{r['description']}</div>
+                        <div style="font-size: 0.78rem; color: #9CAFA5; margin-top: 8px;">
+                            Reported by: <b style="color:#F8FAFC;">{r['reporter_name']}</b> | Filed: {str(r['reported_at'])[:19].replace('T', ' ')} UTC
                         </div>
                     </div>
                     """,
@@ -222,8 +242,13 @@ with tab_queue:
 # TAB 3: AUDIT TRAIL
 # =============================================================================
 with tab_audit:
-    st.subheader("📜 Administrative & Operational Audit Trail")
-    st.write("Immutable chronological record of administrative actions, user role modifications, and obstacle verifications.")
+    st.markdown("### 📜 Administrative & Operational Audit Trail")
+    st.markdown(
+        "<div style='color:#9CAFA5;font-size:0.88rem;margin-bottom:14px;'>"
+        "Immutable chronological record of administrative actions, user role modifications, and obstacle verifications."
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
     audit_logs = db_manager.get_audit_logs(limit=100)
     if not audit_logs:
