@@ -8,6 +8,7 @@ from modules.accessibility import (
     RouteAccessibilityAssessment,
 )
 from modules.campus_map import CampusDataValidationError, CampusMap, load_campus_map
+from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder, RouteResult, RouteStep
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "PathAccessibilityAssessment",
     "LocationAccessibilityAssessment",
     "RouteAccessibilityAssessment",
+    "ObstacleManager",
 ]
