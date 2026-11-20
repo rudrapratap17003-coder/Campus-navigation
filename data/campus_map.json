@@ -1,0 +1,335 @@
+{
+  "_metadata": {
+    "description": "Accessible Campus Navigator - Synthetic Benchmark / Sample Campus Map Dataset",
+    "note": "Sample 15-node dataset for architecture validation. Does not represent any specific physical campus or the actual FET building. Designed for straightforward replacement once surveyed floor plans are supplied.",
+    "version": "1.0",
+    "unit_distance": "meters",
+    "unit_time": "seconds"
+  },
+  "locations": [
+    {
+      "id": "LOC_01",
+      "name": "Main Campus Entrance",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "entrance",
+      "x": 10.0,
+      "y": 10.0
+    },
+    {
+      "id": "LOC_02",
+      "name": "Central Reception & Info Desk",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "lobby",
+      "x": 25.0,
+      "y": 15.0
+    },
+    {
+      "id": "LOC_03",
+      "name": "Ground Floor Restroom (Accessible)",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "restroom",
+      "x": 20.0,
+      "y": 30.0
+    },
+    {
+      "id": "LOC_04",
+      "name": "Elevator Lobby - Ground Floor",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "elevator",
+      "x": 35.0,
+      "y": 25.0
+    },
+    {
+      "id": "LOC_05",
+      "name": "Central Staircase - Ground Floor",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "stairs",
+      "x": 40.0,
+      "y": 15.0
+    },
+    {
+      "id": "LOC_06",
+      "name": "Lecture Hall A",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "classroom",
+      "x": 50.0,
+      "y": 10.0
+    },
+    {
+      "id": "LOC_07",
+      "name": "Auditorium Main Gate",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "auditorium",
+      "x": 55.0,
+      "y": 30.0
+    },
+    {
+      "id": "LOC_08",
+      "name": "Campus Cafeteria",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "cafeteria",
+      "x": 15.0,
+      "y": 45.0
+    },
+    {
+      "id": "LOC_09",
+      "name": "West Ramp Entrance",
+      "floor": 0,
+      "building": "Sample Academic Complex",
+      "category": "entrance",
+      "x": 5.0,
+      "y": 35.0
+    },
+    {
+      "id": "LOC_10",
+      "name": "Elevator Lobby - Floor 1",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "elevator",
+      "x": 35.0,
+      "y": 25.0
+    },
+    {
+      "id": "LOC_11",
+      "name": "Central Staircase - Floor 1",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "stairs",
+      "x": 40.0,
+      "y": 15.0
+    },
+    {
+      "id": "LOC_12",
+      "name": "Computer Science Lab 101",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "lab",
+      "x": 25.0,
+      "y": 35.0
+    },
+    {
+      "id": "LOC_13",
+      "name": "Department Library",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "library",
+      "x": 15.0,
+      "y": 20.0
+    },
+    {
+      "id": "LOC_14",
+      "name": "Faculty Office Suite",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "office",
+      "x": 50.0,
+      "y": 20.0
+    },
+    {
+      "id": "LOC_15",
+      "name": "First Floor Restroom",
+      "floor": 1,
+      "building": "Sample Academic Complex",
+      "category": "restroom",
+      "x": 20.0,
+      "y": 45.0
+    }
+  ],
+  "connections": [
+    {
+      "source": "LOC_01",
+      "destination": "LOC_02",
+      "distance": 20.0,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_02",
+      "destination": "LOC_03",
+      "distance": 18.0,
+      "estimated_time": 14.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_02",
+      "destination": "LOC_04",
+      "distance": 15.0,
+      "estimated_time": 12.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_02",
+      "destination": "LOC_05",
+      "distance": 16.0,
+      "estimated_time": 13.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_05",
+      "destination": "LOC_06",
+      "distance": 12.0,
+      "estimated_time": 10.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_04",
+      "destination": "LOC_07",
+      "distance": 22.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_03",
+      "destination": "LOC_08",
+      "distance": 17.0,
+      "estimated_time": 14.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_09",
+      "destination": "LOC_08",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_09",
+      "destination": "LOC_03",
+      "distance": 16.0,
+      "estimated_time": 13.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_04",
+      "destination": "LOC_10",
+      "distance": 4.5,
+      "estimated_time": 30.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": true,
+      "status": "open"
+    },
+    {
+      "source": "LOC_05",
+      "destination": "LOC_11",
+      "distance": 7.0,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_10",
+      "destination": "LOC_11",
+      "distance": 12.0,
+      "estimated_time": 10.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_10",
+      "destination": "LOC_12",
+      "distance": 15.0,
+      "estimated_time": 12.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_10",
+      "destination": "LOC_13",
+      "distance": 24.0,
+      "estimated_time": 20.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_11",
+      "destination": "LOC_14",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_12",
+      "destination": "LOC_15",
+      "distance": 11.0,
+      "estimated_time": 9.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "LOC_13",
+      "destination": "LOC_12",
+      "distance": 18.0,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    }
+  ]
+}
