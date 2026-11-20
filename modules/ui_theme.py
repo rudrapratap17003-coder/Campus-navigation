@@ -12,6 +12,19 @@ from modules.campus_map import CampusMap, load_campus_map
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder
 
+__all__ = [
+    "get_app_services",
+    "get_current_user",
+    "login_user",
+    "logout_user",
+    "is_authenticated",
+    "has_role",
+    "apply_custom_theme",
+    "render_sidebar_info",
+    "render_sidebar_user_pill",
+    "render_sidebar_footer",
+]
+
 
 def get_app_services() -> Dict[str, Any]:
     """Retrieve or initialize shared singleton service instances stored in st.session_state.

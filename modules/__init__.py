@@ -21,8 +21,14 @@ from modules.route_finder import RouteFinder, RouteResult, RouteStep
 from modules.ui_theme import (
     apply_custom_theme,
     get_app_services,
+    get_current_user,
+    has_role,
+    is_authenticated,
+    login_user,
+    logout_user,
     render_sidebar_footer,
     render_sidebar_info,
+    render_sidebar_user_pill,
 )
 
 __all__ = [
@@ -39,8 +45,14 @@ __all__ = [
     "RouteAccessibilityAssessment",
     "ObstacleManager",
     "get_app_services",
+    "get_current_user",
+    "login_user",
+    "logout_user",
+    "is_authenticated",
+    "has_role",
     "apply_custom_theme",
     "render_sidebar_info",
+    "render_sidebar_user_pill",
     "render_sidebar_footer",
     "get_floors_in_campus",
     "get_locations_for_floor",
