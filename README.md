@@ -28,6 +28,40 @@ A Python-based college campus accessibility and navigation system designed to em
   - Comprehensive lifecycle management: *Pending*, *Verified*, *Resolved*, and *Rejected*.
   - Dynamic graph synchronization: verified active obstacles dynamically update live path availability without overwriting raw dataset attributes.
   - Immediate operational restoration upon report resolution.
+- **Modern Streamlit Web Application Interface:**
+  - Professional forest-green and white aesthetic with custom CSS styling and rounded cards.
+  - Multi-page navigation router with persistent singleton backend service context in `st.session_state`.
+  - Interactive Plotly visualizations for campus topology, accessibility breakdowns, and obstacle statuses.
+
+---
+
+## 💻 Streamlit Web Application Pages
+
+The application is structured into five cohesive pages accessible via the sidebar navigation:
+
+1. **📊 Dashboard (`pages/dashboard.py`):**
+   - High-level metric summary: Total locations, total pathways, accessible pathways, active verified obstacles, pending reports, and resolved issues.
+   - Interactive Plotly donut and bar charts showing pathway classifications and obstacle distribution.
+   - Infrastructure summary for elevators, access ramps, and stairs.
+   - Recent obstacle log and quick-action navigation shortcuts.
+2. **🧭 Find Accessible Route (`pages/navigation.py`):**
+   - Dropdown selectors for origin and destination with floor metadata.
+   - Toggle between Dijkstra's algorithm (minimizing distance or travel time) and Breadth-First Search (minimizing transitions).
+   - Wheelchair-only constraint toggle enforcing step-free routes through elevators and ramps.
+   - Turn-by-turn instruction sequence with directional badges and segment metrics.
+   - Alternative route suggestions.
+3. **🗺️ Campus Map (`pages/campus_map.py`):**
+   - Interactive 2D coordinate-based network topology rendered in Plotly.
+   - Color-coded pathways: green for accessible corridors/ramps, teal for elevators, orange dotted for stairs, and red dashed for active obstructions.
+   - Floor filtering (Ground Floor, Floor 1, All Floors) and searchable locations directory.
+4. **♿ Accessibility Overview (`pages/accessibility.py`):**
+   - Explanation of the 5 standardized accessibility classifications.
+   - Comprehensive inventory of all 17 campus connections with distances, times, and facilities.
+   - Single-location inspector analyzing node accessibility and special amenities.
+   - Prominent disclaimer regarding the algorithmic heuristic nature of the scores.
+5. **⚠️ Obstacle Reports (`pages/obstacle_reports.py`):**
+   - Complete incident audit log with filters by Status, Severity, and Category.
+   - In-app reporting accordion to log field obstructions directly into the SQLite database.
 
 ---
 
@@ -83,9 +117,9 @@ CREATE INDEX IF NOT EXISTS idx_obstacle_reported_at ON obstacle_reports (reporte
 ## 🛠️ Technology Stack
 
 - **Core Programming Language:** Python 3.14
-- **Web Interface:** Streamlit, Streamlit-Folium
+- **Web Interface:** Streamlit (v1.67.0)
 - **Graph & Network Algorithms:** NetworkX, Custom Dijkstra & BFS implementations
-- **Mapping & Geospatial Visualization:** Folium, Plotly
+- **Mapping & Geospatial Visualization:** Plotly, Folium, streamlit-folium
 - **Data Processing & Manipulation:** Pandas
 - **Database & Storage:** SQLite3, JSON Data Schemas
 
@@ -96,7 +130,7 @@ CREATE INDEX IF NOT EXISTS idx_obstacle_reported_at ON obstacle_reports (reporte
 ```text
 Campus navigation/
 │
-├── main.py                     # Primary Streamlit application entry point
+├── main.py                     # Primary Streamlit application entry point & router
 ├── requirements.txt            # Project dependencies and pinned package versions
 ├── README.md                   # Project documentation and architectural overview
 ├── .gitignore                  # Git exclusions for environments, databases, and caches
@@ -111,7 +145,8 @@ Campus navigation/
 │   ├── campus_map.py           # Campus network representation & graph loader
 │   ├── accessibility.py        # Accessibility classification, heuristics & scoring
 │   ├── route_finder.py         # Route calculation engine & path optimization
-│   └── obstacle_manager.py     # Obstacle lifecycle & dynamic detour management
+│   ├── obstacle_manager.py     # Obstacle lifecycle & dynamic detour management
+│   └── ui_theme.py             # Shared styling, theme injection & session services
 │
 ├── database/                   # Persistent data management
 │   ├── __init__.py
@@ -159,7 +194,7 @@ To run individual test suites:
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Launching the Web App
 
 1. **Activate Virtual Environment:**
    ```powershell
@@ -171,7 +206,8 @@ To run individual test suites:
    & ".venv\Scripts\python.exe" -m pip install -r requirements.txt
    ```
 
-3. **Launch Application:**
+3. **Launch the Streamlit Web Application:**
    ```powershell
    & ".venv\Scripts\python.exe" -m streamlit run main.py
    ```
+   Open your browser to [http://localhost:8501](http://localhost:8501) to explore the interface.
