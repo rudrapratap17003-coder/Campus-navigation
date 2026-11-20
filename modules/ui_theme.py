@@ -22,6 +22,9 @@ def get_app_services() -> Dict[str, Any]:
     Returns:
         Dictionary containing campus_map, db_manager, obstacle_manager, route_finder, and accessibility_engine.
     """
+    if "current_user" not in st.session_state:
+        st.session_state.current_user = None
+
     if "campus_map" not in st.session_state:
         campus_map = load_campus_map()
         db_manager = DatabaseManager()
@@ -42,6 +45,36 @@ def get_app_services() -> Dict[str, Any]:
         "route_finder": st.session_state.route_finder,
         "accessibility_engine": st.session_state.accessibility_engine,
     }
+
+
+def get_current_user() -> Optional[Dict[str, Any]]:
+    """Retrieve currently authenticated user record from session state, or None."""
+    return st.session_state.get("current_user")
+
+
+def login_user(user_dict: Dict[str, Any]) -> None:
+    """Store authenticated user record in session state."""
+    st.session_state.current_user = user_dict
+
+
+def logout_user() -> None:
+    """Clear authenticated user record from session state."""
+    st.session_state.current_user = None
+
+
+def is_authenticated() -> bool:
+    """Check whether a user is currently logged into the session."""
+    return st.session_state.get("current_user") is not None
+
+
+def has_role(roles: Union[str, List[str], Tuple[str, ...]]) -> bool:
+    """Check whether the active user possesses any of the specified roles."""
+    user = get_current_user()
+    if not user:
+        return False
+    if isinstance(roles, str):
+        roles = [roles]
+    return user.get("role") in roles
 
 
 def apply_custom_theme() -> None:
@@ -168,6 +201,46 @@ def render_sidebar_info() -> None:
         st.markdown("---")
 
 
+def render_sidebar_user_pill() -> None:
+    """Render user profile information, role badge, and session controls in sidebar."""
+    user = get_current_user()
+    with st.sidebar:
+        if user:
+            role = user.get("role", "Student")
+            role_colors = {
+                "Administrator": ("#6f42c1", "🛡️ Administrator"),
+                "Field Staff": ("#d97706", "🛠️ Field Staff"),
+                "Student": ("#2d6a4f", "🎓 Campus User"),
+            }
+            bg_color, role_label = role_colors.get(role, ("#2d6a4f", role))
+
+            st.markdown(
+                f"""
+                <div style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;">
+                    <div style="font-size: 0.75rem; color: #95d5b2; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Signed In As</div>
+                    <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem; margin-top: 2px;">{user.get('full_name')}</div>
+                    <div style="font-size: 0.8rem; color: #b7e4c7; margin-bottom: 6px;">@{user.get('username')}</div>
+                    <span style="background-color: {bg_color}; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; display: inline-block;">{role_label}</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if st.button("🚪 Sign Out", key="sidebar_logout_btn", use_container_width=True):
+                logout_user()
+                st.rerun()
+        else:
+            st.markdown(
+                """
+                <div style="background: rgba(255, 255, 255, 0.05); border: 1px dashed rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; text-align: center;">
+                    <div style="font-size: 0.8rem; color: #b7e4c7;">Guest Browsing Mode</div>
+                    <div style="font-size: 0.72rem; color: #95d5b2; margin-top: 2px;">Sign in to report barriers or access staff tools</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        st.markdown("---")
+
+
 def render_sidebar_footer() -> None:
     """Render version and status footer in the sidebar."""
     with st.sidebar:
@@ -175,9 +248,9 @@ def render_sidebar_footer() -> None:
         st.markdown(
             """
             <div style="font-size: 0.75rem; color: #74c69d; line-height: 1.4;">
-                <b>Version:</b> 1.0 (Phase 7)<br>
+                <b>Version:</b> 1.2 (Phase 9)<br>
                 <b>Platform:</b> Streamlit & Python 3.14<br>
-                <b>Mode:</b> Production Prototype<br>
+                <b>Security:</b> RBAC & PBKDF2 Enabled 🔒<br>
                 <b>Status:</b> All Engines Operational ✅
             </div>
             """,

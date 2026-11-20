@@ -10,8 +10,10 @@ import streamlit as st
 from modules.ui_theme import (
     apply_custom_theme,
     get_app_services,
+    get_current_user,
     render_sidebar_footer,
     render_sidebar_info,
+    render_sidebar_user_pill,
 )
 
 # Configure global page parameters
@@ -26,8 +28,13 @@ st.set_page_config(
 get_app_services()
 apply_custom_theme()
 render_sidebar_info()
+render_sidebar_user_pill()
 
-# Define navigation structure
+# Identify authenticated user role
+current_user = get_current_user()
+user_role = current_user.get("role") if current_user else None
+
+# Define page components
 dashboard_page = st.Page(
     "pages/dashboard.py",
     title="Dashboard",
@@ -54,15 +61,43 @@ obstacles_page = st.Page(
     title="Obstacle Reports",
     icon="⚠️",
 )
+auth_page = st.Page(
+    "pages/login.py",
+    title="Account & Sign In" if current_user else "Sign In / Register",
+    icon="🔐",
+)
+admin_page = st.Page(
+    "pages/admin_management.py",
+    title="Administrative Console",
+    icon="🛡️",
+)
 
-# Initialize multi-page router
-pg = st.navigation(
-    {
+# Dynamically construct role-aware navigation structure
+if user_role == "Administrator":
+    nav_structure = {
         "Overview": [dashboard_page],
         "Navigation": [nav_route_page, map_page],
         "Accessibility & Operations": [accessibility_page, obstacles_page],
+        "System Administration": [admin_page, auth_page],
     }
-)
+elif user_role in ("Field Staff", "Student"):
+    nav_structure = {
+        "Overview": [dashboard_page],
+        "Navigation": [nav_route_page, map_page],
+        "Accessibility & Operations": [accessibility_page, obstacles_page],
+        "Account": [auth_page],
+    }
+else:
+    # Unauthenticated / Guest Mode
+    nav_structure = {
+        "Account Access": [auth_page],
+        "Overview": [dashboard_page],
+        "Navigation": [nav_route_page, map_page],
+        "Accessibility": [accessibility_page, obstacles_page],
+    }
+
+# Initialize multi-page router
+pg = st.navigation(nav_structure)
 
 render_sidebar_footer()
 

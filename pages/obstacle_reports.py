@@ -1,17 +1,21 @@
-"""Obstacle Reports Page - Review existing barrier reports, filter hazards, and inspect active disruptions."""
+"""Obstacle Reports Page - Review barrier reports, filter hazards, and manage field verification."""
 
 from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
 
-from modules.ui_theme import apply_custom_theme, get_app_services
+from modules.ui_theme import apply_custom_theme, get_app_services, get_current_user
 
 apply_custom_theme()
 services = get_app_services()
 
 obs_manager = services["obstacle_manager"]
 cmap = services["campus_map"]
+
+current_user = get_current_user()
+user_role = current_user.get("role") if current_user else None
+is_staff_or_admin = user_role in ("Field Staff", "Administrator")
 
 st.title("⚠️ Obstacle & Hazard Reports")
 st.write(
@@ -41,8 +45,92 @@ with c4:
 
 st.markdown("---")
 
-# --- FILTERING CONTROLS ---
-st.subheader("🔍 Filter Reports")
+# =============================================================================
+# STAFF / ADMIN VERIFICATION & RESOLUTION ACTIONS (FIELD STAFF & ADMIN ONLY)
+# =============================================================================
+if is_staff_or_admin:
+    st.subheader("🛠️ Field Operations Queue")
+    staff_tab1, staff_tab2 = st.tabs(["📋 Pending Review Queue", "🔧 Resolve Active Obstacles"])
+
+    with staff_tab1:
+        pending_list = [r for r in all_reports if r["status"] == "Pending"]
+        if not pending_list:
+            st.success("✅ No reports currently require verification.")
+        else:
+            st.write(f"**{len(pending_list)}** reports awaiting inspection and verification:")
+            for p in pending_list:
+                with st.expander(f"Pending #{p['report_id']} - {p['obstacle_category']} ({p['severity']})", expanded=True):
+                    # Target description
+                    if p["target_type"] == "pathway":
+                        s_loc = cmap.get_location(p["source_location_id"])
+                        d_loc = cmap.get_location(p["destination_location_id"])
+                        tgt_name = f"Pathway: {s_loc['name'] if s_loc else p['source_location_id']} ↔ {d_loc['name'] if d_loc else p['destination_location_id']}"
+                    else:
+                        loc = cmap.get_location(p["location_id"])
+                        tgt_name = f"Location: {loc['name'] if loc else p['location_id']}"
+
+                    st.markdown(f"**Target:** {tgt_name} | **Severity:** {p['severity']} | **Filed by:** {p['reporter_name']}")
+                    st.markdown(f"**Description:** {p['description']}")
+
+                    act_col1, act_col2 = st.columns([1, 2])
+                    with act_col1:
+                        if st.button("✅ Verify & Block Route", key=f"obs_verify_{p['report_id']}", type="primary"):
+                            try:
+                                obs_manager.verify_report(p["report_id"], actor_user=current_user)
+                                st.success(f"Report {p['report_id']} verified. Route blocked on graph.")
+                                st.rerun()
+                            except Exception as ex:
+                                st.error(f"Failed to verify report: {ex}")
+
+                    with act_col2:
+                        with st.popover(f"❌ Reject Report"):
+                            rej_input = st.text_input("Rejection Reason:", key=f"obs_rej_reason_{p['report_id']}", placeholder="e.g. Duplicate or obstruction cleared")
+                            if st.button("Confirm Rejection", key=f"obs_confirm_rej_{p['report_id']}"):
+                                try:
+                                    obs_manager.reject_report(p["report_id"], rejection_reason=rej_input, actor_user=current_user)
+                                    st.info(f"Report {p['report_id']} rejected.")
+                                    st.rerun()
+                                except Exception as ex:
+                                    st.error(f"Failed to reject report: {ex}")
+
+    with staff_tab2:
+        verified_list = [r for r in all_reports if r["status"] == "Verified"]
+        if not verified_list:
+            st.info("No active verified obstacles currently blocking navigation.")
+        else:
+            st.write(f"**{len(verified_list)}** active obstacles currently blocking navigation routes:")
+            for v in verified_list:
+                with st.expander(f"Active Obstacle #{v['report_id']} - {v['obstacle_category']} ({v['severity']})", expanded=False):
+                    if v["target_type"] == "pathway":
+                        s_loc = cmap.get_location(v["source_location_id"])
+                        d_loc = cmap.get_location(v["destination_location_id"])
+                        tgt_name = f"Pathway: {s_loc['name'] if s_loc else v['source_location_id']} ↔ {d_loc['name'] if d_loc else v['destination_location_id']}"
+                    else:
+                        loc = cmap.get_location(v["location_id"])
+                        tgt_name = f"Location: {loc['name'] if loc else v['location_id']}"
+
+                    st.markdown(f"**Target:** {tgt_name} | **Status:** <span style='color:red;'><b>ACTIVE BLOCKAGE</b></span>", unsafe_allow_html=True)
+                    st.markdown(f"**Description:** {v['description']}")
+
+                    with st.form(f"resolve_form_{v['report_id']}"):
+                        res_notes = st.text_area("Mandatory Resolution Notes:", placeholder="Describe the maintenance performed and confirmed clearance...")
+                        if st.form_submit_button("Mark as Resolved & Restore Route", type="primary"):
+                            if not res_notes.strip():
+                                st.error("Resolution notes are mandatory when marking an obstacle resolved.")
+                            else:
+                                try:
+                                    obs_manager.resolve_report(v["report_id"], resolution_notes=res_notes.strip(), actor_user=current_user)
+                                    st.success(f"Report {v['report_id']} marked as Resolved. Pathway restored!")
+                                    st.rerun()
+                                except Exception as ex:
+                                    st.error(f"Failed to resolve report: {ex}")
+
+    st.markdown("---")
+
+# =============================================================================
+# FILTERING CONTROLS
+# =============================================================================
+st.subheader("🔍 Browse Incident Log")
 f_col1, f_col2, f_col3 = st.columns(3)
 
 with f_col1:
@@ -75,10 +163,17 @@ if severity_filter != "All Severities":
 if category_filter != "All Categories":
     filtered_reports = [r for r in filtered_reports if r["obstacle_category"] == category_filter]
 
-st.markdown("---")
+# If user is a student, offer a checkbox to view only their submitted reports
+if current_user and not is_staff_or_admin:
+    only_my_reports = st.checkbox("Show only my filed reports", value=False)
+    if only_my_reports:
+        filtered_reports = [
+            r for r in filtered_reports
+            if f"@{current_user['username']}" in r.get("reporter_name", "")
+            or r.get("reporter_name") == current_user["full_name"]
+        ]
 
-# --- REPORTS TABLE ---
-st.subheader(f"📋 Incident Log ({len(filtered_reports)} matching reports)")
+st.markdown(f"**Found {len(filtered_reports)} matching reports**")
 
 if not filtered_reports:
     st.info(
@@ -120,8 +215,10 @@ else:
     df_reports = pd.DataFrame(table_data)
     st.dataframe(df_reports, use_container_width=True, hide_index=True)
 
-# --- QUICK REPORT SUBMISSION ACCORDION ---
-with st.expander("➕ Log a New Obstacle or Hazard Report"):
+# =============================================================================
+# REPORT SUBMISSION FORM WITH DUPLICATE DETECTION WARNING
+# =============================================================================
+with st.expander("➕ Log a New Obstacle or Hazard Report", expanded=False):
     st.write("File a field report regarding an accessibility obstacle, broken lift, or construction closure.")
 
     sub_c1, sub_c2 = st.columns(2)
@@ -146,7 +243,21 @@ with st.expander("➕ Log a New Obstacle or Hazard Report"):
             target_src_id = loc_map[src_label]
             target_dst_id = loc_map[dst_label]
 
-        rep_name = st.text_input("Reporter Name (Optional):", placeholder="e.g. Facilities Staff or Anonymous")
+        default_rep_name = f"{current_user['full_name']} (@{current_user['username']})" if current_user else ""
+        rep_name = st.text_input("Reporter Name:", value=default_rep_name, placeholder="e.g. Facilities Staff or Anonymous")
+
+    # DUPLICATE DETECTION CHECK
+    potential_duplicates = obs_manager.detect_potential_duplicates(
+        source_location_id=target_src_id,
+        destination_location_id=target_dst_id,
+        location_id=target_loc_id,
+    )
+    if potential_duplicates:
+        st.warning(
+            f"⚠️ **Duplicate Warning**: There are currently **{len(potential_duplicates)}** active or pending report(s) "
+            f"already affecting this target (e.g. Report **{potential_duplicates[0]['report_id']}** - "
+            f"Status: **{potential_duplicates[0]['status']}**). You can still submit if you are filing additional observations."
+        )
 
     rep_desc = st.text_area("Detailed Description of Obstacle:", placeholder="Provide clear details on the obstruction...")
 
@@ -166,7 +277,7 @@ with st.expander("➕ Log a New Obstacle or Hazard Report"):
                     location_id=target_loc_id,
                     source_location_id=target_src_id,
                     destination_location_id=target_dst_id,
-                    reporter_name=rep_name,
+                    reporter_name=rep_name if rep_name.strip() else ("Anonymous" if not current_user else current_user["full_name"]),
                 )
                 st.success(f"Report **{new_rep['report_id']}** successfully submitted with status **Pending**!")
                 st.rerun()

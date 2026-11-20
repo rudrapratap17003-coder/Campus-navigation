@@ -34,6 +34,15 @@ A Python-based college campus accessibility and navigation system designed to em
   - Automated cross-floor elevator transfer detection with step instructions.
   - Live color-coded obstacle visualization reflecting active verified obstructions directly from the SQLite database.
   - Single-location inspector panel displaying room categories, accessibility classifications, amenities, and connected links.
+- **Authentication, Role-Based Access Control (RBAC) & Administration (Phase 9):**
+  - Cryptographically salted PBKDF2-HMAC-SHA256 password hashing (100,000 iterations) with constant-time verification.
+  - Three distinct user roles: **Student / Campus User**, **Field Staff**, and **Administrator**.
+  - Service-layer backend RBAC enforcement preventing unauthorized barrier verification or user privilege escalation.
+  - Dynamic role-aware navigation and sidebar session management.
+  - One-time initial setup mechanism for bootstrapping the primary Administrator account.
+  - Comprehensive Administrative Management Console with user directory, role/status assignment, and obstacle verification queue.
+  - Immutable administrative audit logging for all critical operations and obstacle status transitions.
+  - Duplicate obstacle detection warnings alerting users when existing reports already affect selected pathways.
 
 ---
 
@@ -99,7 +108,10 @@ Persistent storage is implemented via Python's built-in `sqlite3` module with fo
 
 ### SQLite Database Schema (`obstacle_reports`)
 
+### SQLite Database Schema
+
 ```sql
+-- Obstacle & Barrier Reports
 CREATE TABLE IF NOT EXISTS obstacle_reports (
     report_id TEXT PRIMARY KEY,
     location_id TEXT,
@@ -116,26 +128,110 @@ CREATE TABLE IF NOT EXISTS obstacle_reports (
     updated_at TEXT NOT NULL
 );
 
+-- Registered User Accounts
+CREATE TABLE IF NOT EXISTS users (
+    user_id TEXT PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('Student', 'Field Staff', 'Administrator')),
+    account_status TEXT NOT NULL CHECK(account_status IN ('Active', 'Inactive')),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+-- Administrative & Operational Audit Trail
+CREATE TABLE IF NOT EXISTS administrative_audit_log (
+    audit_id TEXT PRIMARY KEY,
+    actor_user_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    target_type TEXT NOT NULL CHECK(target_type IN ('obstacle_report', 'user_account', 'system')),
+    target_id TEXT NOT NULL,
+    previous_status TEXT,
+    new_status TEXT,
+    timestamp TEXT NOT NULL,
+    notes TEXT
+);
+
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_obstacle_status ON obstacle_reports (status);
 CREATE INDEX IF NOT EXISTS idx_obstacle_location ON obstacle_reports (location_id);
 CREATE INDEX IF NOT EXISTS idx_obstacle_pathway ON obstacle_reports (source_location_id, destination_location_id);
 CREATE INDEX IF NOT EXISTS idx_obstacle_reported_at ON obstacle_reports (reported_at);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users (account_status);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON administrative_audit_log (actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON administrative_audit_log (action);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON administrative_audit_log (timestamp);
 ```
 
 ### Report Verification Workflow & Lifecycle
 
 1. **Submission (`Pending`):**
    - User submits an obstacle report. Initial status is `Pending`. Pending reports **do not automatically block pathways**.
-2. **Verification (`Verified`):**
-   - Administrators confirm the report. Status transitions to `Verified`.
+   - The engine checks for duplicate or concurrent reports affecting the same location or connection and displays a warning notice.
+2. **Field Staff / Administrator Verification (`Verified`):**
+   - Authorized personnel review the pending queue and confirm the report. Status transitions to `Verified`.
    - `ObstacleManager` applies a temporary `blocked` status to the affected live graph edge/node.
    - Dijkstra and BFS automatically detour around the blocked segment.
    - The map dynamically highlights the connection in dashed red (`#e63946`).
+   - Every verification records an audit trail record in `administrative_audit_log`.
 3. **Resolution (`Resolved`):**
-   - Maintenance logs resolution notes. Pathway is restored to original status (`open`).
+   - Field staff log mandatory resolution notes detailing maintenance.
+   - Pathway is restored to original operational status (`open`).
 4. **Rejection (`Rejected`):**
-   - Unsubstantiated reports are marked `Rejected` without affecting pathway availability.
+   - Unsubstantiated reports are marked `Rejected` with a documented reason without affecting pathway availability.
+
+---
+
+## 🔒 Authentication, Roles & RBAC Architecture
+
+The application enforces a multi-tier Role-Based Access Control (RBAC) model implemented with backend service-layer validation and cryptographically salted password hashing.
+
+### User Roles & Permissions Matrix
+
+| Capability / Action | Student / Campus User | Field Staff | Administrator |
+|:---|:---:|:---:|:---:|
+| **Browse Dashboard & Campus Map** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Calculate Accessible Routes (Dijkstra/BFS)** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Inspect Accessibility Classifications** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Submit Obstacle & Hazard Reports** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Track Report Status & View Own Reports** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Inspect Field Staff Verification Queue** | ❌ No | ✅ Yes | ✅ Yes |
+| **Verify Reports & Block Routes** | ❌ No | ✅ Yes | ✅ Yes |
+| **Reject Reports with Documented Reason** | ❌ No | ✅ Yes | ✅ Yes |
+| **Resolve Verified Obstacles (Mandatory Notes)** | ❌ No | ✅ Yes | ✅ Yes |
+| **Access Administrative Console** | ❌ No | ❌ No | ✅ Yes |
+| **Provision Field Staff / Admin Accounts** | ❌ No | ❌ No | ✅ Yes |
+| **Modify User Roles & Activate/Deactivate** | ❌ No | ❌ No | ✅ Yes |
+| **Inspect Administrative Audit Log** | ❌ No | ❌ No | ✅ Yes |
+
+### Password Security & Cryptography
+
+- **Algorithm:** PBKDF2 with HMAC-SHA256 (`hashlib.pbkdf2_hmac`).
+- **Iterations:** 100,000 hashing rounds.
+- **Salting:** 16-byte cryptographically secure random salt generated per user via `secrets.token_hex(16)`.
+- **Verification:** Constant-time hash comparison (`hmac.compare_digest`) preventing timing attacks.
+- **Sanitization:** Password hashes and salts are completely stripped from query results before reaching UI components or session state.
+
+### One-Time Initial Administrator Setup
+
+To eliminate insecure hardcoded credentials, the system features a one-time bootstrap mechanism:
+1. **Interactive Bootstrap UI:** If the database contains zero active Administrator accounts, navigating to the **Account & Sign In** page presents the **Primary Administrator Initialization** prompt to establish the lead administrator.
+2. **Environment Variable Bootstrap:** Alternatively, administrators can define `CAMPUS_ADMIN_USERNAME` and `CAMPUS_ADMIN_PASSWORD` in the execution environment, allowing headless automated provisioning during initial setup.
+3. Once initialized, self-registration of Administrator accounts is permanently disabled.
+
+### Backend Defense-in-Depth Enforcement
+
+UI navigation restrictions and button hiding are accompanied by mandatory validation in backend domain managers (`ObstacleManager`, `DatabaseManager`):
+- Attempting to verify, reject, or resolve obstacle reports without `Field Staff` or `Administrator` authority raises `PermissionError`.
+- Attempting to update user roles or account activation without `Administrator` authority raises `PermissionError`.
+- Self-demotion safeguards prevent the last remaining active Administrator from demoting or deactivating their own account.
+
+> [!NOTE]
+> **Security Notice:** This prototype demonstrates robust application-level access controls and PBKDF2 password hashing. It is designed for educational, research, and campus-scale prototype deployment. Enterprise deployment would benefit from additional network-level TLS enforcement and multi-factor authentication (MFA).
 
 ---
 
@@ -147,6 +243,7 @@ CREATE INDEX IF NOT EXISTS idx_obstacle_reported_at ON obstacle_reports (reporte
 - **Mapping & Geospatial Visualization:** Plotly, Folium, streamlit-folium
 - **Data Processing & Manipulation:** Pandas
 - **Database & Storage:** SQLite3, JSON Data Schemas
+- **Security & Authentication:** Standard Library `hashlib`, `hmac`, `secrets` (Zero external dependencies)
 
 ---
 
@@ -170,13 +267,13 @@ Campus navigation/
 │   ├── campus_map.py           # Campus network representation & graph loader
 │   ├── accessibility.py        # Accessibility classification, heuristics & scoring
 │   ├── route_finder.py         # Route calculation engine & path optimization
-│   ├── obstacle_manager.py     # Obstacle lifecycle & dynamic detour management
+│   ├── obstacle_manager.py     # Obstacle lifecycle, RBAC checks & dynamic detour management
 │   ├── indoor_map.py           # Indoor map engine, floor filters & visualizer
-│   └── ui_theme.py             # Shared styling, theme injection & session services
+│   └── ui_theme.py             # Shared styling, session services & user authentication
 │
 ├── database/                   # Persistent data management
 │   ├── __init__.py
-│   └── db_manager.py           # SQLite connection, schemas, and parameterized queries
+│   └── db_manager.py           # SQLite connection, RBAC user schemas, audit log & parameterized queries
 │
 ├── data/                       # Static graph & spatial datasets
 │   └── campus_map.json         # Campus nodes, edges, coordinates, and attributes
@@ -186,7 +283,9 @@ Campus navigation/
 │   ├── navigation.py           # Route query & turn-by-turn guidance page
 │   ├── campus_map.py           # Interactive indoor campus map & route visualizer
 │   ├── accessibility.py        # Accessibility profiles & amenity directory
-│   └── obstacle_reports.py     # Hazard reporting & resolution interface
+│   ├── obstacle_reports.py     # Hazard reporting, duplicate warnings & field staff queue
+│   ├── login.py                # User authentication, registration & admin bootstrap
+│   └── admin_management.py     # Administrative console: users, roles, queue & audit logs
 │
 ├── assets/                     # Media, icons, and styling stylesheets
 │   └── .gitkeep
@@ -199,7 +298,8 @@ Campus navigation/
     ├── test_route_finder.py    # Multi-modal routing & alternative route tests
     ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
     ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
-    └── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
+    ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
+    └── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
 ```
 
 ---

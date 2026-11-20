@@ -229,11 +229,47 @@ class ObstacleManager:
         """Retrieve all verified, active obstacles."""
         return self.db.get_active_reports()
 
+    def detect_potential_duplicates(
+        self,
+        source_location_id: Optional[str] = None,
+        destination_location_id: Optional[str] = None,
+        location_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Identify existing pending or active verified obstacle reports affecting the target.
+
+        Args:
+            source_location_id: Optional source endpoint of a pathway.
+            destination_location_id: Optional destination endpoint of a pathway.
+            location_id: Optional single location identifier.
+
+        Returns:
+            List of matching existing reports with status in ('Pending', 'Verified').
+        """
+        duplicates: List[Dict[str, Any]] = []
+        if source_location_id and destination_location_id:
+            pathway_reports = self.db.get_reports_by_pathway(
+                source_location_id, destination_location_id
+            )
+            duplicates = [
+                r for r in pathway_reports if r.get("status") in ("Pending", "Verified")
+            ]
+        elif location_id:
+            loc_reports = self.db.get_reports_by_location(location_id)
+            duplicates = [
+                r
+                for r in loc_reports
+                if r.get("target_type") == "location"
+                and r.get("location_id") == location_id
+                and r.get("status") in ("Pending", "Verified")
+            ]
+        return duplicates
+
     def update_report_status(
         self,
         report_id: str,
         status: str,
         resolution_notes: Optional[str] = None,
+        actor_user: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Update report status and synchronize graph operational state accordingly.
 
@@ -241,13 +277,27 @@ class ObstacleManager:
             report_id: Unique identifier of the report.
             status: Target status ('Pending', 'Verified', 'Resolved', 'Rejected').
             resolution_notes: Optional resolution notes or rejection reason.
+            actor_user: Optional authenticated user dictionary. If provided, role-based
+                        access control is strictly enforced.
 
         Returns:
             Updated report dictionary.
 
         Raises:
+            PermissionError: If actor_user is not authorized or account is inactive.
             ValueError: If report_id is not found or status is invalid.
         """
+        if actor_user is not None:
+            role = actor_user.get("role")
+            if role not in ("Field Staff", "Administrator"):
+                raise PermissionError(
+                    f"Permission Denied: User role '{role}' is not authorized to update obstacle reports."
+                )
+            if actor_user.get("account_status") != "Active":
+                raise PermissionError(
+                    "Permission Denied: Inactive user accounts cannot modify obstacle reports."
+                )
+
         if status not in self.ALLOWED_STATUSES:
             raise ValueError(
                 f"Invalid status '{status}'. Must be one of: {', '.join(self.ALLOWED_STATUSES)}."
@@ -271,26 +321,58 @@ class ObstacleManager:
         elif previous_status == "Verified" and status in ("Resolved", "Rejected", "Pending"):
             self.remove_obstacle_from_graph(updated_report)
 
+        # Audit logging
+        actor_id = actor_user.get("user_id", "system") if actor_user else "system"
+        action_map = {
+            "Verified": "VERIFY_OBSTACLE",
+            "Resolved": "RESOLVE_OBSTACLE",
+            "Rejected": "REJECT_OBSTACLE",
+            "Pending": "RESET_OBSTACLE",
+        }
+        self.db.log_audit_action(
+            actor_user_id=actor_id,
+            action=action_map.get(status, "UPDATE_OBSTACLE"),
+            target_type="obstacle_report",
+            target_id=report_id,
+            previous_status=previous_status,
+            new_status=status,
+            notes=resolution_notes or f"Updated obstacle status from {previous_status} to {status}",
+        )
+
         return updated_report
 
-    def verify_report(self, report_id: str) -> Dict[str, Any]:
+    def verify_report(
+        self, report_id: str, actor_user: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Confirm and verify an obstacle report, marking the affected pathway/location as blocked."""
-        return self.update_report_status(report_id, "Verified")
+        return self.update_report_status(report_id, "Verified", actor_user=actor_user)
 
-    def resolve_report(self, report_id: str, resolution_notes: str) -> Dict[str, Any]:
+    def resolve_report(
+        self,
+        report_id: str,
+        resolution_notes: str,
+        actor_user: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Resolve an obstacle report, restoring the pathway's original operational availability."""
         if not resolution_notes or not str(resolution_notes).strip():
             raise ValueError("Resolution notes are required when resolving an obstacle report.")
-        return self.update_report_status(report_id, "Resolved", resolution_notes.strip())
+        return self.update_report_status(
+            report_id, "Resolved", resolution_notes.strip(), actor_user=actor_user
+        )
 
-    def reject_report(self, report_id: str, rejection_reason: Optional[str] = None) -> Dict[str, Any]:
+    def reject_report(
+        self,
+        report_id: str,
+        rejection_reason: Optional[str] = None,
+        actor_user: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Reject an invalid or unsubstantiated report, ensuring it does not block navigation."""
         notes = (
             rejection_reason.strip()
             if rejection_reason
             else "Report was reviewed and rejected as invalid or duplicate."
         )
-        return self.update_report_status(report_id, "Rejected", notes)
+        return self.update_report_status(report_id, "Rejected", notes, actor_user=actor_user)
 
     def apply_obstacle_to_graph(self, report: Dict[str, Any]) -> None:
         """Apply temporary blocked operational status to the live campus graph without data loss."""
