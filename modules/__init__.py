@@ -8,6 +8,14 @@ from modules.accessibility import (
     RouteAccessibilityAssessment,
 )
 from modules.campus_map import CampusDataValidationError, CampusMap, load_campus_map
+from modules.indoor_map import (
+    calculate_display_coordinates,
+    create_indoor_map_figure,
+    detect_cross_floor_transitions,
+    get_connections_for_floor,
+    get_floors_in_campus,
+    get_locations_for_floor,
+)
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder, RouteResult, RouteStep
 from modules.ui_theme import (
@@ -34,4 +42,10 @@ __all__ = [
     "apply_custom_theme",
     "render_sidebar_info",
     "render_sidebar_footer",
+    "get_floors_in_campus",
+    "get_locations_for_floor",
+    "get_connections_for_floor",
+    "detect_cross_floor_transitions",
+    "calculate_display_coordinates",
+    "create_indoor_map_figure",
 ]

@@ -1,171 +1,289 @@
-"""Campus Map Page - Schematic connectivity visualization, floor filters, and location directory."""
+"""Campus Map Page - Advanced interactive indoor campus navigation and schematic spatial visualizer."""
 
 from __future__ import annotations
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
+from modules.indoor_map import (
+    create_indoor_map_figure,
+    detect_cross_floor_transitions,
+    get_floors_in_campus,
+    get_locations_for_floor,
+)
 from modules.ui_theme import apply_custom_theme, get_app_services
 
 apply_custom_theme()
 services = get_app_services()
 
 cmap = services["campus_map"]
-locations = cmap.get_all_locations()
-graph = cmap.graph
+route_finder = services["route_finder"]
+acc_engine = services["accessibility_engine"]
+obs_manager = services["obstacle_manager"]
 
-st.title("🗺️ Schematic Campus Connectivity Visualization")
+st.title("🗺️ Interactive Indoor Campus Map & Route Visualizer")
 st.write(
-    "Topological graph layout of campus locations, walkable connections, elevators, "
-    "and access ramps for navigation testing."
+    "Schematic floor-by-floor navigation visualizer illustrating campus walkable paths, "
+    "elevator hubs, access ramps, real-time obstacles, and multi-floor routes."
 )
 
-# Mandatory Coordinate Disclaimer
-st.warning(
-    "⚠️ **Schematic Connectivity Layout Notice:** The node positions displayed below are "
-    "**illustrative graph-layout coordinates** designed strictly for schematic connectivity "
-    "and topological pathfinding visualization. They are **not geographically surveyed coordinates** "
-    "and do **not** claim architectural scale or blueprint accuracy. Full architectural CAD floor plans "
-    "and indoor GIS integration will be introduced in Phase 8."
+# Mandatory Architectural Disclaimer
+st.markdown(
+    """
+    <div class="disclaimer-banner">
+        <b>📐 Schematic Connectivity Layout Notice:</b> The node positions and 2D layouts rendered below
+        are <b>illustrative graph-layout coordinates</b> designed for schematic pathfinding and connectivity visualization.
+        They are <b>not geographically surveyed coordinates</b> and do not represent architectural CAD blueprints or surveyed physical dimensions.
+        Verified architectural floor plans will be integrated as spatial overlays in future updates.
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
-# --- FLOOR FILTER & METRICS ---
-col_fl, col_cat = st.columns([1, 2])
-with col_fl:
-    selected_floor = st.radio(
-        "Select Floor View:",
-        options=["All Floors", "Ground Floor (Floor 0)", "First Floor (Floor 1)"],
-        index=0,
-        horizontal=True,
-    )
-
-floor_filter = None
-if selected_floor == "Ground Floor (Floor 0)":
-    floor_filter = 0
-elif selected_floor == "First Floor (Floor 1)":
-    floor_filter = 1
-
-# Filter locations based on floor selection
-filtered_locs = [
-    loc for loc in locations if floor_filter is None or loc["floor"] == floor_filter
-]
-filtered_node_ids = {loc["id"] for loc in filtered_locs}
-
-# --- PLOTLY GRAPH VISUALIZATION ---
-st.subheader("📍 Schematic Network Topology")
-
-fig = go.Figure()
-
-# Draw edges
-for u, v, data in graph.edges(data=True):
-    # Only draw if both endpoints are in filtered view (or inter-floor if all floors)
-    if u in filtered_node_ids and v in filtered_node_ids:
-        u_node = cmap.get_location(u)
-        v_node = cmap.get_location(v)
-        if not u_node or not v_node:
-            continue
-
-        x0, y0 = u_node["x"], u_node["y"]
-        x1, y1 = v_node["x"], v_node["y"]
-
-        # Color edge based on accessibility and status
-        status = data.get("status", "open")
-        is_acc = data.get("wheelchair_accessible", True)
-        has_stairs = data.get("has_stairs", False)
-        has_elevator = data.get("has_elevator", False)
-        has_ramp = data.get("has_ramp", False)
-
-        if status in ("blocked", "closed"):
-            line_color = "#e63946"
-            dash = "dash"
-            edge_type = "Blocked Pathway"
-        elif has_stairs and not is_acc:
-            line_color = "#e76f51"
-            dash = "dot"
-            edge_type = "Stairs (Inaccessible)"
-        elif has_elevator:
-            line_color = "#2a9d8f"
-            dash = "solid"
-            edge_type = "Elevator Transition"
-        elif has_ramp:
-            line_color = "#40916c"
-            dash = "solid"
-            edge_type = "Access Ramp"
-        else:
-            line_color = "#52b788"
-            dash = "solid"
-            edge_type = "Accessible Corridor"
-
-        fig.add_trace(
-            go.Scatter(
-                x=[x0, x1],
-                y=[y0, y1],
-                mode="lines",
-                line=dict(color=line_color, width=3, dash=dash),
-                hoverinfo="text",
-                text=f"{edge_type}: {u_node['name']} ↔ {v_node['name']}<br>Traversable Distance: {data.get('distance')}m",
-                showlegend=False,
-            )
-        )
-
-# Draw nodes
-df_nodes = pd.DataFrame(filtered_locs)
-category_colors = {
-    "entrance": "#1b4332",
-    "lobby": "#2d6a4f",
-    "elevator": "#2a9d8f",
-    "stairs": "#e76f51",
-    "restroom": "#457b9d",
-    "classroom": "#3a86ff",
-    "auditorium": "#8338ec",
-    "cafeteria": "#f4a261",
-    "lab": "#06d6a0",
-    "library": "#118ab2",
-    "office": "#073b4c",
+# Get all unique floors and locations
+floors = get_floors_in_campus(cmap)
+all_locations = sorted(cmap.get_all_locations(), key=lambda x: (x.get("floor", 0), x.get("name", "")))
+loc_label_to_id = {
+    f"[{loc['id']}] {loc['name']} (Floor {loc['floor']})": loc["id"]
+    for loc in all_locations
 }
 
-for cat in df_nodes["category"].unique():
-    cat_df = df_nodes[df_nodes["category"] == cat]
-    color = category_colors.get(cat, "#4a5568")
+# --- CONTROLS: FLOOR SELECTOR & IN-MAP ROUTE PLANNER ---
+ctrl_c1, ctrl_c2 = st.columns([1, 2])
 
-    fig.add_trace(
-        go.Scatter(
-            x=cat_df["x"],
-            y=cat_df["y"],
-            mode="markers+text",
-            marker=dict(size=16, color=color, line=dict(width=2, color="#ffffff")),
-            text=cat_df["id"],
-            textposition="top center",
-            name=cat.capitalize(),
-            hoverinfo="text",
-            hovertext=[
-                f"<b>[{row['id']}] {row['name']}</b><br>Floor: {row['floor']}<br>Building: {row['building']}<br>Category: {row['category'].capitalize()}<br>Layout Position: ({row['x']}, {row['y']})"
-                for _, row in cat_df.iterrows()
-            ],
-        )
+with ctrl_c1:
+    floor_options = ["All Floors (Side-by-Side)"] + [
+        f"Ground Floor (Floor 0)" if fl == 0 else f"First Floor (Floor {fl})"
+        for fl in floors
+    ]
+    selected_floor_str = st.radio(
+        "🏢 Select Floor View:",
+        options=floor_options,
+        index=0,
+        help="Switch between individual floor layouts or view both floors side-by-side.",
     )
 
-fig.update_layout(
-    height=480,
-    margin=dict(l=20, r=20, t=30, b=20),
-    xaxis=dict(title="Schematic X Coordinate", showgrid=True, zeroline=False),
-    yaxis=dict(title="Schematic Y Coordinate", showgrid=True, zeroline=False, scaleanchor="x"),
-    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
-    plot_bgcolor="#fcfdfd",
-)
+    floor_filter: int | None = None
+    if "Floor 0" in selected_floor_str:
+        floor_filter = 0
+    elif "Floor 1" in selected_floor_str:
+        floor_filter = 1
 
-st.plotly_chart(fig, use_container_width=True)
+with ctrl_c2:
+    with st.expander("🧭 In-Map Route Planning Controls", expanded=True):
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            start_sel = st.selectbox(
+                "Origin Location:",
+                options=list(loc_label_to_id.keys()),
+                index=0,  # LOC_01
+                key="map_start_loc",
+            )
+            map_source = loc_label_to_id[start_sel]
 
-# Legend hint
-st.caption(
-    "🟢 Green: Accessible Corridors / Ramps | 🔵 Teal: Elevators | 🟠 Orange Dotted: Stairs | 🔴 Red Dashed: Blocked | Circles: Location Nodes"
-)
+        with rc2:
+            dest_default_idx = min(len(loc_label_to_id) - 1, 13)  # LOC_14
+            dest_sel = st.selectbox(
+                "Destination:",
+                options=list(loc_label_to_id.keys()),
+                index=dest_default_idx,
+                key="map_dest_loc",
+            )
+            map_dest = loc_label_to_id[dest_sel]
+
+        ro1, ro2, ro3 = st.columns([1, 1, 1])
+        with ro1:
+            map_algo = st.selectbox(
+                "Algorithm:",
+                options=["Dijkstra's Algorithm", "Breadth-First Search (BFS)"],
+                index=0,
+                key="map_algo_choice",
+            )
+        with ro2:
+            map_opt = st.selectbox(
+                "Optimization:",
+                options=["Shortest Distance", "Fastest Time"],
+                index=0,
+                disabled=("BFS" in map_algo),
+                key="map_opt_choice",
+            )
+        with ro3:
+            map_wheelchair = st.checkbox(
+                "♿ Wheelchair Only",
+                value=True,
+                key="map_wheelchair_check",
+                help="Prohibits staircases, enforcing step-free routing through elevators and access ramps.",
+            )
+
+        calc_route_click = st.button("🗺️ Visualize Route on Map", type="primary", use_container_width=True)
+
+# Maintain route in session state so floor switching doesn't wipe active calculated route
+if "active_map_route" not in st.session_state:
+    st.session_state.active_map_route = None
+
+if calc_route_click:
+    if map_source == map_dest:
+        st.warning("Origin and destination locations are identical.")
+        st.session_state.active_map_route = None
+    else:
+        algo_k = "dijkstra" if "Dijkstra" in map_algo else "bfs"
+        opt_k = "time" if "Time" in map_opt else "distance"
+        calc_res = route_finder.find_route(
+            source=map_source,
+            destination=map_dest,
+            algorithm=algo_k,
+            optimize_for=opt_k,
+            wheelchair_accessible=map_wheelchair,
+        )
+        if calc_res.success:
+            st.session_state.active_map_route = calc_res
+            st.session_state.active_map_route_algo = map_algo
+        else:
+            st.error(f"Route calculation failed: {calc_res.error_message}")
+            st.session_state.active_map_route = None
+
+active_route: Any = st.session_state.active_map_route
+highlight_path: list[str] | None = active_route.path if active_route and active_route.success else None
+
+# --- ROUTE SUMMARY CARD (IF ACTIVE ROUTE EXISTS) ---
+if active_route and active_route.success:
+    route_acc_eval = acc_engine.evaluate_route_accessibility(active_route)
+    transitions = detect_cross_floor_transitions(active_route.path, cmap)
+
+    st.markdown("---")
+    st.markdown(f"#### 🚀 Active Route: **{cmap.get_location(active_route.path[0])['name']}** ➔ **{cmap.get_location(active_route.path[-1])['name']}**")
+
+    rm1, rm2, rm3, rm4, rm5 = st.columns(5)
+    with rm1:
+        st.metric("Total Distance", f"{active_route.total_distance:.1f} m")
+    with rm2:
+        m_mins = int(active_route.total_time // 60)
+        m_secs = int(active_route.total_time % 60)
+        st.metric("Est. Time", f"{m_mins}m {m_secs}s" if m_mins > 0 else f"{m_secs}s")
+    with rm3:
+        st.metric("Transitions", f"{active_route.edge_count} hops")
+    with rm4:
+        st.metric("Classification", route_acc_eval.overall_classification)
+    with rm5:
+        st.metric("Accessibility Score", f"{route_acc_eval.accessibility_score} / 100")
+
+    # Multi-floor elevator transition alert
+    if transitions:
+        for trans in transitions:
+            st.info(
+                f"**{trans['icon']} Multi-Floor Elevator Transfer (Step {trans['step_index']}):** "
+                f"{trans['guidance']} (Distance: {trans['distance']} m)"
+            )
+
+    if route_acc_eval.warnings:
+        for w in route_acc_eval.warnings:
+            st.warning(f"⚠️ {w}")
 
 st.markdown("---")
 
-# --- LOCATIONS DIRECTORY TABLE ---
-st.subheader("📋 Campus Locations Directory")
-df_display = df_nodes[["id", "name", "building", "floor", "category", "x", "y"]].copy()
-df_display.columns = ["ID", "Location Name", "Building", "Floor", "Category", "X (Layout)", "Y (Layout)"]
-st.dataframe(df_display, use_container_width=True, hide_index=True)
+# --- INTERACTIVE MAP DISPLAY ---
+map_col, inspect_col = st.columns([3, 2])
+
+with inspect_col:
+    st.subheader("📍 Location Details Panel")
+    selected_loc_label = st.selectbox(
+        "Select Location to Inspect:",
+        options=list(loc_label_to_id.keys()),
+        index=0,
+        key="inspect_loc_selector",
+    )
+    inspected_loc_id = loc_label_to_id[selected_loc_label]
+    loc_data = cmap.get_location(inspected_loc_id) or {}
+    loc_acc = acc_engine.check_location_accessibility(inspected_loc_id)
+
+    # Check for active obstacles affecting this location
+    loc_reports = obs_manager.get_reports_by_location(inspected_loc_id)
+    active_loc_obstacles = [r for r in loc_reports if r.get("status") == "Verified"]
+
+    st.markdown(
+        f"""
+        <div class="ui-card">
+            <div style="font-weight: 700; color: #1b4332; font-size: 1.15rem;">[{loc_data.get('id')}] {loc_data.get('name')}</div>
+            <div style="color: #4b6354; font-size: 0.85rem; margin-top: 2px;">
+                <b>Building:</b> {loc_data.get('building')} · <b>Floor:</b> {loc_data.get('floor')} · <b>Category:</b> {str(loc_data.get('category')).capitalize()}
+            </div>
+            <hr style="margin: 8px 0; border-color: #e1ebe5;">
+            <div style="font-size: 0.88rem; color: #2d3748;">
+                <b>Accessibility Classification:</b> <span style="font-weight: 600; color: #2d6a4f;">{loc_acc.classification}</span><br>
+                <b>Accessibility Score:</b> <b>{loc_acc.score} / 100</b><br>
+                <b>Connected Pathways:</b> {loc_acc.accessible_connections} Accessible / {loc_acc.total_connections} Total
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Amenities badges
+    amenities_list = []
+    if loc_acc.has_accessible_restroom:
+        amenities_list.append("♿ Accessible Restroom Facility")
+    if loc_acc.is_elevator_hub:
+        amenities_list.append("🛗 Multi-Floor Elevator Hub")
+    if loc_acc.has_ramp_access:
+        amenities_list.append("♿ Code-Compliant Access Ramp")
+
+    if amenities_list:
+        st.success("Available Amenities:\n- " + "\n- ".join(amenities_list))
+
+    # Obstacle alerts on location
+    if active_loc_obstacles:
+        st.error(f"⛔ Active Disruption Reported at this Location ({len(active_loc_obstacles)} active):")
+        for obs in active_loc_obstacles:
+            st.markdown(f"- **{obs['obstacle_category']} ({obs['severity']}):** {obs['description']}")
+
+    # Connected pathways breakdown
+    connected_paths = cmap.get_connected_paths(inspected_loc_id)
+    with st.expander(f"🔗 Connected Pathways ({len(connected_paths)} links)"):
+        for cp in connected_paths:
+            target = cp["target_location"]
+            attrs = cp["attributes"]
+            status_tag = "🔴 Blocked" if attrs.get("status") in ("blocked", "closed") else "🟢 Open"
+            acc_tag = "♿ Accessible" if attrs.get("wheelchair_accessible", True) and not attrs.get("has_stairs") else "🪜 Stairs"
+            st.markdown(
+                f"- **{target.get('name')}** [{cp['to_location_id']}]: {attrs.get('distance')}m · {status_tag} · {acc_tag}"
+            )
+
+with map_col:
+    st.subheader("📍 Indoor Connectivity Map View")
+    fig_map = create_indoor_map_figure(
+        campus_map=cmap,
+        floor_filter=floor_filter,
+        highlight_route=highlight_path,
+        selected_location_id=inspected_loc_id,
+    )
+    st.plotly_chart(fig_map, use_container_width=True)
+
+# --- MAP LEGENDS ---
+st.markdown("---")
+st.subheader("📖 Map Legends & Visual Indicators")
+
+leg_c1, leg_c2 = st.columns(2)
+
+with leg_c1:
+    st.markdown("##### 🚶 Pathway Accessibility Indicators")
+    st.markdown(
+        """
+        - 🟢 **Solid Green Line:** Fully Accessible / Step-Free corridor or walkway.
+        - 🔵 **Solid Teal Line:** Multi-Floor Elevator vertical connection.
+        - 🟠 **Dotted Orange Line:** Staircase connection (Inaccessible for wheelchairs).
+        - 🔴 **Dashed Red Line:** Temporarily Blocked / Closed pathway (Active obstacle).
+        - ⚪ **Dash-Dot Grey Line:** Pathway with unknown or unverified accessibility.
+        - 🟡 **Glowing Amber Path:** Active planned navigation route overlay.
+        """
+    )
+
+with leg_c2:
+    st.markdown("##### 📍 Location & Waypoint Markers")
+    st.markdown(
+        """
+        - 🟢 **Origin Pin:** Selected navigation starting point.
+        - 🏁 **Destination Pin:** Selected navigation target destination.
+        - 🟣 **Purple Halo:** Current location inspected in details panel.
+        - 🔵 **Categorized Circles:** Entrances, lobbies, classrooms, labs, offices, and restrooms.
+        """
+    )
