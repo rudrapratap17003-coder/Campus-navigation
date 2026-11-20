@@ -58,8 +58,12 @@ def login_user(user_dict: Dict[str, Any]) -> None:
 
 
 def logout_user() -> None:
-    """Clear authenticated user record from session state."""
+    """Clear authenticated user record and wipe all sensitive session-state variables."""
     st.session_state.current_user = None
+    # Purge any transient user-specific or sensitive keys
+    for k in list(st.session_state.keys()):
+        if k.startswith(("user_", "auth_", "login_", "admin_")):
+            st.session_state.pop(k, None)
 
 
 def is_authenticated() -> bool:

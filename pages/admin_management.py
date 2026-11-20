@@ -145,13 +145,15 @@ with tab_users:
             prov_name = st.text_input("Full Name:", placeholder="e.g. Campus Officer")
             prov_username = st.text_input("Username:", placeholder="e.g. officer_1")
             prov_role = st.selectbox("Assign Role:", options=["Field Staff", "Administrator", "Student"])
-            prov_password = st.text_input("Temporary Password (min 6 chars):", type="password")
+            prov_password = st.text_input("Temporary Password (min 8 chars, letters & numbers):", type="password")
 
             if st.form_submit_button("Provision Account", type="primary"):
                 if not prov_name.strip() or not prov_username.strip():
                     st.error("Please provide both full name and username.")
-                elif len(prov_password) < 6:
-                    st.error("Password must be at least 6 characters long.")
+                elif len(prov_password) < 8:
+                    st.error("Password must be at least 8 characters long.")
+                elif not any(c.isdigit() for c in prov_password) or not any(c.isalpha() for c in prov_password):
+                    st.error("Password must contain at least one letter and one number.")
                 else:
                     try:
                         new_acc = db_manager.create_user(

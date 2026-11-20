@@ -154,6 +154,12 @@ CREATE TABLE IF NOT EXISTS administrative_audit_log (
     notes TEXT
 );
 
+-- Brute-Force Rate Limiting & Account Lockout
+CREATE TABLE IF NOT EXISTS login_rate_limits (
+    username TEXT NOT NULL,
+    attempt_time REAL NOT NULL
+);
+
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_obstacle_status ON obstacle_reports (status);
 CREATE INDEX IF NOT EXISTS idx_obstacle_location ON obstacle_reports (location_id);
@@ -165,6 +171,7 @@ CREATE INDEX IF NOT EXISTS idx_users_status ON users (account_status);
 CREATE INDEX IF NOT EXISTS idx_audit_actor ON administrative_audit_log (actor_user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON administrative_audit_log (action);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON administrative_audit_log (timestamp);
+CREATE INDEX IF NOT EXISTS idx_rate_limit_user ON login_rate_limits (username, attempt_time);
 ```
 
 ### Report Verification Workflow & Lifecycle
@@ -211,10 +218,15 @@ The application enforces a multi-tier Role-Based Access Control (RBAC) model imp
 ### Password Security & Cryptography
 
 - **Algorithm:** PBKDF2 with HMAC-SHA256 (`hashlib.pbkdf2_hmac`).
-- **Iterations:** 100,000 hashing rounds.
-- **Salting:** 16-byte cryptographically secure random salt generated per user via `secrets.token_hex(16)`.
-- **Verification:** Constant-time hash comparison (`hmac.compare_digest`) preventing timing attacks.
+- **Work Factor & Iterations:** **600,000 hashing rounds** conforming to modern OWASP Password Storage Guidelines (upgraded from 100,000).
+- **Progressive Zero-Downtime Upgrade:** Existing accounts stored with legacy iterations are automatically verified and progressively upgraded to 600,000 rounds upon their next successful sign-in.
+- **Salting:** Cryptographically secure 16-byte random salt generated per user via `secrets.token_hex(16)`, stored in modern `<iterations>$<salt_hex>` format.
+- **Verification:** Constant-time hash comparison (`hmac.compare_digest`) preventing timing side-channel attacks.
+- **Brute-Force Rate Limiting:** Consecutive failed login attempts are tracked per account. Exceeding 5 failed attempts activates an automated 5-minute (300-second) lockout window, logging a `SECURITY_LOCKOUT` audit event. Successful authentication automatically resets the lockout counter.
+- **Password Complexity Policy:** Passwords must be at least 8 characters long and contain both alphabetic characters and numerical digits.
+- **Session Cleanup:** The `logout_user()` mechanism completely purges authentication state and removes any transient session cache keys.
 - **Sanitization:** Password hashes and salts are completely stripped from query results before reaching UI components or session state.
+- **Append-Only Audit Immutability:** The administrative audit log is strictly append-only; no application methods or interface actions permit altering or deleting historical audit records.
 
 ### One-Time Initial Administrator Setup
 
@@ -299,14 +311,15 @@ Campus navigation/
     ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
     ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
     ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
-    └── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
+    ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
+    └── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
 ```
 
 ---
 
 ## 🧪 Running Automated Tests
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database:
+All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of 81 automated tests:
 
 ```powershell
 & ".venv\Scripts\python.exe" -m unittest discover tests
@@ -314,7 +327,8 @@ All test suites use isolated in-memory or temporary databases to prevent alterin
 
 To run individual test suites:
 ```powershell
-& ".venv\Scripts\python.exe" -m unittest tests/test_indoor_map.py
+& ".venv\Scripts\python.exe" -m unittest tests/test_security_audit.py
+& ".venv\Scripts\python.exe" -m unittest tests/test_auth_rbac.py
 & ".venv\Scripts\python.exe" -m unittest tests/test_obstacle_manager.py
 & ".venv\Scripts\python.exe" -m unittest tests/test_route_finder.py
 ```

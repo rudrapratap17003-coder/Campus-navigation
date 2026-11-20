@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from database.db_manager import SecurityLockoutError
 from modules.ui_theme import (
     apply_custom_theme,
     get_app_services,
@@ -118,15 +119,18 @@ else:
                     if not username.strip() or not password:
                         st.error("Please enter both username and password.")
                     else:
-                        authenticated = db_manager.authenticate_user(username.strip(), password)
-                        if not authenticated:
-                            st.error("Invalid username or password. Please check your credentials.")
-                        elif authenticated.get("account_status") != "Active":
-                            st.error("Your account has been deactivated. Please contact an Administrator.")
-                        else:
-                            login_user(authenticated)
-                            st.success(f"Welcome back, {authenticated['full_name']}!")
-                            st.rerun()
+                        try:
+                            authenticated = db_manager.authenticate_user(username.strip(), password)
+                            if not authenticated:
+                                st.error("Invalid username or password. Please check your credentials.")
+                            elif authenticated.get("account_status") != "Active":
+                                st.error("Your account has been deactivated. Please contact an Administrator.")
+                            else:
+                                login_user(authenticated)
+                                st.success(f"Welcome back, {authenticated['full_name']}!")
+                                st.rerun()
+                        except SecurityLockoutError as lock_exc:
+                            st.error(f"⛔ {lock_exc}")
 
         with tab_register:
             st.subheader("Student / Campus User Registration")
@@ -139,7 +143,7 @@ else:
             with st.form("student_registration_form"):
                 reg_name = st.text_input("Full Name:", placeholder="e.g. Alex Johnson")
                 reg_username = st.text_input("Desired Username:", placeholder="e.g. alex_j")
-                reg_password = st.text_input("Password (min 6 characters):", type="password")
+                reg_password = st.text_input("Password (min 8 chars, letters & numbers):", type="password")
                 reg_confirm = st.text_input("Confirm Password:", type="password")
 
                 reg_submitted = st.form_submit_button("Create Campus Account", type="primary")
@@ -147,8 +151,10 @@ else:
                 if reg_submitted:
                     if not reg_name.strip() or not reg_username.strip():
                         st.error("Please fill in all required fields.")
-                    elif len(reg_password) < 6:
-                        st.error("Password must be at least 6 characters long.")
+                    elif len(reg_password) < 8:
+                        st.error("Password must be at least 8 characters long.")
+                    elif not any(c.isdigit() for c in reg_password) or not any(c.isalpha() for c in reg_password):
+                        st.error("Password must contain at least one letter and one number.")
                     elif reg_password != reg_confirm:
                         st.error("Passwords do not match.")
                     else:

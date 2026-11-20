@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import secrets
 import sqlite3
+import time
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 
@@ -20,12 +21,23 @@ class DatabaseError(Exception):
     pass
 
 
+class SecurityLockoutError(DatabaseError):
+    """Exception raised when an account is temporarily locked due to excessive failed attempts."""
+
+    pass
+
+
 class DatabaseManager:
     """Manages persistent SQLite storage for campus navigation, user authentication, and obstacle reports."""
 
     DEFAULT_DB_FILE = "campus_navigation.db"
-    PBKDF2_ITERATIONS = 100_000
+    PBKDF2_RECOMMENDED_ITERATIONS = 600_000
+    PBKDF2_LEGACY_ITERATIONS = 100_000
+    PBKDF2_ITERATIONS = PBKDF2_RECOMMENDED_ITERATIONS
     PBKDF2_ALGORITHM = "sha256"
+
+    MAX_FAILED_LOGIN_ATTEMPTS = 5
+    LOGIN_LOCKOUT_SECONDS = 300  # 5 minutes
 
     ALLOWED_ROLES: Tuple[str, ...] = ("Student", "Field Staff", "Administrator")
     ALLOWED_USER_STATUSES: Tuple[str, ...] = ("Active", "Inactive")
@@ -76,10 +88,18 @@ class DatabaseManager:
     );
     """
 
+    CREATE_RATE_LIMIT_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS login_rate_limits (
+        username TEXT NOT NULL,
+        attempt_time REAL NOT NULL
+    );
+    """
+
     CREATE_TABLES_SQL = [
         CREATE_TABLE_SQL,
         CREATE_USERS_TABLE_SQL,
         CREATE_AUDIT_LOG_TABLE_SQL,
+        CREATE_RATE_LIMIT_TABLE_SQL,
     ]
 
     CREATE_INDEXES_SQL = [
@@ -93,6 +113,7 @@ class DatabaseManager:
         "CREATE INDEX IF NOT EXISTS idx_audit_actor ON administrative_audit_log (actor_user_id);",
         "CREATE INDEX IF NOT EXISTS idx_audit_action ON administrative_audit_log (action);",
         "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON administrative_audit_log (timestamp);",
+        "CREATE INDEX IF NOT EXISTS idx_rate_limit_user ON login_rate_limits (username, attempt_time);",
     ]
 
     def __init__(self, db_path: Optional[Union[str, Path]] = None) -> None:
@@ -141,7 +162,12 @@ class DatabaseManager:
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
         """Context manager yielding a configured SQLite connection with foreign keys enabled."""
         if str(self.db_path) == ":memory:" and self._memory_conn is not None:
-            yield self._memory_conn
+            try:
+                yield self._memory_conn
+                self._memory_conn.commit()
+            except sqlite3.Error as exc:
+                self._memory_conn.rollback()
+                raise DatabaseError(f"Database operation failed: {exc}") from exc
             return
 
         conn = sqlite3.connect(str(self.db_path), detect_types=sqlite3.PARSE_DECLTYPES)
@@ -419,44 +445,105 @@ class DatabaseManager:
     # =========================================================================
 
     @staticmethod
-    def hash_password(password: str, salt: Optional[str] = None) -> Tuple[str, str]:
-        """Hash a password using PBKDF2-HMAC-SHA256 with a unique cryptographic salt.
+    def hash_password(
+        password: str,
+        salt: Optional[str] = None,
+        iterations: Optional[int] = None,
+    ) -> Tuple[str, str]:
+        """Hash a password using PBKDF2-HMAC-SHA256 with cryptographic salting and configurable work factor.
+
+        Supports both modern format ('<iterations>$<salt_hex>') and legacy format ('<salt_hex>').
 
         Args:
             password: Plaintext password.
-            salt: Optional hex salt. If None, a secure 16-byte random salt is generated.
+            salt: Optional salt. If contains '$', parsed as '<iterations>$<salt_hex>'.
+                  If plain hex, treated as legacy salt unless iterations is explicitly supplied.
+            iterations: Optional explicit iteration count override.
 
         Returns:
-            Tuple of (password_hash_hex, salt_hex).
+            Tuple of (password_hash_hex, salt_string).
         """
         if not password:
             raise ValueError("Password cannot be empty.")
-        if salt is None:
-            salt = secrets.token_hex(16)
+
+        if salt is not None and "$" in salt:
+            parts = salt.split("$", 1)
+            try:
+                iter_count = int(parts[0])
+            except ValueError:
+                iter_count = iterations or DatabaseManager.PBKDF2_RECOMMENDED_ITERATIONS
+            actual_salt = parts[1]
+            stored_salt = salt
+        elif salt is not None:
+            # Legacy salt (plain hex without '$')
+            iter_count = iterations or DatabaseManager.PBKDF2_LEGACY_ITERATIONS
+            actual_salt = salt
+            stored_salt = salt
+        else:
+            iter_count = iterations or DatabaseManager.PBKDF2_RECOMMENDED_ITERATIONS
+            actual_salt = secrets.token_hex(16)
+            stored_salt = f"{iter_count}${actual_salt}"
+
         pwd_hash = hashlib.pbkdf2_hmac(
             DatabaseManager.PBKDF2_ALGORITHM,
             password.encode("utf-8"),
-            salt.encode("utf-8"),
-            DatabaseManager.PBKDF2_ITERATIONS,
+            actual_salt.encode("utf-8"),
+            iter_count,
         ).hex()
-        return pwd_hash, salt
+        return pwd_hash, stored_salt
 
     @staticmethod
     def verify_password(password: str, password_hash: str, salt: str) -> bool:
-        """Verify a plaintext password against a stored PBKDF2-HMAC-SHA256 hash using constant-time comparison.
-
-        Args:
-            password: Plaintext password candidate.
-            password_hash: Stored hex hash.
-            salt: Stored hex salt.
-
-        Returns:
-            True if candidate password matches, False otherwise.
-        """
+        """Verify candidate plaintext password against stored hash using constant-time comparison."""
         if not password or not password_hash or not salt:
             return False
         candidate_hash, _ = DatabaseManager.hash_password(password, salt=salt)
         return hmac.compare_digest(candidate_hash, password_hash)
+
+    def is_account_locked(self, username: str) -> Tuple[bool, int]:
+        """Check whether the username has exceeded failed login attempt limits.
+
+        Returns:
+            Tuple of (is_locked: bool, remaining_seconds: int).
+        """
+        clean_user = username.lower().strip()
+        now = time.time()
+        cutoff = now - self.LOGIN_LOCKOUT_SECONDS
+        sql = "SELECT attempt_time FROM login_rate_limits WHERE username = ? AND attempt_time > ? ORDER BY attempt_time ASC;"
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.execute(sql, (clean_user, cutoff))
+                rows = cursor.fetchall()
+            if len(rows) >= self.MAX_FAILED_LOGIN_ATTEMPTS:
+                oldest_in_window = rows[0]["attempt_time"]
+                remaining = int(self.LOGIN_LOCKOUT_SECONDS - (now - oldest_in_window))
+                return True, max(1, remaining)
+            return False, 0
+        except sqlite3.Error:
+            return False, 0
+
+    def record_failed_login(self, username: str) -> None:
+        """Record a failed login attempt for rate-limiting purposes."""
+        clean_user = username.lower().strip()
+        now = time.time()
+        sql = "INSERT INTO login_rate_limits (username, attempt_time) VALUES (?, ?);"
+        try:
+            with self.get_connection() as conn:
+                conn.execute(sql, (clean_user, now))
+                # Prune old attempts beyond window to keep table lightweight
+                conn.execute("DELETE FROM login_rate_limits WHERE attempt_time < ?;", (now - 3600,))
+        except sqlite3.Error:
+            pass
+
+    def reset_failed_logins(self, username: str) -> None:
+        """Clear failed login attempts following successful authentication."""
+        clean_user = username.lower().strip()
+        sql = "DELETE FROM login_rate_limits WHERE username = ?;"
+        try:
+            with self.get_connection() as conn:
+                conn.execute(sql, (clean_user,))
+        except sqlite3.Error:
+            pass
 
     def create_user(
         self,
@@ -468,12 +555,12 @@ class DatabaseManager:
         actor_user: Optional[Dict[str, Any]] = None,
         user_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Register a new user in the database with hashed credentials and role enforcement.
+        """Register a new user in the database with hardened password policy and role enforcement.
 
         Args:
-            full_name: Real or display name of the user.
-            username: Unique username identifier.
-            password: Plaintext password (min 6 characters).
+            full_name: Real or display name of the user (max 100 characters).
+            username: Unique username identifier (3-40 characters).
+            password: Plaintext password (min 8 characters, must contain letters and numbers).
             role: 'Student', 'Field Staff', or 'Administrator'.
             account_status: 'Active' or 'Inactive'.
             actor_user: Optional dict of the acting authenticated user performing the creation.
@@ -490,17 +577,21 @@ class DatabaseManager:
         if not full_name or not str(full_name).strip():
             raise ValueError("Full name cannot be empty.")
         full_name = str(full_name).strip()
+        if len(full_name) > 100:
+            raise ValueError("Full name cannot exceed 100 characters.")
 
         if not username or not str(username).strip():
             raise ValueError("Username cannot be empty.")
         username = str(username).strip()
-        if len(username) < 3 or not re.match(r"^[a-zA-Z0-9_\-\.]+$", username):
+        if len(username) < 3 or len(username) > 40 or not re.match(r"^[a-zA-Z0-9_\-\.]+$", username):
             raise ValueError(
-                "Username must be at least 3 characters and contain only letters, numbers, hyphens, underscores, or periods."
+                "Username must be between 3 and 40 characters and contain only letters, numbers, hyphens, underscores, or periods."
             )
 
-        if not password or len(password) < 6:
-            raise ValueError("Password must be at least 6 characters long.")
+        if not password or len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+        if not any(c.isdigit() for c in password) or not any(c.isalpha() for c in password):
+            raise ValueError("Password must contain at least one letter and one number.")
 
         if role not in self.ALLOWED_ROLES:
             raise ValueError(f"Invalid role '{role}'. Must be one of: {', '.join(self.ALLOWED_ROLES)}.")
@@ -570,7 +661,7 @@ class DatabaseManager:
         }
 
     def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
-        """Verify user credentials and return sanitized user record if valid.
+        """Verify user credentials with rate-limiting and automatic work factor upgrades.
 
         Args:
             username: Username candidate.
@@ -578,13 +669,65 @@ class DatabaseManager:
 
         Returns:
             Sanitized user dictionary (without hash/salt) if valid, or None if authentication fails.
+
+        Raises:
+            SecurityLockoutError: If the account is temporarily locked due to excessive failed attempts.
         """
-        user_record = self.get_user_by_username(username, include_secrets=True)
+        clean_user = username.strip().lower()
+        is_locked, remaining = self.is_account_locked(clean_user)
+        if is_locked:
+            raise SecurityLockoutError(
+                f"Account is temporarily locked due to excessive failed attempts. Please retry in {remaining} seconds."
+            )
+
+        user_record = self.get_user_by_username(clean_user, include_secrets=True)
         if not user_record:
+            self.record_failed_login(clean_user)
             return None
 
         if not self.verify_password(password, user_record["password_hash"], user_record["salt"]):
+            self.record_failed_login(clean_user)
             return None
+
+        # Check account active status
+        if user_record["account_status"] != "Active":
+            return {
+                "user_id": user_record["user_id"],
+                "full_name": user_record["full_name"],
+                "username": user_record["username"],
+                "role": user_record["role"],
+                "account_status": user_record["account_status"],
+                "created_at": user_record["created_at"],
+                "updated_at": user_record["updated_at"],
+            }
+
+        # Successful authentication: reset failed attempts
+        self.reset_failed_logins(clean_user)
+
+        # Automatic security upgrade for legacy work factors
+        salt_val = str(user_record["salt"])
+        needs_upgrade = (
+            "$" not in salt_val
+            or int(salt_val.split("$")[0]) < self.PBKDF2_RECOMMENDED_ITERATIONS
+        )
+        if needs_upgrade:
+            try:
+                new_hash, new_salt = self.hash_password(password)
+                now_iso = datetime.now(timezone.utc).isoformat()
+                with self.get_connection() as conn:
+                    conn.execute(
+                        "UPDATE users SET password_hash = ?, salt = ?, updated_at = ? WHERE user_id = ?;",
+                        (new_hash, new_salt, now_iso, user_record["user_id"]),
+                    )
+                self.log_audit_action(
+                    actor_user_id=user_record["user_id"],
+                    action="UPGRADE_SECURITY",
+                    target_type="user_account",
+                    target_id=user_record["user_id"],
+                    notes="Progressively upgraded password hash work factor to 600,000 PBKDF2 iterations.",
+                )
+            except Exception:
+                pass
 
         # Return sanitized dict
         return {
