@@ -18,6 +18,14 @@ from modules.indoor_map import (
 )
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder, RouteResult, RouteStep
+from modules.three_d_map import (
+    build_3d_scene_payload,
+    get_3d_locations_data,
+    get_3d_pathways_data,
+    get_3d_route_data,
+    normalize_3d_coordinates,
+    render_three_d_scene_html,
+)
 from modules.ui_theme import (
     apply_custom_theme,
     apply_plotly_dark_theme,
@@ -66,4 +74,10 @@ __all__ = [
     "detect_cross_floor_transitions",
     "calculate_display_coordinates",
     "create_indoor_map_figure",
+    "normalize_3d_coordinates",
+    "get_3d_locations_data",
+    "get_3d_pathways_data",
+    "get_3d_route_data",
+    "build_3d_scene_payload",
+    "render_three_d_scene_html",
 ]

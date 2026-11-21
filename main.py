@@ -51,6 +51,11 @@ map_page = st.Page(
     title="Campus Map",
     icon="🗺️",
 )
+three_d_map_page = st.Page(
+    "pages/3d_campus_map.py",
+    title="3D Campus Map",
+    icon="🏢",
+)
 accessibility_page = st.Page(
     "pages/accessibility.py",
     title="Accessibility Overview",
@@ -76,14 +81,14 @@ admin_page = st.Page(
 if user_role == "Administrator":
     nav_structure = {
         "Overview": [dashboard_page],
-        "Navigation": [nav_route_page, map_page],
+        "Navigation": [nav_route_page, map_page, three_d_map_page],
         "Accessibility & Operations": [accessibility_page, obstacles_page],
         "System Administration": [admin_page, auth_page],
     }
 elif user_role in ("Field Staff", "Student"):
     nav_structure = {
         "Overview": [dashboard_page],
-        "Navigation": [nav_route_page, map_page],
+        "Navigation": [nav_route_page, map_page, three_d_map_page],
         "Accessibility & Operations": [accessibility_page, obstacles_page],
         "Account": [auth_page],
     }
@@ -92,7 +97,7 @@ else:
     nav_structure = {
         "Account Access": [auth_page],
         "Overview": [dashboard_page],
-        "Navigation": [nav_route_page, map_page],
+        "Navigation": [nav_route_page, map_page, three_d_map_page],
         "Accessibility": [accessibility_page, obstacles_page],
     }
 

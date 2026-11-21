@@ -28,6 +28,14 @@ A Python-based college campus accessibility and navigation system designed to em
   - Comprehensive lifecycle management: *Pending*, *Verified*, *Resolved*, and *Rejected*.
   - Dynamic graph synchronization: verified active obstacles dynamically update live path availability without overwriting raw dataset attributes.
   - Immediate operational restoration upon report resolution.
+- **Interactive 3D Campus Navigation Engine (Phase 12):**
+  - High-performance Three.js WebGL 3D architectural visualization of campus buildings, facilities, and vertical circulation.
+  - Multi-floor controls: Combined view, Exploded floor view (separating Floor 1 vertically), Ground Floor only, and First Floor only.
+  - Full 360-degree orbit rotation, camera pan, smooth zoom, and camera presets (Isometric, Top-Down, Front Elevation, Reset).
+  - Vertical connector modeling: Transparent glass elevator shaft tower with illuminated cab (`LOC_04` ↔ `LOC_10`) and 3D stepped staircase flight (`LOC_05` ↔ `LOC_11`).
+  - Authoritative Python routing: Calculates live routes in Python (`RouteFinder`) and renders glowing 3D trajectory tubes with moving traversal light orbs.
+  - Dynamic barrier visualization: Synchronized with SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green.
+  - Interactive Raycaster Inspector: Clicking any 3D room volume opens a glassmorphic HUD drawer showing facility metadata, wheelchair accessibility, and amenity lists.
 - **Advanced Interactive Indoor Map & Route Visualizer (Phase 8):**
   - Floor-by-floor navigation filtering for Ground Floor (Floor 0), First Floor (Floor 1), and a side-by-side All Floors architectural overview.
   - In-map route planning with dynamic gold route overlays, origin pins, and destination flags.
@@ -72,6 +80,38 @@ A Python-based college campus accessibility and navigation system designed to em
 
 ---
 
+## 🏢 Three.js 3D Campus Navigation Engine (Phase 12)
+
+### 3D Architectural Visualization & Spatial Normalization
+
+The 3D Campus Navigation Engine (`modules/three_d_map.py`) translates schematic 2D campus graphs into a rich, hardware-accelerated WebGL isometric world rendered via **Three.js r128**:
+
+1. **Coordinate Normalization:**
+   - Translates 2D layout coordinates $(X, Y)$ into normalized 3D coordinates $(X, Y, Z)$ centered around $(X_c = 30.0, Z_c = 27.5)$ scaled at $0.85\times$.
+   - Vertical elevation ($Y$): Ground Floor resides at $Y = 0.0$; First Floor resides at $Y = 8.0$ (elevated to $Y = 16.0$ in Exploded View).
+2. **Multi-Floor Circulation & Platforms:**
+   - **Ground & First Floor Slabs:** Semi-translucent glass slabs with emerald perimeter borders and architectural alignment grids.
+   - **Vertical Elevator Shaft:** Enclosed glass tower connecting Ground Floor Elevator Lobby (`LOC_04`) to First Floor Elevator Lobby (`LOC_10`) with an illuminated elevator cab.
+   - **Central Staircase:** 3D stepped staircase flight connecting Ground Floor (`LOC_05`) to First Floor (`LOC_11`) in amber accent.
+   - **West Ramp Entrance:** Sloped ramp approach connecting outside access (`LOC_09`) to campus dining and restrooms.
+3. **3D Interaction & HUD Camera Controls:**
+   - **360° Orbit Rotation:** Left-click and drag for full panoramic inspection.
+   - **Smooth Zoom & Pan:** Mouse wheel zoom and right-click panning.
+   - **Camera Presets:** Isometric (45°), Top-Down (bird's-eye), Front Elevation, and Reset buttons.
+   - **Floor Layer Controls:** Combined building view, Exploded floor view (+8.0 vertical elevation for floor clearance), Ground Floor only, and First Floor only.
+4. **Authoritative Python-to-JavaScript Data Contract:**
+   - All pathfinding and accessibility intelligence execute exclusively in Python (`RouteFinder`, `AccessibilityEngine`).
+   - The calculated path nodes are transformed into 3D spline curves (`THREE.CatmullRomCurve3`) and rendered as glowing 3D trajectory tubes with moving traversal light pulses.
+5. **Dynamic SQLite Barrier Synchronization:**
+   - Actively verified obstacle reports from SQLite immediately update affected 3D pathway meshes to glowing crimson red with physical hazard barrier blocks.
+   - Rerouting around verified hazards updates the 3D trajectory in real-time.
+   - Resolving obstacles restores the pathway to operational green.
+6. **System Requirements & WebGL Graceful Degradation:**
+   - Runs in standard modern browsers (Chrome, Edge, Firefox, Safari) with WebGL 1.0/2.0 enabled.
+   - If WebGL hardware acceleration is unavailable, a clear notice is displayed directing users to the 2D schematic map.
+
+---
+
 ## 💻 Streamlit Web Application Pages
 
 The application is structured into five cohesive pages accessible via the sidebar navigation:
@@ -91,13 +131,25 @@ The application is structured into five cohesive pages accessible via the sideba
    - Interactive indoor schematic map with floor filters (*Ground Floor*, *First Floor*, *All Floors*).
    - In-map route visualization with path overlays, origin/destination pins, and elevator transfer callouts.
    - Location details panel with connected link breakdown and active obstacle alerts.
-4. **♿ Accessibility Overview (`pages/accessibility.py`):**
+4. **🏢 3D Campus Map (`pages/3d_campus_map.py`):**
+   - Full Three.js WebGL isometric multi-floor 3D campus navigator.
+   - Exploded floor view separating Floor 1 vertically for unobstructed inspection of ground-level corridors.
+   - 3D route planning with animated traversal orbs, step-by-step guidance, and vertical elevator shaft movement.
+   - Interactive raycasting room inspector displaying facility amenities and wheelchair readiness.
+   - Dynamic synchronization with live SQLite obstacle states (blocked pathways render in glowing crimson red).
+5. **♿ Accessibility Overview (`pages/accessibility.py`):**
    - Explanation of the 5 standardized accessibility classifications.
    - Comprehensive inventory of all 17 campus connections with distances, times, and facilities.
    - Single-location inspector analyzing node accessibility and special amenities.
    - Prominent disclaimer regarding the algorithmic heuristic nature of the scores.
-5. **⚠️ Obstacle Reports (`pages/obstacle_reports.py`):**
+6. **⚠️ Obstacle Reports (`pages/obstacle_reports.py`):**
    - Complete incident audit log with filters by Status, Severity, and Category.
+   - In-app reporting accordion to log field obstructions directly into the SQLite database.
+   - Authorized verification queue for Field Staff and Administrators.
+7. **🔐 Account & Sign In (`pages/login.py`):**
+   - Secure authentication interface with brute-force lockout and session management.
+8. **🛡️ Administrative Console (`pages/admin_management.py`):**
+   - Governance console for user role assignment, status toggling, and immutable audit logs.
    - In-app reporting accordion to log field obstructions directly into the SQLite database.
 
 ---
