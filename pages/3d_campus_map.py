@@ -2,7 +2,8 @@
 
 Provides 360-degree interactive camera orbit, exploded multi-floor viewing,
 room volume inspection, authoritative Python route planning with 3D spline rendering,
-vertical elevator/stair transitions, and dynamic obstacle synchronization.
+vertical elevator/stair transitions, intelligent multi-route comparison,
+and dynamic obstacle synchronization.
 
 Supports:
 1. JAIN Global Campus & FET 5-Floor Digital Twin (Ground to Fourth Floor + Outdoor Campus).
@@ -11,7 +12,7 @@ Supports:
 DISCLAIMER:
 All 3D building models and pathway geometries are schematic digital twin representations
 designed for graph connectivity visualization, accessibility inspection, and pathfinding
-demonstration. They do not represent surveyed architectural CAD blueprints or surveyed physical dimensions.
+demonstration. They do not represent surveyed architectural CAD blueprints or physical dimensions.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from modules.campus_map import CampusMap
 from modules.jain_digital_twin import (
     FLOOR_NAMES,
     build_jain_digital_twin_payload,
+    get_jain_multi_route_comparison,
     load_jain_campus_map,
     render_jain_digital_twin_html,
 )
@@ -139,16 +141,17 @@ if is_jain_twin:
             active_cmap.graph[u][v]["status"] = "blocked"
     active_rf = RouteFinder(active_cmap)
 
-    all_locs = sorted(
-        active_cmap.get_all_locations(),
-        key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))),
-    )
+    raw_locs = active_cmap.get_all_locations()
 
     def format_jain_label(loc: dict) -> str:
         fl = int(loc.get("floor", 0))
         fl_str = "Outdoor" if fl == -1 else f"Floor {fl}"
         return f"[{fl_str}] {loc.get('name', loc['id'])} ({loc['id']})"
 
+    all_locs = sorted(
+        raw_locs,
+        key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))),
+    )
     loc_options = {format_jain_label(loc): loc["id"] for loc in all_locs}
     loc_labels = list(loc_options.keys())
 
@@ -189,19 +192,53 @@ with col_controls:
     st.markdown('<div class="ui-card">', unsafe_allow_html=True)
     st.markdown("#### 🧭 3D Route Planning")
 
+    # Search & Filter Enhancements for Location Selection
+    if is_jain_twin:
+        filter_floor = st.selectbox(
+            "Filter Destination by Floor:",
+            options=["All Floors & Outdoor", "Outdoor Campus", "Ground Floor (Level 0)", "First Floor (Level 1)", "Second Floor (Level 2)", "Third Floor (Level 3)", "Fourth Floor (Level 4)"],
+            index=0,
+            key="3d_filter_floor",
+        )
+        filtered_labels = loc_labels
+        if filter_floor == "Outdoor Campus":
+            filtered_labels = [l for l in loc_labels if "[Outdoor]" in l]
+        elif filter_floor == "Ground Floor (Level 0)":
+            filtered_labels = [l for l in loc_labels if "[Floor 0]" in l]
+        elif filter_floor == "First Floor (Level 1)":
+            filtered_labels = [l for l in loc_labels if "[Floor 1]" in l]
+        elif filter_floor == "Second Floor (Level 2)":
+            filtered_labels = [l for l in loc_labels if "[Floor 2]" in l]
+        elif filter_floor == "Third Floor (Level 3)":
+            filtered_labels = [l for l in loc_labels if "[Floor 3]" in l]
+        elif filter_floor == "Fourth Floor (Level 4)":
+            filtered_labels = [l for l in loc_labels if "[Floor 4]" in l]
+        
+        if not filtered_labels:
+            filtered_labels = loc_labels
+    else:
+        filtered_labels = loc_labels
+
     start_label = st.selectbox(
         "Origin Location:",
         options=loc_labels,
-        index=default_start_idx,
+        index=default_start_idx if default_start_idx < len(loc_labels) else 0,
         key="3d_route_start",
         help="Choose starting campus facility.",
     )
     start_id = loc_options[start_label]
 
+    # Destination index within filtered list
+    dest_idx = 0
+    for idx, label in enumerate(filtered_labels):
+        if default_dest_idx < len(loc_labels) and label == loc_labels[default_dest_idx]:
+            dest_idx = idx
+            break
+
     dest_label = st.selectbox(
         "Destination Facility:",
-        options=loc_labels,
-        index=default_dest_idx,
+        options=filtered_labels,
+        index=dest_idx,
         key="3d_route_dest",
         help="Choose target campus destination.",
     )
@@ -234,7 +271,7 @@ with col_controls:
     inspect_label = st.selectbox(
         "Inspect Location:",
         options=loc_labels,
-        index=default_dest_idx,
+        index=default_dest_idx if default_dest_idx < len(loc_labels) else 0,
         key="3d_inspect_loc",
         help="Select a campus facility to highlight and view accessibility attributes.",
     )
@@ -293,6 +330,7 @@ if is_jain_twin:
         view_mode="all_floors",
     )
     route_data = scene_payload.get("active_route")
+    route_comparison = scene_payload.get("route_comparison")
     html_3d = render_jain_digital_twin_html(scene_payload, height=750)
 else:
     scene_payload = build_3d_scene_payload(
@@ -307,6 +345,7 @@ else:
         view_mode="combined",
     )
     route_data = scene_payload.get("active_route")
+    route_comparison = None
     html_3d = render_three_d_scene_html(scene_payload, height=750)
 
 with col_viewport:
@@ -355,6 +394,52 @@ if route_data and route_data.get("success"):
             icon = "🛗" if trans.get("connector_type") == "Elevator" else "🪜"
             st.info(f"{icon} **Vertical Transition Alert:** {trans.get('instruction')}")
 
+    # Active Verified Obstacle Detour Banner (if rerouted)
+    active_verified_hazards = [h for h in obs_manager.get_active_obstacles() if h.get("status") == "Verified"]
+    if active_verified_hazards:
+        st.markdown(
+            f"""
+            <div style="background: rgba(248, 113, 113, 0.15); border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-size: 12px; color: #F8FAFC;">
+                <b>⚠️ Active Obstacle Detour Notice:</b> The navigation engine detected <b>{len(active_verified_hazards)} active verified hazard(s)</b> on campus. Routes are dynamically rerouted around blocked corridors and non-operational vertical connectors to guarantee continuous accessibility.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Multi-Route Trade-off Comparison Panel
+    if route_comparison and len(route_comparison) > 1:
+        st.markdown("#### ⚖️ Multi-Route Trade-off Analysis & Algorithm Comparison")
+        st.caption("Heuristic path comparison evaluating physical distance, transit duration, vertical connectors, and step-free accessibility.")
+
+        comp_cols = st.columns(len(route_comparison))
+        for idx, (k, r_info) in enumerate(route_comparison.items()):
+            if not r_info:
+                continue
+            with comp_cols[idx]:
+                is_current = (k == algo_choice.lower())
+                border_color = "#35D99A" if is_current else "rgba(156, 175, 165, 0.25)"
+                bg_color = "rgba(53, 217, 154, 0.12)" if is_current else "rgba(13, 31, 24, 0.6)"
+                st.markdown(
+                    f"""
+                    <div style="border: 1px solid {border_color}; background: {bg_color}; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;">
+                        <div style="font-weight: 700; font-size: 13px; color: {'#35D99A' if is_current else '#F8FAFC'}; margin-bottom: 4px;">
+                            {'⭐ Active: ' if is_current else ''}{r_info['label']}
+                        </div>
+                        <div style="font-size: 11px; color: #9CAFA5; line-height: 1.5; margin-bottom: 8px;">
+                            {r_info['rationale']}
+                        </div>
+                        <div style="font-size: 12px; line-height: 1.8;">
+                            <div>📏 <b>Distance:</b> {r_info['total_distance']} m</div>
+                            <div>⏱️ <b>Est. Time:</b> {r_info['total_time']} s</div>
+                            <div>🪜 <b>Segments:</b> {r_info['edge_count']} Steps</div>
+                            <div>🛗 <b>Floor Transfers:</b> {r_info['floor_transitions']}</div>
+                            <div>♿ <b>Wheelchair:</b> <span style="color: {'#35D99A' if r_info['is_accessible'] else '#F5B942'};">{'Passable' if r_info['is_accessible'] else 'Stairs'}</span></div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
     # Detailed Step-by-Step Directions
     with st.expander("📋 Turn-by-Turn Navigational Guidance", expanded=True):
         steps = route_data.get("steps", [])
@@ -380,5 +465,23 @@ if route_data and route_data.get("success"):
                 unsafe_allow_html=True,
             )
 
+    # Heuristic Accessibility Notice
+    st.markdown(
+        """
+        <div style="font-size: 11px; color: #9CAFA5; margin-top: 14px; padding: 8px 12px; background: rgba(13, 31, 24, 0.5); border-left: 3px solid #35D99A; border-radius: 4px;">
+            ℹ️ <b>Accessibility Indicator Disclosure:</b> Route classifications and continuous accessibility scores (0–100) are generated as heuristic navigational guidance based on recorded building features (ramps, elevators, doorway clearance) and live field reports. They serve as assistive navigation metrics and do not constitute statutory architectural accessibility compliance certificates.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 elif route_data and not route_data.get("success"):
     st.error(f"❌ Route Unavailable: {route_data.get('error_message')}")
+    st.markdown(
+        """
+        <div style="font-size: 12px; color: #F5B942; margin-top: 6px;">
+            <b>Guidance:</b> If wheelchair mode is enabled and all vertical elevators connecting to the destination floor are blocked by active maintenance, try disabling wheelchair mode to inspect alternative staircase paths, or choose another destination facility.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )

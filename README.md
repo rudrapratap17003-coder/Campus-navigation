@@ -38,6 +38,14 @@ A Python-based college campus accessibility and navigation system designed to em
   - **Unified Outdoor/Indoor Navigation Graph:** 79 locations and 106 pathways connecting outdoor gateways directly to indoor research labs across all 5 floors. Powered by authoritative Python routing (BFS and Dijkstra).
   - **Dynamic Obstacle & Accessibility Integration:** Synchronized with the SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green. ♿ Wheelchair toggle strictly enforces step-free paths, using ramps and elevators while avoiding stairs.
   - **Dual Environment Switching:** Toggle seamlessly between the comprehensive *JAIN Global Campus & FET 5-Floor Digital Twin* and the canonical *15-Node Schematic Benchmark Model*.
+- **Campus Digital Twin Intelligence, Navigation Accuracy & System Validation (Phase 14):**
+  - **Topological Integrity & All-Pairs Reachability:** Verified mathematical graph connectivity for all 79 campus locations and 106 pathways across 5 physical floors. Achieved 100% reachability across all 6,162 directed pairs with zero isolated nodes in both standard pedestrian and wheelchair-accessible modes.
+  - **Intelligent Multi-Route Trade-Off Comparison Engine:** Side-by-side metric comparison evaluating Dijkstra (Shortest Distance), Breadth-First Search (Fewest Step Turns), and Alternative Detour with distance, estimated walking time, turn counts, floor transitions, elevator vs. stairs usage, and decision rationales.
+  - **Floor-Filtered Destination Navigation:** Searchable floor-based destination filter narrowing room selection to specific levels (Ground, Level 1, Level 2, Level 3, Level 4, or Outdoor).
+  - **Wheelchair Invariance & Vertical Alignment:** Formally validated step-free accessibility across 88 pathways, including continuous vertical transit via the central elevator core and strict exclusion of all 18 staircase edges.
+  - **Multi-Obstacle Concurrency & Database Audit Logging:** Validated that pathways with multiple overlapping hazard reports remain blocked until all reports are resolved. All verification and resolution actions write immutable audit trails to SQLite.
+  - **Accessibility Indicator Disclosure:** Explicit in-app advisory clarifying that accessibility scores (0–100) are continuous heuristic routing metrics representing barrier freedom rather than statutory building compliance certificates.
+  - **121 Comprehensive Automated Tests:** Test suite expanded to 121 tests passing with 0 failures and 0 errors, validating graph connectivity, 5-floor routing, wheelchair constraints, and security.
 - **Advanced Interactive Indoor Map & Route Visualizer (Phase 8):**
   - Floor-by-floor navigation filtering for Ground Floor (Floor 0), First Floor (Floor 1), and a side-by-side All Floors architectural overview.
   - In-map route planning with dynamic gold route overlays, origin pins, and destination flags.
@@ -374,6 +382,7 @@ Campus navigation/
 │   ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
 │   ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
 │   ├── test_three_d_map.py     # Three.js 3D isometric mapping and route tests
+│   ├── test_campus_graph_integrity.py # Phase 14 graph topology, reachability, concurrency & multi-route tests
 │   ├── test_jain_campus.py     # JAIN Global Campus 5-floor digital twin engine tests
 │   ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
 │   ├── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
@@ -384,7 +393,7 @@ Campus navigation/
 
 ## 🧪 Running Automated Tests
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **111 automated tests** across 12 test suites:
+All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **121 automated tests** across 13 test suites:
 
 ```powershell
 & ".venv\Scripts\python.exe" -m unittest discover tests -v
@@ -392,6 +401,7 @@ All test suites use isolated in-memory or temporary databases to prevent alterin
 
 To run individual test suites:
 ```powershell
+& ".venv\Scripts\python.exe" -m unittest tests/test_campus_graph_integrity.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_jain_campus.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_three_d_map.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_demo_workflow.py -v

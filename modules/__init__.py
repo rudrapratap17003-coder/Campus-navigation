@@ -34,6 +34,7 @@ from modules.jain_digital_twin import (
     get_jain_3d_locations_data,
     get_jain_3d_pathways_data,
     get_jain_3d_route_data,
+    get_jain_multi_route_comparison,
     load_jain_campus_map,
     render_jain_digital_twin_html,
 )
@@ -98,6 +99,7 @@ __all__ = [
     "get_jain_3d_locations_data",
     "get_jain_3d_pathways_data",
     "get_jain_3d_route_data",
+    "get_jain_multi_route_comparison",
     "build_jain_digital_twin_payload",
     "render_jain_digital_twin_html",
 ]

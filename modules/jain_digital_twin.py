@@ -344,6 +344,81 @@ def get_jain_3d_route_data(
     }
 
 
+def get_jain_multi_route_comparison(
+    campus_map: CampusMap,
+    route_finder: RouteFinder,
+    start_id: str,
+    dest_id: str,
+    wheelchair_accessible: bool = False,
+) -> Dict[str, Any]:
+    """Calculate and compare multiple route alternatives (Dijkstra, BFS, Alternative Detour) between two points."""
+    routes: Dict[str, Any] = {}
+
+    # 1. Primary Dijkstra Route (Shortest Distance)
+    dijkstra_res = route_finder.find_route(
+        source=start_id,
+        destination=dest_id,
+        algorithm="dijkstra",
+        wheelchair_accessible=wheelchair_accessible,
+        optimize_for="distance",
+    )
+
+    # 2. BFS Route (Fewest Steps/Hops)
+    bfs_res = route_finder.find_route(
+        source=start_id,
+        destination=dest_id,
+        algorithm="bfs",
+        wheelchair_accessible=wheelchair_accessible,
+    )
+
+    # 3. Penalty Alternative Route (Detour)
+    alternatives = route_finder.find_alternative_routes(
+        source=start_id,
+        destination=dest_id,
+        max_alternatives=1,
+        wheelchair_accessible=wheelchair_accessible,
+    )
+    alt_res = alternatives[0] if alternatives else None
+
+    def package_summary(r: Optional[RouteResult], label: str, rationale: str) -> Optional[Dict[str, Any]]:
+        if not r or not r.success:
+            return None
+        has_elev = any(s.has_elevator for s in r.steps)
+        has_stairs = any(s.has_stairs for s in r.steps)
+        trans_count = sum(1 for s in r.steps if s.from_floor != s.to_floor)
+        return {
+            "label": label,
+            "rationale": rationale,
+            "total_distance": round(r.total_distance, 1),
+            "total_time": round(r.total_time, 1),
+            "edge_count": r.edge_count,
+            "floor_transitions": trans_count,
+            "has_elevator": has_elev,
+            "has_stairs": has_stairs,
+            "is_accessible": r.is_accessible,
+            "path": r.path,
+        }
+
+    routes["dijkstra"] = package_summary(
+        dijkstra_res,
+        "Dijkstra (Shortest Distance)",
+        "Optimizes total physical pathway distance; best overall walking path.",
+    )
+    routes["bfs"] = package_summary(
+        bfs_res,
+        "BFS (Fewest Pathway Hops)",
+        "Minimizes the number of corridor and facility transitions.",
+    )
+    if alt_res:
+        routes["alternative"] = package_summary(
+            alt_res,
+            "Detour Alternative",
+            "Alternative trajectory bypassing key segments of the primary path.",
+        )
+
+    return routes
+
+
 def build_jain_digital_twin_payload(
     campus_map: CampusMap,
     route_finder: Optional[RouteFinder] = None,
@@ -366,6 +441,7 @@ def build_jain_digital_twin_payload(
     pathways = get_jain_3d_pathways_data(campus_map, obstacle_manager)
 
     active_route: Optional[Dict[str, Any]] = None
+    route_comparison: Optional[Dict[str, Any]] = None
     if route_finder and start_id and dest_id and start_id != dest_id:
         active_route = get_jain_3d_route_data(
             campus_map=campus_map,
@@ -373,6 +449,13 @@ def build_jain_digital_twin_payload(
             start_id=start_id,
             dest_id=dest_id,
             algorithm=algorithm,
+            wheelchair_accessible=wheelchair_accessible,
+        )
+        route_comparison = get_jain_multi_route_comparison(
+            campus_map=campus_map,
+            route_finder=route_finder,
+            start_id=start_id,
+            dest_id=dest_id,
             wheelchair_accessible=wheelchair_accessible,
         )
 
@@ -400,6 +483,7 @@ def build_jain_digital_twin_payload(
         "locations": locations,
         "pathways": pathways,
         "active_route": active_route,
+        "route_comparison": route_comparison,
         "active_obstacles": active_obstacles,
     }
 
