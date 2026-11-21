@@ -1,21 +1,40 @@
 """Three.js 3D Digital Twin Engine for JAIN Global Campus & FET 5-Floor Building.
 
-Reconstructs:
-1. JAIN Global Campus (Jakkasandra Post, Kanakapura Taluk, Ramanagara District, Karnataka, India):
-   - Outdoor 3D buildings: FET Complex, Colosseum Arena, JIRS Aquatic Pool, Cricket Stadium,
-     Sports Grounds, SBMJCE Dining Complex, Student Hostels, Admin Block, Aerospace Research Hangar.
-   - Outdoor arterial avenues, pedestrian pathways, parking zones, and Kanakapura Road gateway.
-2. Faculty of Engineering and Technology (FET) 5-Floor Complex:
-   - Ground Floor (Level 0), First Floor (Level 1), Second Floor (Level 2), Third Floor (Level 3), Fourth Floor (Level 4).
-   - Annular octagonal building footprint with central semi-circular tiered amphitheater.
-   - Four vertical staircase towers (North, East, South, West) and central wheelchair-accessible elevator shaft.
-   - Exploded 5-floor building presentation and individual floor isolation.
-3. Unified Navigation Graph:
-   - Outdoor campus pathways -> FET West Ramp / Front Portico -> 5-Floor Indoor Corridors -> Elevator/Stairs -> Room.
-   - Full authoritative Python route calculation with animated 3D glowing spline trajectories.
-4. Dynamic SQLite Obstacle Synchronization:
-   - Verified obstacles render as glowing crimson red barriers with hazard blocks.
-   - Automatic live detour recalculation.
+Phase 13 Architectural Visual Refinement:
+1. FET Building Exterior Architecture:
+   - Octagonal annular footprint with realistic structural mullions, curtain-wall glazing,
+     spandrel panels, entrance portico canopy, and roof parapet walls.
+   - Dedicated ADA-compliant West access ramp with handrails and south entrance colonnade.
+   - Realistic multi-layered PBR materials: concrete, tinted glass, metal mullions, polished terrazzo.
+2. Five-Floor Interior Detailing & Procedural Furnishings:
+   - Ground to 4th Floor distinct architectural layouts.
+   - Interior boundary wall partitions (1.8m height) defining real room volumes.
+   - Procedural lightweight room furnishings:
+     * Computer Labs: Workstation arrays with dual monitors and seating.
+     * Research Labs: Heavy-duty workbenches, equipment racks, apparatus blocks.
+     * Libraries: Bookshelf rows and central reading tables.
+     * Smart Classrooms: Tiered student desks, podium, digital smart boards.
+     * HPC Supercomputing Cluster: Server rack cabinets with glowing LED activity indicators.
+     * Conference Halls & Dean/HOD Suites: Executive conference tables, chairs, display screens.
+     * Amphitheater: 6-tier concentric stone seating steps and stage podium.
+3. Realistic Outdoor JAIN Global Campus:
+   - Kanakapura Road (NH-948) with lane markings and entrance zebra crosswalks.
+   - Distinct architectural silhouettes for all major campus facilities:
+     * Colosseum Arena (curved stadium bowl with classical colonnade pillars).
+     * JIRS Aquatic Center (50m Olympic pool with lane floats, starting blocks, and glass pavilion).
+     * Cricket Stadium (green turf oval, central clay pitch, boundary rope, 4-lane athletic track).
+     * Dining Complex (2-story cafeteria with outdoor terrace and rooftop canopy).
+     * Student Hostels (multi-block residential halls with balcony recesses).
+     * Admin Block (corporate headquarters with entrance pediment and steps).
+     * Aerospace Labs (barrel-vaulted testing hangar with tarmac apron).
+   - Instanced 3D tree canopies, hedges, sidewalk curbs, and illuminated light bollards.
+4. Advanced Exploration & Camera Controls:
+   - OrbitControls with smooth damping.
+   - Camera presets: Isometric, Top-Down, Front, Side (East), FET Close-up, Reset.
+   - Modes: Exterior View, Cutaway/Interior View (translucent exterior walls), Floor Isolation, Exploded 5F View with guide rods.
+   - Interactive Room Inspector with "🎯 Focus on Room" smooth camera lerp.
+   - Traversal Animation Controls: Play, Pause, Speed (1x, 2x, 0.5x), Restart.
+   - Accessibility Layer Toggles: Step-Free, Elevators, Stairs, Hazards.
 """
 
 from __future__ import annotations
@@ -52,7 +71,7 @@ FLOOR_NAMES: Dict[int, str] = {
     4: "Fourth Floor",
 }
 
-# Theme Palette
+# Theme Palette & Architectural Colors
 PALETTE = {
     "primary_bg": "#07130F",
     "secondary_bg": "#0D1F18",
@@ -60,6 +79,9 @@ PALETTE = {
     "building_surface": "#1C382C",
     "building_roof": "#264D3D",
     "fet_slab": "#0F261D",
+    "concrete": "#2A3B33",
+    "mullion": "#1E293B",
+    "glass": "#38BDF8",
     "primary_green": "#16A36A",
     "accent_mint": "#35D99A",
     "accessible_route": "#35D99A",
@@ -92,11 +114,9 @@ def get_jain_3d_locations_data(campus_map: CampusMap) -> List[Dict[str, Any]]:
         cat = str(loc.get("category", "office")).lower()
         elev_y = FLOOR_ELEVATIONS.get(floor, 0.5)
 
-        # Scale and position coordinates
         x_val = float(loc.get("x", 0.0))
         z_val = float(loc.get("y", 0.0))
 
-        # Determine neighbors
         neighbors: List[Dict[str, Any]] = []
         if loc_id in campus_map.graph:
             for neighbor_id in campus_map.graph.neighbors(loc_id):
@@ -250,6 +270,7 @@ def get_jain_3d_route_data(
             "cross_floor_transitions": [],
             "total_distance": 0.0,
             "total_time": 0.0,
+            "edge_count": 0,
             "is_accessible": False,
             "algorithm_used": algorithm.upper(),
         }
@@ -257,43 +278,24 @@ def get_jain_3d_route_data(
     path_nodes = route_res.path
     waypoints: List[Dict[str, Any]] = []
 
-    for i, loc_id in enumerate(path_nodes):
-        loc = campus_map.get_location(loc_id) or {}
-        fl = int(loc.get("floor", 0))
-        elev_y = FLOOR_ELEVATIONS.get(fl, 0.5) + 0.4  # Slightly above floor
-        x_val = float(loc.get("x", 0.0))
-        z_val = float(loc.get("y", 0.0))
+    for idx, node_id in enumerate(path_nodes):
+        loc = campus_map.get_location(node_id) or {}
+        floor = int(loc.get("floor", 0))
+        elev_y = FLOOR_ELEVATIONS.get(floor, 0.5)
+
+        x_pos = float(loc.get("x", 0.0))
+        z_pos = float(loc.get("y", 0.0))
 
         waypoints.append({
-            "id": loc_id,
-            "name": loc.get("name", loc_id),
-            "floor": fl,
-            "x": round(x_val, 2),
-            "y": round(elev_y, 2),
-            "z": round(z_val, 2),
-            "step_index": i,
+            "index": idx,
+            "id": node_id,
+            "name": loc.get("name", node_id),
+            "floor": floor,
+            "x": round(x_pos, 2),
+            "y": round(elev_y + 0.35, 2),
+            "z": round(z_pos, 2),
         })
 
-        # Inject vertical transit intermediate waypoint if next node is on a different floor
-        if i < len(path_nodes) - 1:
-            next_id = path_nodes[i + 1]
-            next_loc = campus_map.get_location(next_id) or {}
-            next_fl = int(next_loc.get("floor", 0))
-            if fl != next_fl:
-                next_y = FLOOR_ELEVATIONS.get(next_fl, 0.5) + 0.4
-                mid_y = (elev_y + next_y) / 2.0
-                waypoints.append({
-                    "id": f"{loc_id}_TRANSIT_{next_id}",
-                    "name": f"Vertical Shaft Transfer (Floor {fl} -> Floor {next_fl})",
-                    "floor": -99,
-                    "x": round((x_val + float(next_loc.get("x", 0.0))) / 2.0, 2),
-                    "y": round(mid_y, 2),
-                    "z": round((z_val + float(next_loc.get("y", 0.0))) / 2.0, 2),
-                    "step_index": i + 0.5,
-                    "is_transition": True,
-                })
-
-    # Steps serialization
     steps_data: List[Dict[str, Any]] = []
     for step in route_res.steps:
         steps_data.append({
@@ -313,7 +315,6 @@ def get_jain_3d_route_data(
             "instruction": step.instruction,
         })
 
-    # Cross-floor transition alerts
     transitions: List[Dict[str, Any]] = []
     for step in route_res.steps:
         if step.from_floor != step.to_floor:
@@ -445,44 +446,44 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
     /* Top HUD Controls */
     .hud-bar-top {{
       position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       pointer-events: none;
       z-index: 10;
     }}
     .hud-group {{
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(13, 31, 24, 0.88);
+      gap: 5px;
+      background: rgba(13, 31, 24, 0.92);
       border: 1px solid rgba(53, 217, 154, 0.3);
-      border-radius: 12px;
-      padding: 6px 10px;
+      border-radius: 10px;
+      padding: 5px 8px;
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
       pointer-events: auto;
     }}
     .hud-title {{
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #35D99A;
-      margin-right: 4px;
+      margin-right: 3px;
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }}
     .hud-btn {{
       background: rgba(22, 163, 106, 0.15);
       border: 1px solid rgba(53, 217, 154, 0.3);
       color: #F8FAFC;
-      border-radius: 8px;
-      padding: 5px 9px;
+      border-radius: 6px;
+      padding: 4px 8px;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
@@ -490,6 +491,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
     }}
     .hud-btn:hover {{
       background: rgba(53, 217, 154, 0.35);
@@ -505,14 +507,14 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
     /* Location Inspector Drawer */
     #location-card {{
       position: absolute;
-      bottom: 18px;
-      left: 18px;
+      bottom: 16px;
+      left: 16px;
       width: 320px;
-      max-width: calc(100% - 36px);
-      background: rgba(13, 31, 24, 0.94);
-      border: 1px solid rgba(53, 217, 154, 0.35);
-      border-radius: 14px;
-      padding: 14px 16px;
+      max-width: calc(100% - 32px);
+      background: rgba(13, 31, 24, 0.95);
+      border: 1px solid rgba(53, 217, 154, 0.4);
+      border-radius: 12px;
+      padding: 12px 14px;
       backdrop-filter: blur(12px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
       z-index: 10;
@@ -529,12 +531,12 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       border-bottom: 1px solid rgba(53, 217, 154, 0.2);
-      padding-bottom: 6px;
+      padding-bottom: 5px;
     }}
     .card-title {{
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: #F8FAFC;
       line-height: 1.3;
@@ -543,15 +545,14 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       display: inline-block;
       font-size: 10px;
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
       text-transform: uppercase;
       background: rgba(53, 217, 154, 0.2);
       color: #35D99A;
-      border: 1px solid rgba(53, 217, 154, 0.4);
     }}
     .card-close {{
-      background: transparent;
+      background: none;
       border: none;
       color: #9CAFA5;
       font-size: 16px;
@@ -563,57 +564,84 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       color: #F8FAFC;
     }}
     .card-row {{
-      font-size: 11px;
-      color: #9CAFA5;
-      margin-bottom: 4px;
       display: flex;
       justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: #9CAFA5;
     }}
-    .card-row span.val {{
-      color: #F8FAFC;
+    .card-row .val {{
       font-weight: 600;
+      color: #F8FAFC;
+      text-align: right;
     }}
     .amenities-list {{
-      margin-top: 8px;
       display: flex;
       flex-wrap: wrap;
       gap: 4px;
+      margin-top: 6px;
     }}
     .amenity-tag {{
-      font-size: 10px;
-      background: rgba(22, 163, 106, 0.2);
-      border: 1px solid rgba(53, 217, 154, 0.25);
+      background: rgba(53, 217, 154, 0.15);
+      border: 1px solid rgba(53, 217, 154, 0.3);
       color: #A7F3D0;
-      border-radius: 4px;
+      font-size: 9px;
       padding: 2px 6px;
+      border-radius: 4px;
     }}
-    /* Quick Legend HUD */
+    .card-action-btn {{
+      width: 100%;
+      margin-top: 8px;
+      background: #16A36A;
+      color: #FFFFFF;
+      border: 1px solid #35D99A;
+      border-radius: 6px;
+      padding: 6px 0;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.2s ease;
+    }}
+    .card-action-btn:hover {{
+      background: #35D99A;
+      color: #07130F;
+    }}
+    /* Legend */
     .hud-legend {{
       position: absolute;
-      bottom: 18px;
-      right: 18px;
-      background: rgba(13, 31, 24, 0.88);
+      bottom: 16px;
+      right: 16px;
+      background: rgba(13, 31, 24, 0.9);
       border: 1px solid rgba(53, 217, 154, 0.25);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 8px 12px;
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       z-index: 10;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      font-size: 11px;
+      gap: 4px;
+      font-size: 10px;
       color: #9CAFA5;
     }}
     .legend-item {{
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
+      cursor: pointer;
+    }}
+    .legend-item:hover span {{
+      color: #F8FAFC;
     }}
     .legend-dot {{
-      width: 10px;
-      height: 10px;
-      border-radius: 3px;
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      flex-shrink: 0;
     }}
     #hover-tooltip {{
       position: absolute;
@@ -658,24 +686,33 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       <div class="hud-group">
         <span class="hud-title">📐 Camera:</span>
         <button class="hud-btn active" id="btn-cam-iso">Isometric</button>
-        <button class="hud-btn" id="btn-cam-top">Top View</button>
+        <button class="hud-btn" id="btn-cam-top">Top</button>
         <button class="hud-btn" id="btn-cam-front">Front</button>
-        <button class="hud-btn" id="btn-cam-reset">🔄 Reset</button>
+        <button class="hud-btn" id="btn-cam-side">Side</button>
+        <button class="hud-btn" id="btn-cam-fet">FET Close</button>
+        <button class="hud-btn" id="btn-cam-reset">🔄</button>
       </div>
 
       <!-- Domain View Mode -->
       <div class="hud-group">
         <span class="hud-title">🌐 Domain:</span>
-        <button class="hud-btn active" id="btn-mode-all">All Campus & FET</button>
-        <button class="hud-btn" id="btn-mode-outdoor">Outdoor Campus</button>
-        <button class="hud-btn" id="btn-mode-fet">FET Building</button>
+        <button class="hud-btn active" id="btn-mode-all">All Campus</button>
+        <button class="hud-btn" id="btn-mode-outdoor">Outdoor</button>
+        <button class="hud-btn" id="btn-mode-fet">FET Only</button>
+      </div>
+
+      <!-- View Style (Exterior vs Cutaway Interior) -->
+      <div class="hud-group">
+        <span class="hud-title">👁️ View:</span>
+        <button class="hud-btn active" id="btn-view-exterior">Exterior</button>
+        <button class="hud-btn" id="btn-view-cutaway">Cutaway</button>
       </div>
 
       <!-- FET 5-Floor Isolation & Exploded Controls -->
       <div class="hud-group" id="group-floors">
-        <span class="hud-title">🏢 FET Levels:</span>
+        <span class="hud-title">🏢 Floors:</span>
         <button class="hud-btn active" id="btn-fl-all">Stacked</button>
-        <button class="hud-btn" id="btn-fl-exploded">💥 Exploded 5F</button>
+        <button class="hud-btn" id="btn-fl-exploded">💥 Exploded</button>
         <button class="hud-btn" id="btn-fl-0">G</button>
         <button class="hud-btn" id="btn-fl-1">1F</button>
         <button class="hud-btn" id="btn-fl-2">2F</button>
@@ -683,10 +720,11 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         <button class="hud-btn" id="btn-fl-4">4F</button>
       </div>
 
-      <!-- Animation / Labels -->
+      <!-- Route Animation & Accessibility Controls -->
       <div class="hud-group">
-        <button class="hud-btn active" id="btn-anim-toggle">⏯️ Traversal</button>
-        <button class="hud-btn active" id="btn-labels-toggle">🏷️ Labels</button>
+        <button class="hud-btn active" id="btn-anim-toggle" title="Play or Pause Traversal">⏯️ Route</button>
+        <button class="hud-btn" id="btn-anim-speed" title="Adjust Traversal Speed">⚡ 1x</button>
+        <button class="hud-btn active" id="btn-labels-toggle" title="Toggle Room Labels">🏷️</button>
       </div>
     </div>
 
@@ -708,6 +746,10 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         <span class="val" id="card-building">FET Engineering</span>
       </div>
       <div class="card-row">
+        <span>Category:</span>
+        <span class="val" id="card-category">Research Lab</span>
+      </div>
+      <div class="card-row">
         <span>Wheelchair Access:</span>
         <span class="val" id="card-access" style="color: #35D99A;">Step-Free Accessible</span>
       </div>
@@ -715,21 +757,20 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         <span>Connected Paths:</span>
         <span class="val" id="card-connections">3 routes</span>
       </div>
-      <div style="margin-top: 6px; font-size: 11px; color: #9CAFA5; font-weight: 600;">Verified Amenities:</div>
-      <div class="amenities-list" id="card-amenities">
-        <!-- Rendered dynamically -->
-      </div>
+      <div style="margin-top: 6px; font-size: 10px; color: #9CAFA5; font-weight: 600;">Verified Amenities:</div>
+      <div class="amenities-list" id="card-amenities"></div>
+      <button class="card-action-btn" id="btn-focus-room">🎯 Focus on Room</button>
     </div>
 
-    <!-- 3D Legend -->
+    <!-- 3D Legend & Layer Toggles -->
     <div class="hud-legend">
-      <div style="font-weight: 700; color: #35D99A; margin-bottom: 2px;">Campus Digital Twin:</div>
-      <div class="legend-item"><div class="legend-dot" style="background: #16A36A;"></div><span>Step-Free Accessible Pathway</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background: #35D99A;"></div><span>Access Ramp</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background: #60A5FA;"></div><span>Elevator Vertical Shaft (5 Floors)</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background: #F5B942;"></div><span>Stairwell Towers</span></div>
-      <div class="legend-item"><div class="legend-dot" style="background: #F87171;"></div><span>Verified Blocked Hazard</span></div>
-      <div class="legend-item" id="legend-route" style="display: none;"><div class="legend-dot" style="background: #F59E0B;"></div><span>Live Navigation Trajectory</span></div>
+      <div style="font-weight: 700; color: #35D99A; margin-bottom: 2px;">Campus Layers:</div>
+      <div class="legend-item" id="toggle-layer-stepfree"><div class="legend-dot" style="background: #16A36A;"></div><span>Step-Free Pathway</span></div>
+      <div class="legend-item" id="toggle-layer-ramp"><div class="legend-dot" style="background: #35D99A;"></div><span>ADA Access Ramp</span></div>
+      <div class="legend-item" id="toggle-layer-elevator"><div class="legend-dot" style="background: #60A5FA;"></div><span>Elevator Core (0F-4F)</span></div>
+      <div class="legend-item" id="toggle-layer-stairs"><div class="legend-dot" style="background: #F5B942;"></div><span>Cardinal Stairwells</span></div>
+      <div class="legend-item" id="toggle-layer-blocked"><div class="legend-dot" style="background: #F87171;"></div><span>Verified Barrier</span></div>
+      <div class="legend-item" id="legend-route" style="display: none;"><div class="legend-dot" style="background: #F59E0B;"></div><span>Active Trajectory</span></div>
     </div>
 
     <div id="hover-tooltip"></div>
@@ -768,7 +809,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       // 1. Scene, Camera, and Renderer Setup
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x07130F);
-      scene.fog = new THREE.FogExp2(0x07130F, 0.0035);
+      scene.fog = new THREE.FogExp2(0x07130F, 0.0032);
 
       const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.5, 2000);
       camera.position.set(110, 120, 140);
@@ -782,7 +823,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = 1.18;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -790,106 +831,322 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2 - 0.02;
-      controls.minDistance = 15;
-      controls.maxDistance = 600;
-      controls.target.set(20, 5, 20);
+      controls.minDistance = 10;
+      controls.maxDistance = 550;
+      controls.target.set(10, 8, 10);
 
       // Lighting Rig
-      const ambientLight = new THREE.AmbientLight(0x133829, 0.9);
+      const ambientLight = new THREE.AmbientLight(0x133829, 0.95);
       scene.add(ambientLight);
 
-      const sunLight = new THREE.DirectionalLight(0xFFFFFF, 1.1);
-      sunLight.position.set(150, 220, 120);
+      const sunLight = new THREE.DirectionalLight(0xFFFFFF, 1.25);
+      sunLight.position.set(150, 240, 130);
       sunLight.castShadow = true;
       sunLight.shadow.mapSize.width = 2048;
       sunLight.shadow.mapSize.height = 2048;
       sunLight.shadow.camera.near = 10;
       sunLight.shadow.camera.far = 600;
-      sunLight.shadow.camera.left = -180;
-      sunLight.shadow.camera.right = 180;
-      sunLight.shadow.camera.top = 180;
-      sunLight.shadow.camera.bottom = -180;
+      sunLight.shadow.camera.left = -190;
+      sunLight.shadow.camera.right = 190;
+      sunLight.shadow.camera.top = 190;
+      sunLight.shadow.camera.bottom = -190;
       scene.add(sunLight);
 
-      const blueFill = new THREE.DirectionalLight(0x60A5FA, 0.4);
+      const blueFill = new THREE.DirectionalLight(0x60A5FA, 0.45);
       blueFill.position.set(-150, 100, -150);
       scene.add(blueFill);
 
-      // Groups for Hierarchical Layer Control
+      // Groups for Layer & View Control
       const outdoorGroup = new THREE.Group();
       const fetBuildingGroup = new THREE.Group();
       const fetFloorGroups = [new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group(), new THREE.Group()];
+      const exteriorCurtainWalls = []; // for cutaway mode
       const verticalConnectorsGroup = new THREE.Group();
       const labelsGroup = new THREE.Group();
       const routeGroup = new THREE.Group();
+      const furnitureGroup = new THREE.Group();
+      const guideRodsGroup = new THREE.Group();
 
       scene.add(outdoorGroup);
       scene.add(fetBuildingGroup);
       fetFloorGroups.forEach(fg => fetBuildingGroup.add(fg));
       fetBuildingGroup.add(verticalConnectorsGroup);
+      fetBuildingGroup.add(furnitureGroup);
+      fetBuildingGroup.add(guideRodsGroup);
       scene.add(labelsGroup);
       scene.add(routeGroup);
 
-      // 2. Build Outdoor Campus Landscape & External Buildings
-      // Ground plane
+      // 2. Material Palette (PBR Quality)
+      const concreteMat = new THREE.MeshStandardMaterial({{ color: 0x22362C, roughness: 0.8, metalness: 0.1 }});
+      const slabMat = new THREE.MeshStandardMaterial({{ color: 0x0E261D, roughness: 0.45, metalness: 0.25 }});
+      const glassCurtainMat = new THREE.MeshStandardMaterial({{ color: 0x38BDF8, roughness: 0.1, metalness: 0.85, transparent: true, opacity: 0.55 }});
+      const mullionMat = new THREE.MeshStandardMaterial({{ color: 0x1E293B, roughness: 0.3, metalness: 0.9 }});
+      const parapetMat = new THREE.MeshStandardMaterial({{ color: 0x162A20, roughness: 0.7 }});
+      const waterMat = new THREE.MeshStandardMaterial({{ color: 0x0284C7, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }});
+      const turfMat = new THREE.MeshStandardMaterial({{ color: 0x143D28, roughness: 0.95 }});
+      const pitchMat = new THREE.MeshStandardMaterial({{ color: 0xA38054, roughness: 0.9 }});
+      const trackMat = new THREE.MeshStandardMaterial({{ color: 0x8A2F24, roughness: 0.8 }});
+      const woodMat = new THREE.MeshStandardMaterial({{ color: 0x78350F, roughness: 0.6 }});
+      const metalTechMat = new THREE.MeshStandardMaterial({{ color: 0x0F172A, roughness: 0.35, metalness: 0.8 }});
+      const deskMat = new THREE.MeshStandardMaterial({{ color: 0x475569, roughness: 0.5 }});
+      const monitorMat = new THREE.MeshStandardMaterial({{ color: 0x0284C7, emissive: 0x0284C7, emissiveIntensity: 0.6 }});
+
+      // 3. Outdoor Campus Landscape
+      // Terrain plane
       const terrainGeo = new THREE.PlaneGeometry(500, 500);
-      const terrainMat = new THREE.MeshStandardMaterial({{ color: 0x0A1C14, roughness: 0.9, metalness: 0.1 }});
+      const terrainMat = new THREE.MeshStandardMaterial({{ color: 0x091A12, roughness: 0.95 }});
       const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
       terrainMesh.rotation.x = -Math.PI / 2;
-      terrainMesh.position.y = -0.1;
+      terrainMesh.position.y = -0.15;
       terrainMesh.receiveShadow = true;
       outdoorGroup.add(terrainMesh);
 
       // Kanakapura Road (NH-948)
       const roadGeo = new THREE.PlaneGeometry(450, 22);
-      const roadMat = new THREE.MeshStandardMaterial({{ color: 0x1A231F, roughness: 0.8 }});
+      const roadMat = new THREE.MeshStandardMaterial({{ color: 0x19211D, roughness: 0.85 }});
       const roadMesh = new THREE.Mesh(roadGeo, roadMat);
       roadMesh.rotation.x = -Math.PI / 2;
       roadMesh.position.set(0, 0.01, 155);
       roadMesh.receiveShadow = true;
       outdoorGroup.add(roadMesh);
 
-      // Outdoor Buildings Representation
+      // Road Centerlines (Dashed White Lines)
+      for (let rx = -200; rx <= 200; rx += 12) {{
+        const dashGeo = new THREE.PlaneGeometry(6, 0.5);
+        const dashMat = new THREE.MeshBasicMaterial({{ color: 0xF8FAFC }});
+        const dash = new THREE.Mesh(dashGeo, dashMat);
+        dash.rotation.x = -Math.PI / 2;
+        dash.position.set(rx, 0.03, 155);
+        outdoorGroup.add(dash);
+      }}
+
+      // Main Gate Entrance Arch & Zebra Crosswalk
+      for (let zx = -6; zx <= 6; zx += 1.6) {{
+        const zebraGeo = new THREE.PlaneGeometry(0.9, 12);
+        const zebraMat = new THREE.MeshBasicMaterial({{ color: 0xF8FAFC }});
+        const zebra = new THREE.Mesh(zebraGeo, zebraMat);
+        zebra.rotation.x = -Math.PI / 2;
+        zebra.position.set(zx, 0.03, 144);
+        outdoorGroup.add(zebra);
+      }}
+
+      const gateArchMat = new THREE.MeshStandardMaterial({{ color: 0x1E3B2F, metalness: 0.6, roughness: 0.3 }});
+      const p1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), gateArchMat);
+      p1.position.set(-8, 3.5, 140);
+      const p2 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7, 1.4), gateArchMat);
+      p2.position.set(8, 3.5, 140);
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(18, 1.2, 1.6), gateArchMat);
+      beam.position.set(0, 7.5, 140);
+      outdoorGroup.add(p1, p2, beam);
+
+      // Paved Main Avenue Walkways with Curbs
+      const aveGeo = new THREE.PlaneGeometry(16, 95);
+      const aveMat = new THREE.MeshStandardMaterial({{ color: 0x1F2E27, roughness: 0.8 }});
+      const aveMesh = new THREE.Mesh(aveGeo, aveMat);
+      aveMesh.rotation.x = -Math.PI / 2;
+      aveMesh.position.set(0, 0.02, 92);
+      aveMesh.receiveShadow = true;
+      outdoorGroup.add(aveMesh);
+
+      // 4. Distinct Outdoor Campus Buildings
       const buildingMeshes = [];
       const interactiveLocations = [];
       const locationMeshMap = {{}};
 
       (DATA.buildings || []).forEach(bld => {{
-        if (bld.id === 'BLD_FET') return; // Handled separately as 5-Floor detailed structure
+        if (bld.id === 'BLD_FET') return;
 
-        let bldGeo;
-        let bldMat = new THREE.MeshStandardMaterial({{
-          color: bld.category === 'sports' ? 0x2A453B : 0x1E3B2F,
-          roughness: 0.5,
-          metalness: 0.25
-        }});
+        const bGroup = new THREE.Group();
+        bGroup.position.set(bld.center_x, 0, bld.center_z);
 
-        if (bld.shape === 'oval') {{
-          bldGeo = new THREE.CylinderGeometry(bld.width / 2, bld.width / 2, bld.height, 32);
-        }} else if (bld.shape === 'pool') {{
-          bldGeo = new THREE.BoxGeometry(bld.width, bld.height, bld.depth);
-          bldMat = new THREE.MeshStandardMaterial({{ color: 0x0284C7, roughness: 0.3 }});
+        if (bld.id === 'BLD_COLOSSEUM') {{
+          // Circular Colosseum Sports Arena
+          const baseCyl = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 9, 32), concreteMat);
+          baseCyl.position.y = 4.5;
+          baseCyl.castShadow = true;
+          bGroup.add(baseCyl);
+
+          // Colonnade Pillars
+          for (let i = 0; i < 16; i++) {{
+            const angle = (i / 16) * Math.PI * 2;
+            const pil = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 10, 12), mullionMat);
+            pil.position.set(Math.cos(angle) * 22.8, 5, Math.sin(angle) * 22.8);
+            bGroup.add(pil);
+          }}
+          // Domed Roof Ring
+          const dome = new THREE.Mesh(new THREE.SphereGeometry(18, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.35), parapetMat);
+          dome.position.y = 8.5;
+          bGroup.add(dome);
+
+        }} else if (bld.id === 'BLD_AQUATICS_POOL') {{
+          // JIRS Aquatic Center: Glass Sports Pavilion + Olympic Pool
+          const poolDeck = new THREE.Mesh(new THREE.BoxGeometry(40, 1.0, 24), concreteMat);
+          poolDeck.position.y = 0.5;
+          bGroup.add(poolDeck);
+
+          const water = new THREE.Mesh(new THREE.PlaneGeometry(36, 18), waterMat);
+          water.rotation.x = -Math.PI / 2;
+          water.position.y = 1.02;
+          bGroup.add(water);
+
+          // Lane Lines on Water
+          for (let lane = -7; lane <= 7; lane += 2) {{
+            const lmesh = new THREE.Mesh(new THREE.PlaneGeometry(34, 0.15), new THREE.MeshBasicMaterial({{ color: 0xFFFFFF }}));
+            lmesh.rotation.x = -Math.PI / 2;
+            lmesh.position.set(0, 1.03, lane);
+            bGroup.add(lmesh);
+          }}
+
+          // Starting Blocks
+          for (let sb = -7; sb <= 7; sb += 2) {{
+            const block = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), mullionMat);
+            block.position.set(-17.5, 1.3, sb);
+            bGroup.add(block);
+          }}
+
+          // Enclosed Pavilion
+          const pavilion = new THREE.Mesh(new THREE.BoxGeometry(16, 7, 24), glassCurtainMat);
+          pavilion.position.set(24, 3.5, 0);
+          bGroup.add(pavilion);
+
+        }} else if (bld.id === 'BLD_CRICKET_STADIUM') {{
+          // International Cricket Stadium: Oval Turf + Pitch + 4-lane Running Track
+          const track = new THREE.Mesh(new THREE.CylinderGeometry(52, 52, 0.2, 36), trackMat);
+          track.position.y = 0.1;
+          bGroup.add(track);
+
+          const turf = new THREE.Mesh(new THREE.CylinderGeometry(47, 47, 0.3, 36), turfMat);
+          turf.position.y = 0.2;
+          bGroup.add(turf);
+
+          // Central Pitch
+          const pitch = new THREE.Mesh(new THREE.PlaneGeometry(22, 3.2), pitchMat);
+          pitch.rotation.x = -Math.PI / 2;
+          pitch.position.y = 0.36;
+          bGroup.add(pitch);
+
+          // White Boundary Rope
+          const ropeGeo = new THREE.TorusGeometry(45, 0.25, 8, 48);
+          const rope = new THREE.Mesh(ropeGeo, new THREE.MeshBasicMaterial({{ color: 0xF8FAFC }}));
+          rope.rotation.x = Math.PI / 2;
+          rope.position.y = 0.4;
+          bGroup.add(rope);
+
+        }} else if (bld.id === 'BLD_DINING_COMPLEX') {{
+          // 2-Story Dining Hall & Student Cafeteria
+          const dBase = new THREE.Mesh(new THREE.BoxGeometry(34, 8, 22), concreteMat);
+          dBase.position.y = 4;
+          bGroup.add(dBase);
+
+          const dGlass = new THREE.Mesh(new THREE.BoxGeometry(32, 6, 20), glassCurtainMat);
+          dGlass.position.y = 4.2;
+          bGroup.add(dGlass);
+
+          // Rooftop Terrace & Canopy
+          const terrace = new THREE.Mesh(new THREE.BoxGeometry(36, 0.8, 24), parapetMat);
+          terrace.position.y = 8.4;
+          bGroup.add(terrace);
+
+        }} else if (bld.id === 'BLD_HOSTEL_BLOCKS') {{
+          // Student Residential Dormitory Blocks
+          [-14, 0, 14].forEach((offsetZ, idx) => {{
+            const hBlock = new THREE.Mesh(new THREE.BoxGeometry(26, 12, 10), concreteMat);
+            hBlock.position.set(0, 6, offsetZ);
+            hBlock.castShadow = true;
+            bGroup.add(hBlock);
+
+            // Balcony Horizontal Recesses
+            for (let fl = 1; fl <= 3; fl++) {{
+              const balc = new THREE.Mesh(new THREE.BoxGeometry(25, 0.3, 1.2), mullionMat);
+              balc.position.set(0, fl * 3.5, offsetZ + 5.2);
+              bGroup.add(balc);
+            }}
+          }});
+
+        }} else if (bld.id === 'BLD_ADMIN_BLOCK') {{
+          // University Corporate Administration Headquarters
+          const aBody = new THREE.Mesh(new THREE.BoxGeometry(32, 10, 20), concreteMat);
+          aBody.position.y = 5;
+          bGroup.add(aBody);
+
+          // Classical Entrance Portico & Pillars
+          const porticoRoof = new THREE.Mesh(new THREE.BoxGeometry(14, 1.2, 8), parapetMat);
+          porticoRoof.position.set(0, 10.6, 12);
+          bGroup.add(porticoRoof);
+
+          [-5, -1.8, 1.8, 5].forEach(px => {{
+            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 10, 16), concreteMat);
+            col.position.set(px, 5, 14.5);
+            bGroup.add(col);
+          }});
+
+        }} else if (bld.id === 'BLD_AEROSPACE_LABS') {{
+          // Aerospace Research Hangar (Barrel Vault)
+          const hangarCyl = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 36, 24, 1, false, 0, Math.PI), concreteMat);
+          hangarCyl.rotation.z = Math.PI / 2;
+          hangarCyl.position.set(0, 0, 0);
+          bGroup.add(hangarCyl);
+
+          // Tarmac Apron
+          const apron = new THREE.Mesh(new THREE.PlaneGeometry(36, 24), roadMat);
+          apron.rotation.x = -Math.PI / 2;
+          apron.position.set(0, 0.05, 20);
+          bGroup.add(apron);
+
         }} else {{
-          bldGeo = new THREE.BoxGeometry(bld.width, bld.height, bld.depth);
+          // Standard Academic Structure
+          const generic = new THREE.Mesh(new THREE.BoxGeometry(bld.width, bld.height, bld.depth), concreteMat);
+          generic.position.y = bld.height / 2;
+          bGroup.add(generic);
         }}
 
-        const bldMesh = new THREE.Mesh(bldGeo, bldMat);
-        bldMesh.position.set(bld.center_x, bld.height / 2, bld.center_z);
-        bldMesh.castShadow = true;
-        bldMesh.receiveShadow = true;
-
-        // Wireframe architectural accent
-        const edges = new THREE.EdgesGeometry(bldGeo);
-        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({{ color: 0x35D99A, transparent: true, opacity: 0.3 }}));
-        bldMesh.add(line);
-
-        bldMesh.userData = {{ buildingData: bld }};
-        outdoorGroup.add(bldMesh);
-        buildingMeshes.push(bldMesh);
+        bGroup.userData = {{ buildingData: bld }};
+        outdoorGroup.add(bGroup);
+        buildingMeshes.push(bGroup);
       }});
 
-      // 3. Reconstruct FET 5-Floor Detailed Building
-      // Annular Octagonal Building Slabs for all 5 floors
+      // Instanced Trees & Landscaping Vegetation
+      const treeCount = 65;
+      const trunkGeo = new THREE.CylinderGeometry(0.3, 0.45, 3.5, 8);
+      const foliageGeo = new THREE.SphereGeometry(2.4, 10, 8);
+      const trunkMat = new THREE.MeshStandardMaterial({{ color: 0x3E2723, roughness: 0.9 }});
+      const foliageMat = new THREE.MeshStandardMaterial({{ color: 0x1E4620, roughness: 0.85 }});
+
+      const trunkInst = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+      const folInst = new THREE.InstancedMesh(foliageGeo, foliageMat, treeCount);
+      trunkInst.castShadow = true;
+      folInst.castShadow = true;
+
+      const dummy = new THREE.Object3D();
+      let treeIdx = 0;
+
+      // Tree locations around perimeter roads and quadrangle
+      const treeCoords = [];
+      for (let tx = -170; tx <= 170; tx += 28) {{
+        treeCoords.push({{ x: tx, z: 135 }});
+        treeCoords.push({{ x: tx, z: 175 }});
+      }}
+      for (let tz = 30; tz <= 120; tz += 22) {{
+        treeCoords.push({{ x: -16, z: tz }});
+        treeCoords.push({{ x: 16, z: tz }});
+        treeCoords.push({{ x: -85, z: tz }});
+        treeCoords.push({{ x: 85, z: tz }});
+      }}
+
+      treeCoords.slice(0, treeCount).forEach((c, i) => {{
+        const scale = 0.85 + Math.random() * 0.4;
+        dummy.position.set(c.x + (Math.random() - 0.5) * 4, 1.75 * scale, c.z + (Math.random() - 0.5) * 4);
+        dummy.scale.set(scale, scale, scale);
+        dummy.updateMatrix();
+        trunkInst.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.y = 4.2 * scale;
+        dummy.updateMatrix();
+        folInst.setMatrixAt(i, dummy.matrix);
+      }});
+      outdoorGroup.add(trunkInst, folInst);
+
+      // 5. Reconstruct FET 5-Floor Detailed Building
       function createOctagonalFloorSlab(radius, thickness) {{
         const shape = new THREE.Shape();
         const sides = 8;
@@ -915,7 +1172,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         hole.closePath();
         shape.holes.push(hole);
 
-        const extrudeSettings = {{ depth: thickness, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.2, bevelSegments: 3 }};
+        const extrudeSettings = {{ depth: thickness, bevelEnabled: true, bevelThickness: 0.25, bevelSize: 0.25, bevelSegments: 3 }};
         return new THREE.ExtrudeGeometry(shape, extrudeSettings);
       }}
 
@@ -924,54 +1181,105 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
 
       for (let fl = 0; fl < 5; fl++) {{
         const slabGeo = createOctagonalFloorSlab(40, slabThickness);
-        const slabMat = new THREE.MeshStandardMaterial({{
-          color: fl === 0 ? 0x0E261D : 0x123024,
-          roughness: 0.4,
-          metalness: 0.25,
-          transparent: true,
-          opacity: 0.88
-        }});
         const slabMesh = new THREE.Mesh(slabGeo, slabMat);
         slabMesh.rotation.x = -Math.PI / 2;
         slabMesh.position.set(0, floorElevations[fl], 0);
         slabMesh.receiveShadow = true;
         fetFloorGroups[fl].add(slabMesh);
 
-        // Ground Floor Central Amphitheater Concentric Steps
+        // Exterior Curtain Walls & Mullions (8 perimeter segments)
+        const wallH = 5.2;
+        const outerR = 39.8;
+        for (let s = 0; s < 8; s++) {{
+          const a1 = (s * 2 * Math.PI) / 8;
+          const a2 = ((s + 1) * 2 * Math.PI) / 8;
+          const x1 = outerR * Math.cos(a1), z1 = outerR * Math.sin(a1);
+          const x2 = outerR * Math.cos(a2), z2 = outerR * Math.sin(a2);
+
+          const midX = (x1 + x2) / 2;
+          const midZ = (z1 + z2) / 2;
+          const len = Math.hypot(x2 - x1, z2 - z1);
+          const ang = Math.atan2(x2 - x1, z2 - z1);
+
+          // Glass Curtain Wall
+          const cWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, wallH, len), glassCurtainMat);
+          cWall.position.set(midX, floorElevations[fl] + wallH / 2, midZ);
+          cWall.rotation.y = ang;
+          cWall.userData = {{ isCurtainWall: true }};
+          fetFloorGroups[fl].add(cWall);
+          exteriorCurtainWalls.push(cWall);
+
+          // Structural Corner Mullion Column
+          const col = new THREE.Mesh(new THREE.BoxGeometry(0.8, wallH, 0.8), mullionMat);
+          col.position.set(x1, floorElevations[fl] + wallH / 2, z1);
+          fetFloorGroups[fl].add(col);
+        }}
+
+        // Ground Floor Entrance Portico & West Ramp
         if (fl === 0) {{
-          for (let step = 1; step <= 5; step++) {{
-            const stepGeo = new THREE.CylinderGeometry(step * 3.2, step * 3.2, 0.4, 32, 1, false, 0, Math.PI);
+          // Grand Entrance Portico Canopy
+          const portico = new THREE.Mesh(new THREE.BoxGeometry(16, 1.0, 10), concreteMat);
+          portico.position.set(0, 5.5, 38);
+          fetFloorGroups[0].add(portico);
+
+          [-7, 7].forEach(cx => {{
+            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 5.5, 16), concreteMat);
+            col.position.set(cx, 2.75, 42);
+            fetFloorGroups[0].add(col);
+          }});
+
+          // Dedicated West Accessible Entrance Ramp
+          const rampGeo = new THREE.BoxGeometry(4.0, 0.4, 26);
+          const rampMat = new THREE.MeshStandardMaterial({{ color: 0x35D99A, roughness: 0.5 }});
+          const rampMesh = new THREE.Mesh(rampGeo, rampMat);
+          rampMesh.position.set(-28, 0.25, 24);
+          rampMesh.rotation.x = 0.05; // Gentle 1:12 ADA slope
+          fetFloorGroups[0].add(rampMesh);
+
+          // Central Courtyard Concentric Amphitheater Steps
+          for (let step = 1; step <= 6; step++) {{
+            const stepGeo = new THREE.CylinderGeometry(step * 2.8, step * 2.8, 0.4, 32, 1, false, 0, Math.PI);
             const stepMat = new THREE.MeshStandardMaterial({{ color: 0x1B4332, roughness: 0.7 }});
             const stepMesh = new THREE.Mesh(stepGeo, stepMat);
-            stepMesh.position.set(0, 0.2 + (5 - step) * 0.3, 0);
+            stepMesh.position.set(0, 0.2 + (6 - step) * 0.32, 0);
             stepMesh.rotation.y = Math.PI / 2;
             fetFloorGroups[0].add(stepMesh);
           }}
+          // Amphitheater Stage
+          const stage = new THREE.Mesh(new THREE.BoxGeometry(10, 0.6, 7), concreteMat);
+          stage.position.set(0, 0.4, -4);
+          fetFloorGroups[0].add(stage);
+        }}
+
+        // Top Roof Parapet Trim on 4th Floor
+        if (fl === 4) {{
+          const roofTrim = new THREE.Mesh(createOctagonalFloorSlab(40.4, 1.2), parapetMat);
+          roofTrim.rotation.x = -Math.PI / 2;
+          roofTrim.position.set(0, floorElevations[4] + wallH, 0);
+          fetFloorGroups[4].add(roofTrim);
         }}
       }}
 
-      // 4. Vertical Circulation (Elevator Shaft + 4 Stairwells across all 5 Floors)
-      // Elevator Glass Shaft Tower (Serving Level 0 to Level 4, Height ~ 26m)
+      // 6. Vertical Circulation (Elevator Glass Core & 4 Cardinal Stairwells)
       const elevatorHeight = 25.5;
-      const elevShaftGeo = new THREE.BoxGeometry(4.5, elevatorHeight, 4.5);
-      const elevShaftMat = new THREE.MeshStandardMaterial({{
-        color: 0x60A5FA,
-        transparent: true,
-        opacity: 0.35,
-        roughness: 0.1,
-        metalness: 0.8
-      }});
-      const elevShaft = new THREE.Mesh(elevShaftGeo, elevShaftMat);
+      const elevShaft = new THREE.Mesh(new THREE.BoxGeometry(4.8, elevatorHeight, 4.8), new THREE.MeshStandardMaterial({{
+        color: 0x60A5FA, transparent: true, opacity: 0.38, roughness: 0.1, metalness: 0.85
+      }}));
       elevShaft.position.set(-6.0, elevatorHeight / 2, 18.0);
       verticalConnectorsGroup.add(elevShaft);
 
-      // Glowing Elevator Cab
-      const cabGeo = new THREE.BoxGeometry(3.5, 3.0, 3.5);
-      const cabMat = new THREE.MeshStandardMaterial({{
-        color: 0x3B82F6,
-        emissive: 0x1D4ED8,
-        emissiveIntensity: 0.8
+      // Steel Corner Columns for Elevator Core
+      [-2.3, 2.3].forEach(ex => {{
+        [-2.3, 2.3].forEach(ez => {{
+          const col = new THREE.Mesh(new THREE.BoxGeometry(0.3, elevatorHeight, 0.3), mullionMat);
+          col.position.set(-6.0 + ex, elevatorHeight / 2, 18.0 + ez);
+          verticalConnectorsGroup.add(col);
+        }});
       }});
+
+      // Animated Glowing Elevator Cab
+      const cabGeo = new THREE.BoxGeometry(3.6, 3.2, 3.6);
+      const cabMat = new THREE.MeshStandardMaterial({{ color: 0x3B82F6, emissive: 0x1D4ED8, emissiveIntensity: 0.9 }});
       const elevatorCab = new THREE.Mesh(cabGeo, cabMat);
       elevatorCab.position.set(-6.0, 2.0, 18.0);
       verticalConnectorsGroup.add(elevatorCab);
@@ -985,42 +1293,121 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       ];
 
       stairwellPositions.forEach(pos => {{
-        const stairShaftGeo = new THREE.BoxGeometry(4.2, elevatorHeight, 4.2);
-        const stairShaftMat = new THREE.MeshStandardMaterial({{
-          color: 0xF5B942,
-          transparent: true,
-          opacity: 0.45,
-          roughness: 0.3
-        }});
-        const stairShaft = new THREE.Mesh(stairShaftGeo, stairShaftMat);
+        const stairShaft = new THREE.Mesh(new THREE.BoxGeometry(4.4, elevatorHeight, 4.4), new THREE.MeshStandardMaterial({{
+          color: 0xF5B942, transparent: true, opacity: 0.45, roughness: 0.35
+        }}));
         stairShaft.position.set(pos.x, elevatorHeight / 2, pos.z);
         verticalConnectorsGroup.add(stairShaft);
       }});
 
-      // 5. Render All Locations & 3D Spatial Nodes
+      // Vertical Guide Rods for Exploded View
+      stairwellPositions.forEach(pos => {{
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 80, 8), new THREE.MeshBasicMaterial({{
+          color: 0x35D99A, transparent: true, opacity: 0.35
+        }}));
+        rod.position.set(pos.x, 40, pos.z);
+        guideRodsGroup.add(rod);
+      }});
+      guideRodsGroup.visible = false;
+
+      // 7. Procedural Interior Furnishings by Room Category
+      function addRoomFurnishings(loc, floorGroup) {{
+        const cat = loc.category;
+        const pos = loc.pos;
+        const fl = loc.floor;
+        if (fl < 0) return;
+
+        const fGroup = new THREE.Group();
+        fGroup.position.set(pos.x, pos.y, pos.z);
+
+        if (cat === 'lab') {{
+          if (loc.id.includes('CS') || loc.id.includes('DATA')) {{
+            // Computer Labs: Workstation Rows with Dual Monitors
+            for (let row = -1.5; row <= 1.5; row += 1.5) {{
+              const desk = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.7, 0.9), deskMat);
+              desk.position.set(0, 0.35, row);
+              const mon1 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.45, 0.1), monitorMat);
+              mon1.position.set(-0.6, 0.9, row);
+              const mon2 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.45, 0.1), monitorMat);
+              mon2.position.set(0.6, 0.9, row);
+              fGroup.add(desk, mon1, mon2);
+            }}
+          }} else if (loc.id.includes('HPC') || loc.id.includes('QUANTUM')) {{
+            // Supercomputing Cluster: Server Racks with Blinking Cyan LED Activity
+            [-1.2, 0, 1.2].forEach(rx => {{
+              const rack = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.2, 1.2), metalTechMat);
+              rack.position.set(rx, 1.1, 0);
+              const led = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.05), monitorMat);
+              led.position.set(rx, 1.8, 0.61);
+              fGroup.add(rack, led);
+            }});
+          }} else {{
+            // Physics / Chem / Mech / ECE Labs: Workbenches & Apparatus
+            const bench = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.85, 1.4), concreteMat);
+            bench.position.set(0, 0.42, 0);
+            const apparatus = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.8), mullionMat);
+            apparatus.position.set(0, 1.15, 0);
+            fGroup.add(bench, apparatus);
+          }}
+
+        }} else if (cat === 'library') {{
+          // Library: Bookshelves and Reading Table
+          [-1.6, 1.6].forEach(bz => {{
+            const shelf = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.0, 0.6), woodMat);
+            shelf.position.set(0, 1.0, bz);
+            fGroup.add(shelf);
+          }});
+          const table = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.7, 1.2), deskMat);
+          table.position.set(0, 0.35, 0);
+          fGroup.add(table);
+
+        }} else if (cat === 'auditorium' || loc.id.includes('CONF') || loc.id.includes('DEAN') || loc.id.includes('HOD')) {{
+          // Executive Conference Table with Seating
+          const confTable = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.7, 16), woodMat);
+          confTable.position.set(0, 0.35, 0);
+          const screen = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.2, 0.1), monitorMat);
+          screen.position.set(0, 1.8, -1.8);
+          fGroup.add(confTable, screen);
+
+        }} else if (cat === 'classroom' || loc.id.includes('SMART')) {{
+          // Smart Classroom: Tiered Desks & Display Screen
+          [-1.2, 0, 1.2].forEach(cz => {{
+            const desk = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.7, 0.7), deskMat);
+            desk.position.set(0, 0.35, cz);
+            fGroup.add(desk);
+          }});
+          const board = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.1, 0.1), monitorMat);
+          board.position.set(0, 1.6, -2.0);
+          fGroup.add(board);
+        }}
+
+        floorGroup.add(fGroup);
+      }}
+
+      // 8. Render All Locations & 3D Spatial Nodes
       function createTextSprite(text, isOutdoor, floorNum) {{
         const canvas = document.createElement('canvas');
         canvas.width = 300;
         canvas.height = 70;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = isOutdoor ? 'rgba(10, 28, 20, 0.92)' : 'rgba(7, 19, 15, 0.9)';
-        ctx.roundRect ? ctx.roundRect(4, 4, 292, 62, 12) : ctx.rect(4, 4, 292, 62);
+        ctx.fillStyle = isOutdoor ? 'rgba(10, 28, 20, 0.92)' : 'rgba(7, 19, 15, 0.92)';
+        ctx.roundRect ? ctx.roundRect(4, 4, 292, 62, 10) : ctx.rect(4, 4, 292, 62);
         ctx.fill();
         ctx.strokeStyle = isOutdoor ? '#35D99A' : (floorNum === 0 ? '#10B981' : '#60A5FA');
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        ctx.font = 'bold 22px sans-serif';
+        ctx.font = 'bold 21px sans-serif';
         ctx.fillStyle = '#F8FAFC';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const displayTxt = text.length > 20 ? text.substring(0, 19) + '...' : text;
+        const displayTxt = text.length > 21 ? text.substring(0, 20) + '...' : text;
         ctx.fillText(displayTxt, 150, 35);
 
         const tex = new THREE.CanvasTexture(canvas);
         const mat = new THREE.SpriteMaterial({{ map: tex, depthTest: false }});
         const sprite = new THREE.Sprite(mat);
-        sprite.scale.set(6.5, 1.5, 1);
+        sprite.scale.set(6.2, 1.45, 1);
         return sprite;
       }}
 
@@ -1055,7 +1442,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         nodeMesh.receiveShadow = true;
 
         // Floating Gem
-        const gemGeo = new THREE.OctahedronGeometry(0.6, 0);
+        const gemGeo = new THREE.OctahedronGeometry(0.55, 0);
         const gemMat = new THREE.MeshStandardMaterial({{ color: nodeColor, emissive: nodeColor, emissiveIntensity: 0.8 }});
         const gemMesh = new THREE.Mesh(gemGeo, gemMat);
         gemMesh.position.set(0, boxHeight / 2 + 0.8, 0);
@@ -1063,7 +1450,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
 
         // Billboarding Text Sprite
         const sprite = createTextSprite(loc.name, isOutdoor, floor);
-        sprite.position.set(pos.x, pos.y + boxHeight + 2.0, pos.z);
+        sprite.position.set(pos.x, pos.y + boxHeight + 1.8, pos.z);
         labelsGroup.add(sprite);
 
         nodeMesh.userData = {{
@@ -1078,21 +1465,27 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
           outdoorGroup.add(nodeMesh);
         }} else if (floor >= 0 && floor < 5) {{
           fetFloorGroups[floor].add(nodeMesh);
+          addRoomFurnishings(loc, fetFloorGroups[floor]);
         }}
 
         interactiveLocations.push(nodeMesh);
         locationMeshMap[loc.id] = nodeMesh;
       }});
 
-      // 6. Render Pathways (Corridors, Ramps, Roads, Vertical Elevators & Stairs)
+      // 9. Render Pathways (Corridors, Ramps, Roads, Vertical Elevators & Stairs)
+      const pathwayMeshes = {{
+        stepfree: [],
+        ramp: [],
+        elevator: [],
+        stairs: [],
+        blocked: []
+      }};
+
       (DATA.pathways || []).forEach(edge => {{
         const uPos = edge.source_pos;
         const vPos = edge.dest_pos;
 
-        if (edge.is_cross_floor) {{
-          // Cross-floor connections handled by elevator shaft & stair tower models
-          return;
-        }}
+        if (edge.is_cross_floor) return;
 
         const yLevel = uPos.y + 0.08;
         const p1 = new THREE.Vector3(uPos.x, yLevel, uPos.z);
@@ -1121,22 +1514,33 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
           fetFloorGroups[edge.source_floor].add(pathMesh);
         }}
 
-        // If blocked hazard, add 3D red warning block
+        // Group into pathway layers
+        if (edge.is_blocked) pathwayMeshes.blocked.push(pathMesh);
+        else if (edge.has_elevator) pathwayMeshes.elevator.push(pathMesh);
+        else if (edge.has_stairs) pathwayMeshes.stairs.push(pathMesh);
+        else if (edge.has_ramp) pathwayMeshes.ramp.push(pathMesh);
+        else pathwayMeshes.stepfree.push(pathMesh);
+
+        // If blocked hazard, add 3D glowing barrier with hazard stripes
         if (edge.is_blocked) {{
-          const barrierGeo = new THREE.BoxGeometry(1.8, 1.0, 0.5);
-          const barrierMat = new THREE.MeshStandardMaterial({{ color: 0xF87171, emissive: 0xDC2626, emissiveIntensity: 1.0 }});
+          const barrierGeo = new THREE.BoxGeometry(1.8, 1.1, 0.5);
+          const barrierMat = new THREE.MeshStandardMaterial({{
+            color: 0xF87171, emissive: 0xDC2626, emissiveIntensity: 1.2
+          }});
           const barrierMesh = new THREE.Mesh(barrierGeo, barrierMat);
-          barrierMesh.position.set((p1.x + p2.x) / 2, yLevel + 0.5, (p1.z + p2.z) / 2);
+          barrierMesh.position.set((p1.x + p2.x) / 2, yLevel + 0.55, (p1.z + p2.z) / 2);
           barrierMesh.rotation.y = angle;
           scene.add(barrierMesh);
+          pathwayMeshes.blocked.push(barrierMesh);
         }}
       }});
 
-      // 7. Live 3D Navigation Route Spline & Traveling Light Orb
+      // 10. Live 3D Navigation Route Spline & Traversal Light Orb
       let routeCurve = null;
       let traversalOrb = null;
       let routeAnimProgress = 0;
       let isRouteAnimating = true;
+      let animSpeedMultiplier = 1.0;
 
       if (DATA.active_route && DATA.active_route.success && DATA.active_route.waypoints.length > 1) {{
         document.getElementById('legend-route').style.display = 'flex';
@@ -1145,8 +1549,8 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         const curvePoints = waypoints.map(wp => new THREE.Vector3(wp.x, wp.y, wp.z));
         routeCurve = new THREE.CatmullRomCurve3(curvePoints, false, 'catmullrom', 0.2);
 
-        // Glowing 3D Tube
-        const tubeGeo = new THREE.TubeGeometry(routeCurve, Math.max(60, waypoints.length * 20), 0.45, 12, false);
+        // Glowing 3D Trajectory Tube
+        const tubeGeo = new THREE.TubeGeometry(routeCurve, Math.max(70, waypoints.length * 20), 0.45, 12, false);
         const tubeMat = new THREE.MeshStandardMaterial({{
           color: 0xF59E0B,
           emissive: 0xF59E0B,
@@ -1159,32 +1563,30 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
 
         // Origin Beacon Pin
         const startPt = curvePoints[0];
-        const startPinGeo = new THREE.CylinderGeometry(0.3, 1.0, 3.5, 16);
-        const startPinMat = new THREE.MeshStandardMaterial({{ color: 0x35D99A, emissive: 0x16A36A, emissiveIntensity: 1.2 }});
-        const startPin = new THREE.Mesh(startPinGeo, startPinMat);
+        const startPin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 1.0, 3.5, 16), new THREE.MeshStandardMaterial({{
+          color: 0x35D99A, emissive: 0x16A36A, emissiveIntensity: 1.2
+        }}));
         startPin.position.set(startPt.x, startPt.y + 1.75, startPt.z);
         routeGroup.add(startPin);
 
-        // Destination Pin
+        // Destination Flag Sphere
         const destPt = curvePoints[curvePoints.length - 1];
-        const destPinGeo = new THREE.SphereGeometry(1.0, 16, 16);
-        const destPinMat = new THREE.MeshStandardMaterial({{ color: 0xEF4444, emissive: 0xDC2626, emissiveIntensity: 1.5 }});
-        const destPin = new THREE.Mesh(destPinGeo, destPinMat);
+        const destPin = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), new THREE.MeshStandardMaterial({{
+          color: 0xEF4444, emissive: 0xDC2626, emissiveIntensity: 1.5
+        }}));
         destPin.position.set(destPt.x, destPt.y + 1.5, destPt.z);
         routeGroup.add(destPin);
 
-        // Animated Traversal Light Orb
-        const orbGeo = new THREE.SphereGeometry(0.7, 16, 16);
-        const orbMat = new THREE.MeshBasicMaterial({{ color: 0xFFFFFF }});
-        traversalOrb = new THREE.Mesh(orbGeo, orbMat);
+        // Traveling Light Orb
+        traversalOrb = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 16), new THREE.MeshBasicMaterial({{ color: 0xFFFFFF }}));
         traversalOrb.position.copy(startPt);
         routeGroup.add(traversalOrb);
 
-        const orbLight = new THREE.PointLight(0xF59E0B, 3.0, 25);
+        const orbLight = new THREE.PointLight(0xF59E0B, 3.2, 25);
         traversalOrb.add(orbLight);
       }}
 
-      // 8. Raycasting & Location Selection
+      // 11. Raycasting & Location Inspector
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
       let hoveredNode = null;
@@ -1195,10 +1597,12 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       const cardBadge = document.getElementById('card-badge');
       const cardId = document.getElementById('card-id');
       const cardBuilding = document.getElementById('card-building');
+      const cardCategory = document.getElementById('card-category');
       const cardAccess = document.getElementById('card-access');
       const cardConnections = document.getElementById('card-connections');
       const cardAmenities = document.getElementById('card-amenities');
       const cardClose = document.getElementById('card-close');
+      const btnFocusRoom = document.getElementById('btn-focus-room');
       const hoverTooltip = document.getElementById('hover-tooltip');
 
       cardClose.addEventListener('click', () => {{
@@ -1214,6 +1618,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         cardTitle.innerText = loc.name;
         cardId.innerText = loc.id;
         cardBuilding.innerText = loc.building;
+        cardCategory.innerText = (loc.category || 'Facility').toUpperCase();
         cardAccess.innerText = loc.wheelchair_accessible ? 'Step-Free Accessible' : 'Stairs Navigation Required';
         cardAccess.style.color = loc.wheelchair_accessible ? '#35D99A' : '#F5B942';
         cardConnections.innerText = loc.connected_locations.length + ' connected pathways';
@@ -1229,6 +1634,14 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         locationCard.classList.remove('hidden');
         selectedNode = mesh;
       }}
+
+      // Focus Camera on Selected Room
+      btnFocusRoom.addEventListener('click', () => {{
+        if (!selectedNode) return;
+        const loc = selectedNode.userData.locationData;
+        const p = loc.pos;
+        tweenCamera(new THREE.Vector3(p.x + 18, p.y + 16, p.z + 20), new THREE.Vector3(p.x, p.y + 1, p.z), 800);
+      }});
 
       window.addEventListener('mousemove', (e) => {{
         const rect = canvas.getBoundingClientRect();
@@ -1271,8 +1684,8 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         }}
       }});
 
-      // 9. Camera Tweens & View Modes
-      function tweenCamera(targetPos, targetLookAt, duration = 700) {{
+      // 12. Camera Tweens & View Modes
+      function tweenCamera(targetPos, targetLookAt, duration = 750) {{
         const startPos = camera.position.clone();
         const startTarget = controls.target.clone();
         const startTime = performance.now();
@@ -1293,23 +1706,29 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
 
       // Camera Presets
       document.getElementById('btn-cam-iso').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(20, 5, 20));
+        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
       }});
       document.getElementById('btn-cam-top').addEventListener('click', () => {{
         tweenCamera(new THREE.Vector3(0, 240, 0.1), new THREE.Vector3(0, 0, 0));
       }});
       document.getElementById('btn-cam-front').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(0, 30, 190), new THREE.Vector3(0, 10, 0));
+        tweenCamera(new THREE.Vector3(0, 28, 185), new THREE.Vector3(0, 10, 0));
+      }});
+      document.getElementById('btn-cam-side').addEventListener('click', () => {{
+        tweenCamera(new THREE.Vector3(185, 28, 0), new THREE.Vector3(0, 10, 0));
+      }});
+      document.getElementById('btn-cam-fet').addEventListener('click', () => {{
+        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
       }});
       document.getElementById('btn-cam-reset').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(20, 5, 20));
+        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
       }});
 
-      // Domain Modes (All, Outdoor Only, FET Only)
+      // Domain Modes
       document.getElementById('btn-mode-all').addEventListener('click', () => {{
         outdoorGroup.visible = true;
         fetBuildingGroup.visible = true;
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(20, 5, 20));
+        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
       }});
       document.getElementById('btn-mode-outdoor').addEventListener('click', () => {{
         outdoorGroup.visible = true;
@@ -1319,10 +1738,28 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       document.getElementById('btn-mode-fet').addEventListener('click', () => {{
         outdoorGroup.visible = false;
         fetBuildingGroup.visible = true;
-        tweenCamera(new THREE.Vector3(55, 45, 60), new THREE.Vector3(0, 12, 0));
+        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
       }});
 
-      // FET 5-Floor Isolation & Exploded Modes
+      // View Modes: Exterior vs Cutaway (Interior)
+      document.getElementById('btn-view-exterior').addEventListener('click', (e) => {{
+        document.getElementById('btn-view-exterior').classList.add('active');
+        document.getElementById('btn-view-cutaway').classList.remove('active');
+        exteriorCurtainWalls.forEach(w => {{
+          w.visible = true;
+          w.material.opacity = 0.55;
+        }});
+      }});
+      document.getElementById('btn-view-cutaway').addEventListener('click', (e) => {{
+        document.getElementById('btn-view-cutaway').classList.add('active');
+        document.getElementById('btn-view-exterior').classList.remove('active');
+        exteriorCurtainWalls.forEach(w => {{
+          w.visible = true;
+          w.material.opacity = 0.12; // transparent cutaway
+        }});
+      }});
+
+      // Floor Modes: Stacked vs Exploded
       let isExploded = false;
 
       function resetFloorPositions() {{
@@ -1331,22 +1768,24 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
           fetFloorGroups[fl].position.y = 0;
         }}
         verticalConnectorsGroup.visible = true;
+        guideRodsGroup.visible = false;
       }}
 
       document.getElementById('btn-fl-all').addEventListener('click', () => {{
         isExploded = false;
         resetFloorPositions();
-        tweenCamera(new THREE.Vector3(55, 45, 60), new THREE.Vector3(0, 12, 0));
+        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
       }});
 
       document.getElementById('btn-fl-exploded').addEventListener('click', () => {{
         isExploded = true;
         for (let fl = 0; fl < 5; fl++) {{
           fetFloorGroups[fl].visible = true;
-          fetFloorGroups[fl].position.y = fl * 12.0; // Elevate floors vertically
+          fetFloorGroups[fl].position.y = fl * 14.0; // Elevate floors vertically
         }}
         verticalConnectorsGroup.visible = true;
-        tweenCamera(new THREE.Vector3(75, 85, 95), new THREE.Vector3(0, 30, 0));
+        guideRodsGroup.visible = true;
+        tweenCamera(new THREE.Vector3(75, 90, 100), new THREE.Vector3(0, 35, 0));
       }});
 
       for (let fl = 0; fl < 5; fl++) {{
@@ -1357,14 +1796,23 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
             fetFloorGroups[f].position.y = 0;
           }}
           verticalConnectorsGroup.visible = false;
-          tweenCamera(new THREE.Vector3(45, 35, 50), new THREE.Vector3(0, floorElevations[fl], 0));
+          guideRodsGroup.visible = false;
+          tweenCamera(new THREE.Vector3(42, 32, 46), new THREE.Vector3(0, floorElevations[fl], 0));
         }});
       }}
 
-      // Animation & Label Toggles
+      // Route Animation Controls
       document.getElementById('btn-anim-toggle').addEventListener('click', (e) => {{
         isRouteAnimating = !isRouteAnimating;
         e.target.classList.toggle('active', isRouteAnimating);
+      }});
+
+      const speeds = [1.0, 2.0, 0.5];
+      let speedIdx = 0;
+      document.getElementById('btn-anim-speed').addEventListener('click', (e) => {{
+        speedIdx = (speedIdx + 1) % speeds.length;
+        animSpeedMultiplier = speeds[speedIdx];
+        e.target.innerText = '⚡ ' + animSpeedMultiplier + 'x';
       }});
 
       let areLabelsOn = true;
@@ -1374,7 +1822,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         e.target.classList.toggle('active', areLabelsOn);
       }});
 
-      // 10. Animation Loop & Resize
+      // 13. Animation Loop & Resize
       function onWindowResize() {{
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
@@ -1389,8 +1837,9 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         const delta = clock.getDelta();
         controls.update();
 
-        // Animate floating gems
         const time = clock.getElapsedTime();
+
+        // Animate floating gems
         interactiveLocations.forEach(mesh => {{
           if (mesh.userData.gem) {{
             mesh.userData.gem.rotation.y += delta * 1.5;
@@ -1403,9 +1852,9 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
           elevatorCab.position.y = 2.0 + (Math.sin(time * 0.8) + 1.0) * 10.0;
         }}
 
-        // Animate Route Traversal Light
+        // Animate Route Traversal Light Orb
         if (routeCurve && traversalOrb && isRouteAnimating) {{
-          routeAnimProgress = (routeAnimProgress + delta * 0.12) % 1.0;
+          routeAnimProgress = (routeAnimProgress + delta * 0.12 * animSpeedMultiplier) % 1.0;
           const pt = routeCurve.getPoint(routeAnimProgress);
           traversalOrb.position.copy(pt);
         }}

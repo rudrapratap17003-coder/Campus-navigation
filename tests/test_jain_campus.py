@@ -276,6 +276,67 @@ class TestJainCampusDigitalTwin(unittest.TestCase):
         self.assertIn("JAIN Global Campus 3D Digital Twin", html)
         self.assertIn("OUT_GATE_MAIN", html)
 
+    def test_procedural_furnishings_metadata(self) -> None:
+        """Verify room categories and amenity data for procedural 3D furnishings."""
+        all_locs = self.cmap.get_all_locations()
+        categories = {loc.get("category") for loc in all_locs}
+        expected_cats = {"lab", "library", "auditorium", "classroom", "office", "restroom", "elevator", "stairs"}
+        # Check intersection
+        self.assertTrue(len(categories.intersection(expected_cats)) >= 5)
+
+        # Check labs have amenities or descriptors
+        labs = [l for l in all_locs if l.get("category") == "lab"]
+        self.assertGreaterEqual(len(labs), 10)
+        for lab in labs:
+            self.assertIn("amenities", lab)
+            self.assertIsInstance(lab["amenities"], list)
+
+    def test_cutaway_and_exterior_view_modes_in_payload(self) -> None:
+        """Verify view_mode configuration in digital twin payload."""
+        payload_cutaway = build_jain_digital_twin_payload(
+            campus_map=self.cmap,
+            view_mode="cutaway",
+        )
+        self.assertEqual(payload_cutaway["config"]["initial_view_mode"], "cutaway")
+
+        payload_exterior = build_jain_digital_twin_payload(
+            campus_map=self.cmap,
+            view_mode="exterior",
+        )
+        self.assertEqual(payload_exterior["config"]["initial_view_mode"], "exterior")
+
+    def test_alternative_routes_on_jain_graph(self) -> None:
+        """Verify computation of distinct alternative routes on JAIN campus graph."""
+        alts = self.route_finder.find_alternative_routes(
+            source="OUT_GATE_MAIN",
+            destination="FET_G_ENTRANCE_FOYER",
+            max_alternatives=2,
+            wheelchair_accessible=True,
+        )
+        self.assertIsInstance(alts, list)
+        for alt in alts:
+            self.assertTrue(alt.success)
+            self.assertTrue(alt.is_accessible)
+
+    def test_floor_elevations_alignment(self) -> None:
+        """Verify floor elevations are strictly ascending from outdoor to Level 4."""
+        self.assertEqual(FLOOR_ELEVATIONS[-1], 0.0)
+        prev_elev = FLOOR_ELEVATIONS[-1]
+        for fl in [0, 1, 2, 3, 4]:
+            self.assertIn(fl, FLOOR_ELEVATIONS)
+            self.assertGreater(FLOOR_ELEVATIONS[fl], prev_elev)
+            prev_elev = FLOOR_ELEVATIONS[fl]
+
+    def test_all_locations_have_valid_3d_coordinates(self) -> None:
+        """Verify every location node has numeric coordinates and valid attributes."""
+        all_locs = self.cmap.get_all_locations()
+        self.assertGreaterEqual(len(all_locs), 79)
+        for loc in all_locs:
+            self.assertIsInstance(loc["x"], (int, float))
+            self.assertIsInstance(loc["y"], (int, float))
+            self.assertIsInstance(loc["floor"], int)
+            self.assertIsInstance(loc["wheelchair_accessible"], bool)
+
 
 if __name__ == "__main__":
     unittest.main()
