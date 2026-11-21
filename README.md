@@ -28,14 +28,13 @@ A Python-based college campus accessibility and navigation system designed to em
   - Comprehensive lifecycle management: *Pending*, *Verified*, *Resolved*, and *Rejected*.
   - Dynamic graph synchronization: verified active obstacles dynamically update live path availability without overwriting raw dataset attributes.
   - Immediate operational restoration upon report resolution.
-- **Interactive 3D Campus Navigation Engine (Phase 12):**
-  - High-performance Three.js WebGL 3D architectural visualization of campus buildings, facilities, and vertical circulation.
-  - Multi-floor controls: Combined view, Exploded floor view (separating Floor 1 vertically), Ground Floor only, and First Floor only.
-  - Full 360-degree orbit rotation, camera pan, smooth zoom, and camera presets (Isometric, Top-Down, Front Elevation, Reset).
-  - Vertical connector modeling: Transparent glass elevator shaft tower with illuminated cab (`LOC_04` ↔ `LOC_10`) and 3D stepped staircase flight (`LOC_05` ↔ `LOC_11`).
-  - Authoritative Python routing: Calculates live routes in Python (`RouteFinder`) and renders glowing 3D trajectory tubes with moving traversal light orbs.
-  - Dynamic barrier visualization: Synchronized with SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green.
-  - Interactive Raycaster Inspector: Clicking any 3D room volume opens a glassmorphic HUD drawer showing facility metadata, wheelchair accessibility, and amenity lists.
+- **Interactive 3D Digital Twin & JAIN Global Campus Reconstruction (Phase 12):**
+  - **Complete Outdoor Campus Environment:** High-fidelity Three.js WebGL 3D reconstruction of the 300-acre **JAIN Global Campus** on Kanakapura Road (NH-948), including the octagonal FET Building Complex, Colosseum Arena, JIRS Aquatic Center, International Cricket Stadium, SBMJCE Dining Complex, student hostels, administrative headquarters, aerospace hangars, arterial roads, and pedestrian avenues.
+  - **FET Five-Floor Indoor Architectural Model:** Detailed multi-floor reconstruction modeling all 5 physical levels (Ground Floor Level 0, First Floor Level 1, Second Floor Level 2, Third Floor Level 3, and Fourth Floor Level 4) based on official fire escape plans. Includes true 3D room volumes, annular octagonal corridors, central tiered amphitheater, four cardinal fire stairwells (North, East, South, West), and a continuous wheelchair-accessible elevator core.
+  - **Interactive 3D Controls:** Full 360-degree orbit rotation, camera pan, smooth zoom, camera presets (Isometric, Top-Down Plan, Front Elevation, Reset), domain filtering (All Campus & FET, Outdoor Campus, FET Complex Only), individual floor isolation (Levels 0–4), Stacked view, and 5-Floor Exploded View.
+  - **Unified Outdoor/Indoor Navigation Graph:** 79 locations and 106 pathways connecting outdoor gateways directly to indoor research labs across all 5 floors. Powered by authoritative Python routing (BFS and Dijkstra).
+  - **Dynamic Obstacle & Accessibility Integration:** Synchronized with the SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green. ♿ Wheelchair toggle strictly enforces step-free paths, using ramps and elevators while avoiding stairs.
+  - **Dual Environment Switching:** Toggle seamlessly between the comprehensive *JAIN Global Campus & FET 5-Floor Digital Twin* and the canonical *15-Node Schematic Benchmark Model*.
 - **Advanced Interactive Indoor Map & Route Visualizer (Phase 8):**
   - Floor-by-floor navigation filtering for Ground Floor (Floor 0), First Floor (Floor 1), and a side-by-side All Floors architectural overview.
   - In-map route planning with dynamic gold route overlays, origin pins, and destination flags.
@@ -333,6 +332,8 @@ Campus navigation/
 │   ├── route_finder.py         # Route calculation engine & path optimization
 │   ├── obstacle_manager.py     # Obstacle lifecycle, RBAC checks & dynamic detour management
 │   ├── indoor_map.py           # Indoor map engine, floor filters & visualizer
+│   ├── three_d_map.py          # Three.js 3D isometric scene builder for benchmark campus
+│   ├── jain_digital_twin.py    # Three.js 3D Digital Twin engine for JAIN Global Campus & FET 5-floor complex
 │   └── ui_theme.py             # Shared styling, session services & user authentication
 │
 ├── database/                   # Persistent data management
@@ -340,22 +341,25 @@ Campus navigation/
 │   └── db_manager.py           # SQLite connection, RBAC user schemas, audit log & parameterized queries
 │
 ├── data/                       # Static graph & spatial datasets
-│   └── campus_map.json         # Campus nodes, edges, coordinates, and attributes
+│   ├── campus_map.json         # Benchmark campus nodes, edges, coordinates, and attributes (15 nodes)
+│   └── jain_global_campus.json # JAIN Global Campus & FET 5-Floor full digital twin dataset (79 nodes, 106 edges)
 │
 ├── pages/                      # Streamlit multi-page interface views
 │   ├── dashboard.py            # Overview & statistics dashboard
 │   ├── navigation.py           # Route query & turn-by-turn guidance page
 │   ├── campus_map.py           # Interactive indoor campus map & route visualizer
+│   ├── 3d_campus_map.py        # Interactive 3D JAIN Digital Twin & 5-floor FET building visualizer
 │   ├── accessibility.py        # Accessibility profiles & amenity directory
 │   ├── obstacle_reports.py     # Hazard reporting, duplicate warnings & field staff queue
 │   ├── login.py                # User authentication, registration & admin bootstrap
 │   └── admin_management.py     # Administrative console: users, roles, queue & audit logs
 │
-├── assets/                     # Media, icons, and styling stylesheets
-│   └── .gitkeep
+├── assets/                     # Media, icons, floor plans, and stylesheets
+│   └── floor_plans/            # Architectural floor plans and aerial campus references
 │
 ├── scripts/                    # Demonstration & operational utilities
-│   └── demo_setup.py           # Idempotent demo credentials initialization script
+│   ├── demo_setup.py           # Idempotent demo credentials initialization script
+│   └── build_jain_campus_dataset.py # Generator for JAIN Global Campus 5-floor dataset
 │
 ├── tests/                      # Automated unit & integration test suites
 │   ├── __init__.py
@@ -366,6 +370,8 @@ Campus navigation/
 │   ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
 │   ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
 │   ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
+│   ├── test_three_d_map.py     # Three.js 3D isometric mapping and route tests
+│   ├── test_jain_campus.py     # JAIN Global Campus 5-floor digital twin engine tests
 │   ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
 │   ├── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
 │   └── test_demo_workflow.py   # 8-step complete academic demonstration workflow verification
@@ -375,7 +381,7 @@ Campus navigation/
 
 ## 🧪 Running Automated Tests
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **82 automated tests** across 10 test suites:
+All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **106 automated tests** across 12 test suites:
 
 ```powershell
 & ".venv\Scripts\python.exe" -m unittest discover tests -v
@@ -383,6 +389,8 @@ All test suites use isolated in-memory or temporary databases to prevent alterin
 
 To run individual test suites:
 ```powershell
+& ".venv\Scripts\python.exe" -m unittest tests/test_jain_campus.py -v
+& ".venv\Scripts\python.exe" -m unittest tests/test_three_d_map.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_demo_workflow.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_security_audit.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_auth_rbac.py -v

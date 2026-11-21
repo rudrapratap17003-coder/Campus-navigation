@@ -26,6 +26,17 @@ from modules.three_d_map import (
     normalize_3d_coordinates,
     render_three_d_scene_html,
 )
+from modules.jain_digital_twin import (
+    FLOOR_ELEVATIONS,
+    FLOOR_NAMES,
+    JAIN_DATA_FILE,
+    build_jain_digital_twin_payload,
+    get_jain_3d_locations_data,
+    get_jain_3d_pathways_data,
+    get_jain_3d_route_data,
+    load_jain_campus_map,
+    render_jain_digital_twin_html,
+)
 from modules.ui_theme import (
     apply_custom_theme,
     apply_plotly_dark_theme,
@@ -80,4 +91,13 @@ __all__ = [
     "get_3d_route_data",
     "build_3d_scene_payload",
     "render_three_d_scene_html",
+    "JAIN_DATA_FILE",
+    "FLOOR_ELEVATIONS",
+    "FLOOR_NAMES",
+    "load_jain_campus_map",
+    "get_jain_3d_locations_data",
+    "get_jain_3d_pathways_data",
+    "get_jain_3d_route_data",
+    "build_jain_digital_twin_payload",
+    "render_jain_digital_twin_html",
 ]

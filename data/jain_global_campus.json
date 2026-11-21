@@ -1,0 +1,2459 @@
+{
+  "_metadata": {
+    "name": "JAIN (Deemed-to-be University) - Faculty of Engineering & Technology (FET)",
+    "campus": "JAIN Global Campus",
+    "address": "Jakkasandra Post, Kanakapura Taluk, Ramanagara District, Karnataka, India - 562112",
+    "reference_url": "https://set.jainuniversity.ac.in/",
+    "coordinates": {
+      "latitude": 12.6482,
+      "longitude": 77.4418
+    },
+    "floors_count": 5,
+    "disclaimer": "Digital twin dataset combining verified OpenStreetMap campus boundary coordinates, satellite imagery layout geometry, and official JAIN University FET 5-Floor Fire Escape Route Plans. Indoor layouts accurately reflect the physical annular building and room sequences.",
+    "unit_distance": "meters",
+    "unit_time": "seconds"
+  },
+  "buildings": [
+    {
+      "id": "BLD_FET",
+      "name": "Faculty of Engineering and Technology (FET)",
+      "category": "academic",
+      "floors": 5,
+      "center_x": 0.0,
+      "center_z": 0.0,
+      "width": 80.0,
+      "depth": 80.0,
+      "height": 22.0,
+      "shape": "octagonal_annular",
+      "description": "Primary engineering complex with 5 levels, central amphitheater courtyard, and 4 radial wings."
+    },
+    {
+      "id": "BLD_COLOSSEUM",
+      "name": "The Colosseum (Indoor Sports Arena & Hall)",
+      "category": "sports",
+      "floors": 2,
+      "center_x": 95.0,
+      "center_z": -65.0,
+      "width": 45.0,
+      "depth": 35.0,
+      "height": 14.0,
+      "shape": "rectangular",
+      "description": "Grand multi-purpose sports pavilion, convocation hall, and indoor badminton/basketball courts."
+    },
+    {
+      "id": "BLD_CRICKET",
+      "name": "International Cricket Stadium & Pavilion",
+      "category": "sports",
+      "floors": 1,
+      "center_x": 30.0,
+      "center_z": -95.0,
+      "width": 75.0,
+      "depth": 65.0,
+      "height": 6.0,
+      "shape": "oval",
+      "description": "Standard oval cricket pitch with seating pavilions and athletic tracks."
+    },
+    {
+      "id": "BLD_DINING",
+      "name": "SBMJCE Dining Complex & Cafeteria",
+      "category": "cafeteria",
+      "floors": 2,
+      "center_x": 65.0,
+      "center_z": 20.0,
+      "width": 42.0,
+      "depth": 32.0,
+      "height": 9.0,
+      "shape": "courtyard",
+      "description": "Central student dining hall, cafeteria kitchens, and outdoor dining courtyard."
+    },
+    {
+      "id": "BLD_ADMIN",
+      "name": "University Administration & Student Services",
+      "category": "administrative",
+      "floors": 3,
+      "center_x": 45.0,
+      "center_z": 60.0,
+      "width": 38.0,
+      "depth": 28.0,
+      "height": 12.0,
+      "shape": "rectangular",
+      "description": "Central admissions, registrar, chancellor's office, and student services bureau."
+    },
+    {
+      "id": "BLD_HOSTELS",
+      "name": "Student Residential Hostels Complex",
+      "category": "residential",
+      "floors": 4,
+      "center_x": 105.0,
+      "center_z": -15.0,
+      "width": 55.0,
+      "depth": 45.0,
+      "height": 16.0,
+      "shape": "multi_block",
+      "description": "Multi-block student dormitories with ground-floor barrier-free accessible rooms."
+    },
+    {
+      "id": "BLD_POOL",
+      "name": "JIRS Aquatic Complex & Swimming Pool",
+      "category": "sports",
+      "floors": 1,
+      "center_x": -20.0,
+      "center_z": -110.0,
+      "width": 35.0,
+      "depth": 25.0,
+      "height": 5.0,
+      "shape": "pool",
+      "description": "Competition-standard swimming pool and aquatic training center."
+    },
+    {
+      "id": "BLD_AEROSPACE",
+      "name": "Aerospace Propulsion & Wind Tunnel Labs",
+      "category": "research",
+      "floors": 2,
+      "center_x": -60.0,
+      "center_z": -40.0,
+      "width": 40.0,
+      "depth": 30.0,
+      "height": 10.0,
+      "shape": "hangar",
+      "description": "Aeronautical research hangar, supersonic wind tunnel, and propulsion testing bays."
+    }
+  ],
+  "locations": [
+    {
+      "id": "OUT_GATE_MAIN",
+      "name": "Main Campus Entrance Gate (NH-948 / Kanakapura Rd)",
+      "floor": -1,
+      "building": "Campus Grounds",
+      "category": "entrance",
+      "x": 20.0,
+      "y": 140.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Security Checkpoint",
+        "Automated Boom Barrier",
+        "Smooth Curb Cut Ramp",
+        "Tactile Pavement"
+      ]
+    },
+    {
+      "id": "OUT_PARKING_ACC",
+      "name": "Designated Accessible Parking Zone A",
+      "floor": -1,
+      "building": "Campus Grounds",
+      "category": "parking",
+      "x": 25.0,
+      "y": 105.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Extra-Wide Accessible Bays",
+        "Van Access Space",
+        "Direct Ramp to Promenade",
+        "EV Charging"
+      ]
+    },
+    {
+      "id": "OUT_QUAD_CENTRAL",
+      "name": "Central Campus Quadrangle Promenade",
+      "floor": -1,
+      "building": "Campus Grounds",
+      "category": "lobby",
+      "x": 30.0,
+      "y": 60.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Pedestrian Promenade",
+        "Shaded Seating",
+        "Campus Directory Map",
+        "Braille Signage"
+      ]
+    },
+    {
+      "id": "OUT_ADMIN_BLOCK",
+      "name": "Administration & Student Affairs Block",
+      "floor": -1,
+      "building": "Administration",
+      "category": "office",
+      "x": 45.0,
+      "y": 60.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Low-Height Help Desk",
+        "Automated Entrance Doors",
+        "Admissions Office",
+        "Accessible Restrooms"
+      ]
+    },
+    {
+      "id": "OUT_FET_FRONT_PORTICO",
+      "name": "FET Main Front Portico (Grand Steps)",
+      "floor": -1,
+      "building": "FET Engineering",
+      "category": "entrance",
+      "x": 10.0,
+      "y": 28.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Monumental Granite Staircase",
+        "Main Front Façade Entry",
+        "Covered Drop-off Canopy"
+      ]
+    },
+    {
+      "id": "OUT_FET_WEST_RAMP",
+      "name": "FET West Accessible Entrance Ramp",
+      "floor": -1,
+      "building": "FET Engineering",
+      "category": "entrance",
+      "x": -18.0,
+      "y": 22.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Gentle Incline Ramp (1:14)",
+        "Dual Stainless Handrails",
+        "Slip-Resistant Surface",
+        "Automated Sliding Door"
+      ]
+    },
+    {
+      "id": "OUT_DINING_COMPLEX",
+      "name": "SBMJCE Dining Complex & Cafeteria",
+      "floor": -1,
+      "building": "Dining Hall",
+      "category": "cafeteria",
+      "x": 65.0,
+      "y": 20.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Step-Free Dining Entry",
+        "Wide Aisle Seating",
+        "Food Court Counter",
+        "Covered Veranda"
+      ]
+    },
+    {
+      "id": "OUT_COLOSSEUM",
+      "name": "The Colosseum Sports Arena & Hall",
+      "floor": -1,
+      "building": "Colosseum",
+      "category": "auditorium",
+      "x": 95.0,
+      "y": -65.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Ground Level Arena Ramp",
+        "Spectator Seating",
+        "Badminton & Basketball Courts",
+        "Gymnasium"
+      ]
+    },
+    {
+      "id": "OUT_CRICKET_STADIUM",
+      "name": "International Cricket Stadium & Grounds",
+      "floor": -1,
+      "building": "Sports Complex",
+      "category": "sports",
+      "x": 30.0,
+      "y": -95.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Accessible Pavilion Ramp",
+        "Athletic Running Track",
+        "Turf Pitch",
+        "Spectator Stands"
+      ]
+    },
+    {
+      "id": "OUT_AQUATICS_POOL",
+      "name": "JIRS Swimming Pool & Aquatic Complex",
+      "floor": -1,
+      "building": "Sports Complex",
+      "category": "sports",
+      "x": -20.0,
+      "y": -110.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Ramped Pool Deck",
+        "Changing Facilities",
+        "Heated Pool",
+        "Lifeguard Station"
+      ]
+    },
+    {
+      "id": "OUT_AEROSPACE_LABS",
+      "name": "Aerospace Research & Propulsion Center",
+      "floor": -1,
+      "building": "Aerospace Center",
+      "category": "lab",
+      "x": -60.0,
+      "y": -40.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "High-Bay Hangar Doors",
+        "Avionics Cleanroom",
+        "Propulsion Testing Deck",
+        "Roll-in Equipment Access"
+      ]
+    },
+    {
+      "id": "OUT_HOSTEL_BLOCKS",
+      "name": "Student Residential Hostels & Quarters",
+      "floor": -1,
+      "building": "Hostels",
+      "category": "residential",
+      "x": 105.0,
+      "y": -15.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Barrier-Free Ground Dorms",
+        "Accessible Common Room",
+        "Laundry Services",
+        "Emergency Call Point"
+      ]
+    },
+    {
+      "id": "FET_0F_ELEVATOR",
+      "name": "Ground Floor - Main Accessible Elevator Bank",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "elevator",
+      "x": -6.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Braille Buttons",
+        "Voice Floor Announcement",
+        "Wide Doorway (110cm)",
+        "Emergency Telephone"
+      ]
+    },
+    {
+      "id": "FET_0F_STAIRS_SOUTH",
+      "name": "Ground Floor - Central South Stairwell",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 6.0,
+      "y": 20.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Continuous Handrails",
+        "High-Contrast Step Edging",
+        "Fire-Rated Enclosure"
+      ]
+    },
+    {
+      "id": "FET_0F_STAIRS_NORTH",
+      "name": "Ground Floor - North Stairwell & Fire Exit",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 0.0,
+      "y": -22.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Direct Fire Escape Access",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_0F_STAIRS_EAST",
+      "name": "Ground Floor - East Radial Stairwell",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Emergency Exit Access",
+        "Non-Slip Treads"
+      ]
+    },
+    {
+      "id": "FET_0F_STAIRS_WEST",
+      "name": "Ground Floor - West Radial Stairwell",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": -22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "West Fire Exit Route",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_G_ENTRANCE_FOYER",
+      "name": "Ground Floor - FET Main Entrance Foyer & Reception",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "lobby",
+      "x": 0.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Information Desk",
+        "Directory Screen",
+        "Step-Free Atrium"
+      ]
+    },
+    {
+      "id": "FET_G_AMPHI_STAGE",
+      "name": "Ground Floor - Central Open-Air Amphitheater Stage",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "auditorium",
+      "x": 0.0,
+      "y": 0.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Ground Seating",
+        "Acoustic Shell",
+        "Stage Access Ramp"
+      ]
+    },
+    {
+      "id": "FET_G_MECH_LAB",
+      "name": "Ground Floor - Mechanical & Manufacturing Workshop",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "CNC Machining Bay",
+        "Heavy Tooling",
+        "Roll-in Safety Doors"
+      ]
+    },
+    {
+      "id": "FET_G_CIVIL_LAB",
+      "name": "Ground Floor - Civil & Structural Materials Testing Lab",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Concrete Testing Machine",
+        "Soil Mechanics Rig",
+        "Safety Shower"
+      ]
+    },
+    {
+      "id": "FET_G_PHYSICS_LAB",
+      "name": "Ground Floor - Engineering Physics & Optics Lab",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Laser Optical Benches",
+        "Darkroom",
+        "Braille Instrument Tags"
+      ]
+    },
+    {
+      "id": "FET_G_CHEM_LAB",
+      "name": "Ground Floor - Engineering Chemistry & Nanotech Lab",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Fume Hoods",
+        "Eye Wash Station",
+        "Chemical Safety Cabinet"
+      ]
+    },
+    {
+      "id": "FET_G_SEMINAR_01",
+      "name": "Ground Floor - Sir M. Visvesvaraya Seminar Hall",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "classroom",
+      "x": 12.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Hearing Loop System",
+        "Tiered Ramped Seating",
+        "Dual Projectors"
+      ]
+    },
+    {
+      "id": "FET_G_RESTROOM_ACC",
+      "name": "Ground Floor - Ground Floor Accessible Restroom (G-WC01)",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "restroom",
+      "x": -15.0,
+      "y": 24.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Emergency Pull Cord",
+        "Grab Bars",
+        "Support Rails",
+        "Low Basin"
+      ]
+    },
+    {
+      "id": "FET_G_FIRE_EXIT_EAST",
+      "name": "Ground Floor - East Emergency Ramp Exit",
+      "floor": 0,
+      "building": "FET Engineering",
+      "category": "entrance",
+      "x": 32.0,
+      "y": 0.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Crash Bar Door",
+        "Emergency Evacuation Ramp",
+        "Alarm Strobe"
+      ]
+    },
+    {
+      "id": "FET_1F_ELEVATOR",
+      "name": "First Floor - Main Accessible Elevator Bank",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "elevator",
+      "x": -6.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Braille Buttons",
+        "Voice Floor Announcement",
+        "Wide Doorway (110cm)",
+        "Emergency Telephone"
+      ]
+    },
+    {
+      "id": "FET_1F_STAIRS_SOUTH",
+      "name": "First Floor - Central South Stairwell",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 6.0,
+      "y": 20.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Continuous Handrails",
+        "High-Contrast Step Edging",
+        "Fire-Rated Enclosure"
+      ]
+    },
+    {
+      "id": "FET_1F_STAIRS_NORTH",
+      "name": "First Floor - North Stairwell & Fire Exit",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 0.0,
+      "y": -22.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Direct Fire Escape Access",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_1F_STAIRS_EAST",
+      "name": "First Floor - East Radial Stairwell",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Emergency Exit Access",
+        "Non-Slip Treads"
+      ]
+    },
+    {
+      "id": "FET_1F_STAIRS_WEST",
+      "name": "First Floor - West Radial Stairwell",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": -22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "West Fire Exit Route",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_1F_CONCOURSE",
+      "name": "First Floor - First Floor Academic Concourse",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "lobby",
+      "x": 0.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Student Lounge",
+        "Digital Notice Boards",
+        "Wide Hallway"
+      ]
+    },
+    {
+      "id": "FET_1F_AMPHI_TIER",
+      "name": "First Floor - Amphitheater First Floor Balcony",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "auditorium",
+      "x": 0.0,
+      "y": 4.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Overlook Seating",
+        "Safety Glass Railing"
+      ]
+    },
+    {
+      "id": "FET_1F_CS_LAB_101",
+      "name": "First Floor - Computer Science & AI Lab (Room 101)",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "High-Spec GPU Workstations",
+        "Screen Readers",
+        "Height-Adjustable Desks"
+      ]
+    },
+    {
+      "id": "FET_1F_DATA_LAB_102",
+      "name": "First Floor - Data Engineering & Cloud Lab (Room 102)",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Dual Monitor Stations",
+        "Server Racks",
+        "Ergonomic Chairs"
+      ]
+    },
+    {
+      "id": "FET_1F_ECE_LAB",
+      "name": "First Floor - Electronics & Signal Processing Lab",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Oscilloscopes",
+        "Soldering Stations",
+        "ESD Protected Flooring"
+      ]
+    },
+    {
+      "id": "FET_1F_SMART_103",
+      "name": "First Floor - Smart Multimedia Lecture Hall 103",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "classroom",
+      "x": 28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Interactive Smartboards",
+        "Lecture Capture Mic",
+        "Wheelchair Row"
+      ]
+    },
+    {
+      "id": "FET_1F_LIBRARY",
+      "name": "First Floor - FET Departmental Library & Reading Hall",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "library",
+      "x": 12.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Digital Catalog Terminal",
+        "Braille Book Section",
+        "Study Carrels"
+      ]
+    },
+    {
+      "id": "FET_1F_RESTROOM_ACC",
+      "name": "First Floor - First Floor Accessible Restroom (1-WC01)",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "restroom",
+      "x": -15.0,
+      "y": 24.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Grab Bars",
+        "Wheelchair Turning Space",
+        "Emergency Chime"
+      ]
+    },
+    {
+      "id": "FET_1F_FACULTY_SUITE",
+      "name": "First Floor - CSE & ECE Department Faculty Cabins",
+      "floor": 1,
+      "building": "FET Engineering",
+      "category": "office",
+      "x": 0.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Staff Consultation Desk",
+        "Wide Doorways",
+        "Quiet Workspaces"
+      ]
+    },
+    {
+      "id": "FET_2F_ELEVATOR",
+      "name": "Second Floor - Main Accessible Elevator Bank",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "elevator",
+      "x": -6.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Braille Buttons",
+        "Voice Floor Announcement",
+        "Wide Doorway (110cm)",
+        "Emergency Telephone"
+      ]
+    },
+    {
+      "id": "FET_2F_STAIRS_SOUTH",
+      "name": "Second Floor - Central South Stairwell",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 6.0,
+      "y": 20.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Continuous Handrails",
+        "High-Contrast Step Edging",
+        "Fire-Rated Enclosure"
+      ]
+    },
+    {
+      "id": "FET_2F_STAIRS_NORTH",
+      "name": "Second Floor - North Stairwell & Fire Exit",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 0.0,
+      "y": -22.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Direct Fire Escape Access",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_2F_STAIRS_EAST",
+      "name": "Second Floor - East Radial Stairwell",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Emergency Exit Access",
+        "Non-Slip Treads"
+      ]
+    },
+    {
+      "id": "FET_2F_STAIRS_WEST",
+      "name": "Second Floor - West Radial Stairwell",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": -22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "West Fire Exit Route",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_2F_CONCOURSE",
+      "name": "Second Floor - Second Floor Innovation Concourse",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "lobby",
+      "x": 0.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Project Display Gallery",
+        "Collaborative Seating"
+      ]
+    },
+    {
+      "id": "FET_2F_AI_RESEARCH",
+      "name": "Second Floor - Center for Machine Intelligence (Room 201)",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Deep Learning Server Pods",
+        "Computer Vision Benches"
+      ]
+    },
+    {
+      "id": "FET_2F_CYBER_LAB",
+      "name": "Second Floor - Cyber Security & Forensics Lab (Room 202)",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Air-Gapped Network",
+        "Security Workstations"
+      ]
+    },
+    {
+      "id": "FET_2F_VLSI_LAB",
+      "name": "Second Floor - VLSI Design & Microelectronics Lab",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "FPGA Kits",
+        "Logic Analyzers",
+        "Clean Room Protocol"
+      ]
+    },
+    {
+      "id": "FET_2F_SMART_203",
+      "name": "Second Floor - Smart Lecture Hall 203 (Acoustic)",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "classroom",
+      "x": 28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Assistive Sound Loop",
+        "Ramped Front Access"
+      ]
+    },
+    {
+      "id": "FET_2F_DEPT_MECH",
+      "name": "Second Floor - Mechanical & Aerospace Faculty Suite",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "office",
+      "x": 12.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Department Offices",
+        "HOD Conference Room"
+      ]
+    },
+    {
+      "id": "FET_2F_RESTROOM_ACC",
+      "name": "Second Floor - Second Floor Accessible Restroom (2-WC01)",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "restroom",
+      "x": -15.0,
+      "y": 24.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Grab Bars",
+        "Support Rails",
+        "Wide Door"
+      ]
+    },
+    {
+      "id": "FET_2F_HOD_CSE",
+      "name": "Second Floor - HOD Office - Computer Science",
+      "floor": 2,
+      "building": "FET Engineering",
+      "category": "office",
+      "x": 0.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Head of Department Suite",
+        "Executive Desk"
+      ]
+    },
+    {
+      "id": "FET_3F_ELEVATOR",
+      "name": "Third Floor - Main Accessible Elevator Bank",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "elevator",
+      "x": -6.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Braille Buttons",
+        "Voice Floor Announcement",
+        "Wide Doorway (110cm)",
+        "Emergency Telephone"
+      ]
+    },
+    {
+      "id": "FET_3F_STAIRS_SOUTH",
+      "name": "Third Floor - Central South Stairwell",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 6.0,
+      "y": 20.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Continuous Handrails",
+        "High-Contrast Step Edging",
+        "Fire-Rated Enclosure"
+      ]
+    },
+    {
+      "id": "FET_3F_STAIRS_NORTH",
+      "name": "Third Floor - North Stairwell & Fire Exit",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 0.0,
+      "y": -22.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Direct Fire Escape Access",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_3F_STAIRS_EAST",
+      "name": "Third Floor - East Radial Stairwell",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Emergency Exit Access",
+        "Non-Slip Treads"
+      ]
+    },
+    {
+      "id": "FET_3F_STAIRS_WEST",
+      "name": "Third Floor - West Radial Stairwell",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": -22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "West Fire Exit Route",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_3F_CONCOURSE",
+      "name": "Third Floor - Third Floor Aerospace Concourse",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "lobby",
+      "x": 0.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Aircraft Model Exhibition",
+        "Wide Skylit Hallway"
+      ]
+    },
+    {
+      "id": "FET_3F_AVIONICS_LAB",
+      "name": "Third Floor - Avionics & Flight Simulation Studio",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Full Flight Simulator",
+        "Cockpit Instrument Trainer"
+      ]
+    },
+    {
+      "id": "FET_3F_PROPULSION_LAB",
+      "name": "Third Floor - Aerospace Propulsion Research Lab",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Turbine Engine Testbed",
+        "CFD Simulation Cluster"
+      ]
+    },
+    {
+      "id": "FET_3F_ROBOTICS_LAB",
+      "name": "Third Floor - Robotics & Autonomous Systems Studio",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Industrial Robot Arms",
+        "Mobile Drone Test Arena"
+      ]
+    },
+    {
+      "id": "FET_3F_SMART_303",
+      "name": "Third Floor - Aerospace Design Lecture Hall 303",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "classroom",
+      "x": 28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "CAD Modeling Terminals",
+        "Audio Chime"
+      ]
+    },
+    {
+      "id": "FET_3F_DEANS_SUITE",
+      "name": "Third Floor - Dean's Executive Suite & Boardroom",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "office",
+      "x": 12.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Dean of Engineering Office",
+        "Academic Council Boardroom"
+      ]
+    },
+    {
+      "id": "FET_3F_RESTROOM_ACC",
+      "name": "Third Floor - Third Floor Accessible Restroom (3-WC01)",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "restroom",
+      "x": -15.0,
+      "y": 24.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Grab Bars",
+        "Support Rails",
+        "Low Mirror"
+      ]
+    },
+    {
+      "id": "FET_3F_MAKER_SPACE",
+      "name": "Third Floor - Student Innovation & Maker Studio",
+      "floor": 3,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": 0.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "3D Printers",
+        "Laser Cutters",
+        "Circuit Prototyping"
+      ]
+    },
+    {
+      "id": "FET_4F_ELEVATOR",
+      "name": "Fourth Floor - Main Accessible Elevator Bank",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "elevator",
+      "x": -6.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Braille Buttons",
+        "Voice Floor Announcement",
+        "Wide Doorway (110cm)",
+        "Emergency Telephone"
+      ]
+    },
+    {
+      "id": "FET_4F_STAIRS_SOUTH",
+      "name": "Fourth Floor - Central South Stairwell",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 6.0,
+      "y": 20.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Continuous Handrails",
+        "High-Contrast Step Edging",
+        "Fire-Rated Enclosure"
+      ]
+    },
+    {
+      "id": "FET_4F_STAIRS_NORTH",
+      "name": "Fourth Floor - North Stairwell & Fire Exit",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 0.0,
+      "y": -22.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Direct Fire Escape Access",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_4F_STAIRS_EAST",
+      "name": "Fourth Floor - East Radial Stairwell",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": 22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "Emergency Exit Access",
+        "Non-Slip Treads"
+      ]
+    },
+    {
+      "id": "FET_4F_STAIRS_WEST",
+      "name": "Fourth Floor - West Radial Stairwell",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "stairs",
+      "x": -22.0,
+      "y": 0.0,
+      "wheelchair_accessible": false,
+      "amenities": [
+        "West Fire Exit Route",
+        "Dual Handrails"
+      ]
+    },
+    {
+      "id": "FET_4F_CONCOURSE",
+      "name": "Fourth Floor - Fourth Floor Research & PG Concourse",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "lobby",
+      "x": 0.0,
+      "y": 18.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Skybridge Overlook",
+        "Quiet Research Zone"
+      ]
+    },
+    {
+      "id": "FET_4F_HPC_CLUSTER",
+      "name": "Fourth Floor - High-Performance Supercomputing Facility",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Liquid-Cooled Server Cabinets",
+        "Precision Climate Control"
+      ]
+    },
+    {
+      "id": "FET_4F_QUANTUM_LAB",
+      "name": "Fourth Floor - Quantum Computing & Photonics Lab",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "lab",
+      "x": -28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Optical Isolation Tables",
+        "Cryogenic Chambers"
+      ]
+    },
+    {
+      "id": "FET_4F_CONF_HALL",
+      "name": "Fourth Floor - Ramanujan Executive Conference Hall",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "auditorium",
+      "x": 28.0,
+      "y": 10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Video Conferencing Walls",
+        "Simultaneous Translation"
+      ]
+    },
+    {
+      "id": "FET_4F_PG_LIBRARY",
+      "name": "Fourth Floor - Postgraduate Archives & Digital Repository",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "library",
+      "x": 28.0,
+      "y": -10.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Rare Technical Archives",
+        "Silent Research Cubicles"
+      ]
+    },
+    {
+      "id": "FET_4F_INCUBATION",
+      "name": "Fourth Floor - JAIN University Technology Incubation Cell",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "office",
+      "x": 12.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Startup Mentoring Pods",
+        "Pitch Presentation Deck"
+      ]
+    },
+    {
+      "id": "FET_4F_RESTROOM_ACC",
+      "name": "Fourth Floor - Fourth Floor Accessible Restroom (4-WC01)",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "restroom",
+      "x": -15.0,
+      "y": 24.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Grab Bars",
+        "Support Rails",
+        "Emergency Alarm"
+      ]
+    },
+    {
+      "id": "FET_4F_TERRACE_SKY",
+      "name": "Fourth Floor - Observatory & Green Terrace Access",
+      "floor": 4,
+      "building": "FET Engineering",
+      "category": "entrance",
+      "x": 0.0,
+      "y": -26.0,
+      "wheelchair_accessible": true,
+      "amenities": [
+        "Weather Station Sensors",
+        "Solar Array Overlook"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "OUT_GATE_MAIN",
+      "destination": "OUT_PARKING_ACC",
+      "distance": 45.0,
+      "estimated_time": 35.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_PARKING_ACC",
+      "destination": "OUT_QUAD_CENTRAL",
+      "distance": 55.0,
+      "estimated_time": 42.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_GATE_MAIN",
+      "destination": "OUT_QUAD_CENTRAL",
+      "distance": 90.0,
+      "estimated_time": 70.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_QUAD_CENTRAL",
+      "destination": "OUT_ADMIN_BLOCK",
+      "distance": 18.0,
+      "estimated_time": 14.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_QUAD_CENTRAL",
+      "destination": "OUT_FET_FRONT_PORTICO",
+      "distance": 38.0,
+      "estimated_time": 30.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_QUAD_CENTRAL",
+      "destination": "OUT_FET_WEST_RAMP",
+      "distance": 48.0,
+      "estimated_time": 38.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_FET_WEST_RAMP",
+      "destination": "OUT_FET_FRONT_PORTICO",
+      "distance": 22.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_QUAD_CENTRAL",
+      "destination": "OUT_DINING_COMPLEX",
+      "distance": 45.0,
+      "estimated_time": 36.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_DINING_COMPLEX",
+      "destination": "OUT_HOSTEL_BLOCKS",
+      "distance": 55.0,
+      "estimated_time": 44.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_HOSTEL_BLOCKS",
+      "destination": "OUT_COLOSSEUM",
+      "distance": 52.0,
+      "estimated_time": 40.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_DINING_COMPLEX",
+      "destination": "OUT_COLOSSEUM",
+      "distance": 88.0,
+      "estimated_time": 68.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_COLOSSEUM",
+      "destination": "OUT_CRICKET_STADIUM",
+      "distance": 72.0,
+      "estimated_time": 56.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_CRICKET_STADIUM",
+      "destination": "OUT_AQUATICS_POOL",
+      "distance": 54.0,
+      "estimated_time": 42.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_FET_WEST_RAMP",
+      "destination": "OUT_AEROSPACE_LABS",
+      "distance": 68.0,
+      "estimated_time": 52.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_AEROSPACE_LABS",
+      "destination": "OUT_AQUATICS_POOL",
+      "distance": 75.0,
+      "estimated_time": 60.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_CRICKET_STADIUM",
+      "destination": "OUT_QUAD_CENTRAL",
+      "distance": 125.0,
+      "estimated_time": 95.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_ENTRANCE_FOYER",
+      "destination": "FET_0F_ELEVATOR",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_ENTRANCE_FOYER",
+      "destination": "FET_0F_STAIRS_SOUTH",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_SOUTH",
+      "destination": "FET_0F_STAIRS_EAST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_EAST",
+      "destination": "FET_0F_STAIRS_NORTH",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_NORTH",
+      "destination": "FET_0F_STAIRS_WEST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_WEST",
+      "destination": "FET_0F_ELEVATOR",
+      "distance": 24.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_AMPHI_STAGE",
+      "destination": "FET_0F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_MECH_LAB",
+      "destination": "FET_0F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_CIVIL_LAB",
+      "destination": "FET_0F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_PHYSICS_LAB",
+      "destination": "FET_0F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_CHEM_LAB",
+      "destination": "FET_0F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_SEMINAR_01",
+      "destination": "FET_0F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_RESTROOM_ACC",
+      "destination": "FET_G_ENTRANCE_FOYER",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_G_FIRE_EXIT_EAST",
+      "destination": "FET_0F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_CONCOURSE",
+      "destination": "FET_1F_ELEVATOR",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_CONCOURSE",
+      "destination": "FET_1F_STAIRS_SOUTH",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_SOUTH",
+      "destination": "FET_1F_STAIRS_EAST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_EAST",
+      "destination": "FET_1F_STAIRS_NORTH",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_NORTH",
+      "destination": "FET_1F_STAIRS_WEST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_WEST",
+      "destination": "FET_1F_ELEVATOR",
+      "distance": 24.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_AMPHI_TIER",
+      "destination": "FET_1F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_CS_LAB_101",
+      "destination": "FET_1F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_DATA_LAB_102",
+      "destination": "FET_1F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_ECE_LAB",
+      "destination": "FET_1F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_SMART_103",
+      "destination": "FET_1F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_LIBRARY",
+      "destination": "FET_1F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_RESTROOM_ACC",
+      "destination": "FET_1F_CONCOURSE",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_FACULTY_SUITE",
+      "destination": "FET_1F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_CONCOURSE",
+      "destination": "FET_2F_ELEVATOR",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_CONCOURSE",
+      "destination": "FET_2F_STAIRS_SOUTH",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_SOUTH",
+      "destination": "FET_2F_STAIRS_EAST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_EAST",
+      "destination": "FET_2F_STAIRS_NORTH",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_NORTH",
+      "destination": "FET_2F_STAIRS_WEST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_WEST",
+      "destination": "FET_2F_ELEVATOR",
+      "distance": 24.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_AI_RESEARCH",
+      "destination": "FET_2F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_CYBER_LAB",
+      "destination": "FET_2F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_VLSI_LAB",
+      "destination": "FET_2F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_SMART_203",
+      "destination": "FET_2F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_DEPT_MECH",
+      "destination": "FET_2F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_RESTROOM_ACC",
+      "destination": "FET_2F_CONCOURSE",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_HOD_CSE",
+      "destination": "FET_2F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_CONCOURSE",
+      "destination": "FET_3F_ELEVATOR",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_CONCOURSE",
+      "destination": "FET_3F_STAIRS_SOUTH",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_SOUTH",
+      "destination": "FET_3F_STAIRS_EAST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_EAST",
+      "destination": "FET_3F_STAIRS_NORTH",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_NORTH",
+      "destination": "FET_3F_STAIRS_WEST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_WEST",
+      "destination": "FET_3F_ELEVATOR",
+      "distance": 24.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_AVIONICS_LAB",
+      "destination": "FET_3F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_PROPULSION_LAB",
+      "destination": "FET_3F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_ROBOTICS_LAB",
+      "destination": "FET_3F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_SMART_303",
+      "destination": "FET_3F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_DEANS_SUITE",
+      "destination": "FET_3F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_RESTROOM_ACC",
+      "destination": "FET_3F_CONCOURSE",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_MAKER_SPACE",
+      "destination": "FET_3F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_CONCOURSE",
+      "destination": "FET_4F_ELEVATOR",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_CONCOURSE",
+      "destination": "FET_4F_STAIRS_SOUTH",
+      "distance": 6.0,
+      "estimated_time": 5.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_STAIRS_SOUTH",
+      "destination": "FET_4F_STAIRS_EAST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_STAIRS_EAST",
+      "destination": "FET_4F_STAIRS_NORTH",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_STAIRS_NORTH",
+      "destination": "FET_4F_STAIRS_WEST",
+      "distance": 28.0,
+      "estimated_time": 22.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_STAIRS_WEST",
+      "destination": "FET_4F_ELEVATOR",
+      "distance": 24.0,
+      "estimated_time": 18.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_HPC_CLUSTER",
+      "destination": "FET_4F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_QUANTUM_LAB",
+      "destination": "FET_4F_STAIRS_WEST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_CONF_HALL",
+      "destination": "FET_4F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_PG_LIBRARY",
+      "destination": "FET_4F_STAIRS_EAST",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_INCUBATION",
+      "destination": "FET_4F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_RESTROOM_ACC",
+      "destination": "FET_4F_CONCOURSE",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_4F_TERRACE_SKY",
+      "destination": "FET_4F_STAIRS_NORTH",
+      "distance": 14.0,
+      "estimated_time": 11.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_ELEVATOR",
+      "destination": "FET_1F_ELEVATOR",
+      "distance": 4.5,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": true,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_SOUTH",
+      "destination": "FET_1F_STAIRS_SOUTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_NORTH",
+      "destination": "FET_1F_STAIRS_NORTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_EAST",
+      "destination": "FET_1F_STAIRS_EAST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_0F_STAIRS_WEST",
+      "destination": "FET_1F_STAIRS_WEST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_ELEVATOR",
+      "destination": "FET_2F_ELEVATOR",
+      "distance": 4.5,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": true,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_SOUTH",
+      "destination": "FET_2F_STAIRS_SOUTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_NORTH",
+      "destination": "FET_2F_STAIRS_NORTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_EAST",
+      "destination": "FET_2F_STAIRS_EAST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_1F_STAIRS_WEST",
+      "destination": "FET_2F_STAIRS_WEST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_ELEVATOR",
+      "destination": "FET_3F_ELEVATOR",
+      "distance": 4.5,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": true,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_SOUTH",
+      "destination": "FET_3F_STAIRS_SOUTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_NORTH",
+      "destination": "FET_3F_STAIRS_NORTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_EAST",
+      "destination": "FET_3F_STAIRS_EAST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_2F_STAIRS_WEST",
+      "destination": "FET_3F_STAIRS_WEST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_ELEVATOR",
+      "destination": "FET_4F_ELEVATOR",
+      "distance": 4.5,
+      "estimated_time": 15.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": false,
+      "has_elevator": true,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_SOUTH",
+      "destination": "FET_4F_STAIRS_SOUTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_NORTH",
+      "destination": "FET_4F_STAIRS_NORTH",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_EAST",
+      "destination": "FET_4F_STAIRS_EAST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "FET_3F_STAIRS_WEST",
+      "destination": "FET_4F_STAIRS_WEST",
+      "distance": 7.5,
+      "estimated_time": 25.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_FET_WEST_RAMP",
+      "destination": "FET_0F_ELEVATOR",
+      "distance": 8.0,
+      "estimated_time": 6.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_FET_WEST_RAMP",
+      "destination": "FET_G_ENTRANCE_FOYER",
+      "distance": 12.0,
+      "estimated_time": 10.0,
+      "wheelchair_accessible": true,
+      "has_stairs": false,
+      "has_ramp": true,
+      "has_elevator": false,
+      "status": "open"
+    },
+    {
+      "source": "OUT_FET_FRONT_PORTICO",
+      "destination": "FET_G_ENTRANCE_FOYER",
+      "distance": 6.0,
+      "estimated_time": 8.0,
+      "wheelchair_accessible": false,
+      "has_stairs": true,
+      "has_ramp": false,
+      "has_elevator": false,
+      "status": "open"
+    }
+  ]
+}
