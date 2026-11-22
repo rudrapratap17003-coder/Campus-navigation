@@ -1,525 +1,272 @@
-# Accessible Campus Navigator
+# Accessible Campus Navigator — JAIN Global Campus & FET 3D Digital Twin
 
-A Python-based college campus accessibility and navigation system designed to empower students, staff, and visitors—especially individuals with mobility challenges—to navigate campus environments efficiently, safely, and independently.
+[![Build Status](https://img.shields.io/badge/Build-Passing-16A36A.svg)](#-test-suite-and-quality-assurance)
+[![Test Suite](https://img.shields.io/badge/Tests-190%20Passed-16A36A.svg)](#-test-suite-and-quality-assurance)
+[![Python Version](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.14-35D99A.svg)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.67.0-FF4B4B.svg)](https://streamlit.io)
+[![Three.js](https://img.shields.io/badge/Three.js-WebGL%203D-049EF4.svg)](https://threejs.org)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](#)
 
----
+A high-performance, accessible 3D digital twin and real-time wayfinding platform for the **JAIN Global Campus** (300-acre university campus on Kanakapura Road, Karnataka, India) and its flagship **Faculty of Engineering and Technology (FET)** building.
 
-## 🎯 Objectives
-
-- **Inclusive Navigation:** Provide customized routing options catering to diverse accessibility requirements (e.g., wheelchair ramps, elevators, step-free access, tactile paths).
-- **Dynamic Obstacle Awareness:** Enable real-time reporting and avoidance of temporary barriers (construction, broken elevators, maintenance work, crowded routes).
-- **Interactive Campus Exploration:** Deliver rich, multi-layered visual representations of campus buildings, facilities, pathways, and accessibility infrastructure.
-- **Data-Driven Insights:** Track route metrics, obstacle frequency, and pathway usage to assist campus administration in identifying accessibility bottlenecks and infrastructure improvements.
-
----
-
-## ✨ Implemented Core Features
-
-- **Multi-Modal Route Planning:**
-  - Standard shortest path calculation using Dijkstra's and Breadth-First Search (BFS) graph algorithms.
-  - Accessible routing preferences prioritizing elevators, ramps, wide corridors, and automated doors while avoiding stairs, steep slopes, and uneven surfaces.
-  - Alternative route calculation using edge-penalty detours.
-- **Accessibility Intelligence Engine:**
-  - Standardized pathway classification: *Fully Accessible*, *Accessible with Assistance*, *Not Wheelchair Accessible*, *Temporarily Blocked*, and *Unknown Accessibility*.
-  - Heuristic continuous scoring formula (0–100) reflecting step-free status, ramps, elevators, staircase barriers, and temporary obstructions.
-  - Turn-by-turn guidance and automated warning alerts.
-- **Dynamic Obstacle Reporting & SQLite Database Integration:**
-  - Community-driven and administrative hazard logging stored persistently in SQLite.
-  - Comprehensive lifecycle management: *Pending*, *Verified*, *Resolved*, and *Rejected*.
-  - Dynamic graph synchronization: verified active obstacles dynamically update live path availability without overwriting raw dataset attributes.
-  - Immediate operational restoration upon report resolution.
-- **Interactive 3D Digital Twin & JAIN Global Campus Reconstruction (Phase 12 & Phase 13):**
-  - **Complete Outdoor Campus Environment:** High-fidelity Three.js WebGL 3D reconstruction of the 300-acre **JAIN Global Campus** on Kanakapura Road (NH-948), including the octagonal FET Building Complex, Colosseum Arena with classical colonnade, JIRS Aquatic Center with 50m Olympic pool and starting blocks, International Cricket Stadium with turf oval, clay pitch and 4-lane athletic red running track, SBMJCE Dining Complex with terrace, student hostels with balcony recesses, administrative headquarters with entrance portico, aerospace hangars with tarmac apron, arterial roads with dashed lane markings and zebra crosswalks, and 60+ instanced 3D organic trees.
-  - **FET Five-Floor Indoor Architectural Model:** Detailed multi-floor reconstruction modeling all 5 physical levels (Ground Floor Level 0, First Floor Level 1, Second Floor Level 2, Third Floor Level 3, and Fourth Floor Level 4) based on official fire escape plans. Includes exterior curtain wall glazing with structural mullions, entrance canopy portico, ADA west ramp with handrails, central tiered amphitheater, four cardinal fire stairwells (North, East, South, West), and a continuous wheelchair-accessible elevator core with animated cab.
-  - **Procedural Interior Room Detailing:** Realistic 3D room-level furnishings: workstation arrays and dual monitors in computer labs; oscilloscopes, workbenches, and apparatus in science and engineering labs; bookshelf stacks and study tables in libraries; tiered desks, podium, and smart boards in classrooms; supercomputer server racks with flashing activity LEDs in the HPC cluster; and grand conference tables in executive suites.
-  - **Advanced 3D Exploration & Camera Controls:** Full 360-degree orbit rotation with smooth damping, camera presets (*Isometric*, *Top-Down Plan*, *Front Elevation*, *Side East Profile*, *FET Close-up*, and *Reset*), domain filtering (*All Campus*, *Outdoor*, *FET Only*), view modes (*Exterior View* vs. *Cutaway / Interior View* with translucent walls), individual floor isolation (Levels 0–4), Stacked view, and 5-Floor Exploded View with emerald vertical alignment guide rods.
-  - **Interactive Facility Inspector with Room Focus:** Inspect any facility with real-time HUD card detailing metadata, building, floor, room category, step-free access status, and amenities, plus an interactive **"🎯 Focus on Room"** button that smoothly animates the camera to frame the selected facility.
-  - **Dynamic Route Traversal & Speed Controls:** Traversal light orb with Play/Pause toggle, speed multiplier adjustments (`⚡ 1x` / `⚡ 2x` / `⚡ 0.5x`), and restart controls along the glowing 3D trajectory tube.
-  - **Unified Outdoor/Indoor Navigation Graph:** 79 locations and 106 pathways connecting outdoor gateways directly to indoor research labs across all 5 floors. Powered by authoritative Python routing (BFS and Dijkstra).
-  - **Dynamic Obstacle & Accessibility Integration:** Synchronized with the SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green. ♿ Wheelchair toggle strictly enforces step-free paths, using ramps and elevators while avoiding stairs.
-  - **Dual Environment Switching:** Toggle seamlessly between the comprehensive *JAIN Global Campus & FET 5-Floor Digital Twin* and the canonical *15-Node Schematic Benchmark Model*.
-- **Campus Data Accuracy, Digital Twin Realism & Navigation Intelligence (Phase 16):**
-  - **Comprehensive 79-Location & 106-Pathway Audit:** Rigorous verification and validation of all campus graph entities in `data/jain_global_campus.json` with unique connection IDs (`CONN_OUT_...`, `CONN_INTRA_...`, `CONN_VERT_...`) and validated physical metrics.
-  - **Formal Data Verification & Confidence Framework:** Standardized reliability classification into four discrete tiers (`VERIFIED`, `IMAGE_DERIVED`, `APPROXIMATE`, `UNVERIFIED`) with source attribution, confidence levels, and audit timestamps displayed in the interactive Facility Inspector.
-  - **Spatial Vertical Alignment Invariance Proof:** Mathematical verification confirming zero horizontal shear ($0.00\text{ m}$ planar displacement) for the primary elevator shaft $(-6.0, 18.0)$ and all four cardinal stairwells across Floors 0, 1, 2, 3, and 4.
-  - **Room-Level Destination Intelligence Engine:** High-performance relevance search in `modules/destination_search.py` supporting exact IDs, facility names, departments, categories, floor levels, colloquial abbreviations (`AI Lab`, `HPC`, `Library`, `Robotics`, `Seminar Hall`, `Mechanical Lab`), and autocomplete search suggestions.
-  - **Compass & Directional Orientation Intelligence:** Real-time calculation of compass bearings ($0^\circ - 360^\circ$ clockwise from campus grid North) and 8 cardinal directions (N, NE, E, SE, S, SW, W, NW) integrated into turn-by-turn guidance with statutory orientation disclosures.
-  - **Persistent Wayfinding History & Telemetry:** SQLite-backed `navigation_history` table recording completed journeys, distance traversed, duration, floor transfers, and user-isolated query filters with KPI telemetry metrics.
-  - **Administrative Quality & Verification Governance:** RBAC-enforced administrative panel in the 3D map interface providing real-time data reliability breakdowns and audit-logged verification updates in `administrative_audit_log`.
-  - **147 Comprehensive Automated Tests:** 16 new automated tests in `tests/test_phase16_data_accuracy.py` bringing the test suite to 147 passing tests with zero failures, zero errors, and zero regressions.
-- **Interactive Real-Time Indoor & Outdoor Wayfinding System (Phase 15):**
-  - **Stateful Navigation Session Controller:** Robust finite-state machine (`NavigationSession`) managing the complete wayfinding lifecycle (`IDLE`, `ROUTE_PREVIEW`, `NAVIGATING`, `PAUSED`, `FLOOR_TRANSITION`, `ARRIVED`, `REROUTING`, `NO_ACCESSIBLE_ROUTE`) persisted in Streamlit session state.
-  - **Turn-by-Turn Instruction Engine with Geometric Turn Approximations:** Automated directional guidance based on 2D vector cross-product ($u_x v_z - u_z v_x$) and dot-product geometry across 8 angular quadrants (`continue straight`, `turn left`, `turn right`, `turn around`, `enter_building`, `exit_building`, `elevator`, `stairs`, `ramp`, `arrive`), complete with simulated orientation disclosures and landmark references.
-  - **Live 3D User Avatar & Spline Progress Visualization:** Real-time Three.js avatar navigation marker featuring a pulsing ground ring, directional bearing pointer cone, emissive orb, local point light, dynamic segmented route tubes (completed vs. active vs. remaining), and synchronized vertical elevator cab transit during cross-floor steps.
-  - **Streamlit Live Navigation Dashboard HUD:** Dedicated real-time dashboard banner with dynamic progress bar (0–100%), remaining pathway distance and transit time estimations, completed vs. total step tracker, floor indicator, current instruction card, next instruction card, and responsive controls (*Start*, *Pause*, *Resume*, *Next Step*, *Restart*, *Cancel*).
-  - **Dynamic Obstacle Detection & Automatic Rerouting:** Real-time monitoring of upcoming route segments against verified SQLite hazard reports; dynamically triggers rerouting states, avoids blocked corridors, and recalculates alternative detours from the user's current location while preserving wheelchair constraints.
-  - **Wheelchair Safety & Graceful Disconnection Safeguards:** Strict enforcement of step-free routes avoiding all 18 staircase edges, prioritized elevator and ramp utilization, and graceful transition to `NO_ACCESSIBLE_ROUTE` when vertical connections are completely severed.
-  - **Destination Arrival Celebration & Summary Metrics:** Arrival confetti balloons and comprehensive journey metrics display (total distance, transit duration, floor transfers, and accessibility mode) with one-click navigation restart.
-- **Campus Digital Twin Intelligence, Navigation Accuracy & System Validation (Phase 14):**
-  - **Topological Integrity & All-Pairs Reachability:** Verified mathematical graph connectivity for all 79 campus locations and 106 pathways across 5 physical floors. Achieved 100% reachability across all 6,162 directed pairs with zero isolated nodes in both standard pedestrian and wheelchair-accessible modes.
-  - **Intelligent Multi-Route Trade-Off Comparison Engine:** Side-by-side metric comparison evaluating Dijkstra (Shortest Distance), Breadth-First Search (Fewest Step Turns), and Alternative Detour with distance, estimated walking time, turn counts, floor transitions, elevator vs. stairs usage, and decision rationales.
-  - **Floor-Filtered Destination Navigation:** Searchable floor-based destination filter narrowing room selection to specific levels (Ground, Level 1, Level 2, Level 3, Level 4, or Outdoor).
-  - **Wheelchair Invariance & Vertical Alignment:** Formally validated step-free accessibility across 88 pathways, including continuous vertical transit via the central elevator core and strict exclusion of all 18 staircase edges.
-  - **Multi-Obstacle Concurrency & Database Audit Logging:** Validated that pathways with multiple overlapping hazard reports remain blocked until all reports are resolved. All verification and resolution actions write immutable audit trails to SQLite.
-  - **Accessibility Indicator Disclosure:** Explicit in-app advisory clarifying that accessibility scores (0–100) are continuous heuristic routing metrics representing barrier freedom rather than statutory building compliance certificates.
-  - **121 Comprehensive Automated Tests:** Test suite expanded to 121 tests passing with 0 failures and 0 errors, validating graph connectivity, 5-floor routing, wheelchair constraints, and security.
-- **Advanced Interactive Indoor Map & Route Visualizer (Phase 8):**
-  - Floor-by-floor navigation filtering for Ground Floor (Floor 0), First Floor (Floor 1), and a side-by-side All Floors architectural overview.
-  - In-map route planning with dynamic gold route overlays, origin pins, and destination flags.
-  - Automated cross-floor elevator transfer detection with step instructions.
-  - Live color-coded obstacle visualization reflecting active verified obstructions directly from the SQLite database.
-  - Single-location inspector panel displaying room categories, accessibility classifications, amenities, and connected links.
-- **Authentication, Role-Based Access Control (RBAC) & Administration (Phase 9):**
-  - Cryptographically salted PBKDF2-HMAC-SHA256 password hashing (100,000 iterations) with constant-time verification.
-  - Three distinct user roles: **Student / Campus User**, **Field Staff**, and **Administrator**.
-  - Service-layer backend RBAC enforcement preventing unauthorized barrier verification or user privilege escalation.
-  - Dynamic role-aware navigation and sidebar session management.
-  - One-time initial setup mechanism for bootstrapping the primary Administrator account.
-  - Comprehensive Administrative Management Console with user directory, role/status assignment, and obstacle verification queue.
-  - Immutable administrative audit logging for all critical operations and obstacle status transitions.
-  - Duplicate obstacle detection warnings alerting users when existing reports already affect selected pathways.
+Engineered specifically to empower students, visitors, and individuals with mobility challenges (wheelchair users, elderly visitors, and ambulatory impairments) to navigate complex multi-floor university environments safely, independently, and efficiently.
 
 ---
 
-## 🗺️ Indoor Campus Map System & Coordinate Clarification
+## 🏛️ Campus Overview & Physical Setting
 
-### Schematic Connectivity Layout Notice
-
-> [!WARNING]
-> **Coordinate Accuracy & Architectural Blueprint Limitations:**
-> The 2D coordinates $(X, Y)$ utilized by the mapping visualizer are **illustrative graph-layout coordinates** designed strictly for schematic connectivity, topological pathfinding, and navigation demonstration. They are **not geographically surveyed coordinates** and do **not** claim architectural scale, room dimensions, or blueprint precision.
->
-> The visualization engine in `modules/indoor_map.py` has been architected to cleanly accept high-resolution vector floor plans (SVG/DXF), architectural CAD exports, or georeferenced indoor GIS coordinates once physical building surveys are integrated.
-
-### Multi-Floor Visualization Architecture
-
-1. **Floor-by-Floor Separation:**
-   - Filters nodes and intra-floor edges for the selected floor level (`Floor 0` or `Floor 1`).
-2. **All-Floors Side-by-Side Architectural Plate:**
-   - Because physical floors overlap in 2D space, the *All Floors* overview renders Floor 0 and Floor 1 side-by-side using an automatic plate offset ($X + 65.0$), allowing vertical elevator transfers and stairways to span visibly across levels.
-3. **Color-Coded Pathway Classifications:**
-   - 🟢 **Solid Green:** Accessible open corridors and ramps (`#2d6a4f` / `#40916c`).
-   - 🔵 **Solid Teal:** Elevator vertical transitions (`#2a9d8f`).
-   - 🟠 **Dotted Orange:** Staircase connections (`#e76f51`).
-   - 🔴 **Dashed Red:** Verified blocked pathways (`#e63946`).
-   - ⚪ **Dash-Dot Grey:** Unknown or unverified accessibility (`#6c757d`).
-   - 🟡 **Thick Amber Overlay:** Active navigation path (`#f59e0b`).
+- **Campus Reference:** JAIN Global Campus, Jakkasandra Post, Kanakapura Taluk, Ramanagara District, Karnataka, India — 562112
+- **Coordinate Reference:** `12.6508° N, 77.4428° E` (Kanakapura Road / NH-948)
+- **Topological Graph:** **79 Verified Campus Locations** and **106 Pathways**
+- **Indoor Environment:** **5 Physical Floors** of the FET Building (Ground Level 0, First Level 1, Second Level 2, Third Level 3, Fourth Level 4)
+- **Vertical Infrastructure:** Continuous central wheelchair-accessible elevator core and 4 cardinal fire stairwells (North, East, South, West)
+- **Outdoor Environment:** Octagonal FET Complex, Central Amphitheater, Colosseum Arena, JIRS Olympic Aquatic Center, International Cricket Stadium & Running Track, Aerospace Hangars, Student Hostels, Dining Complex, and Administrative Headquarters.
 
 ---
 
-## 🏢 Three.js 3D Campus Navigation Engine (Phase 12)
+## ✨ System Capabilities & Milestone Architecture
 
-### 3D Architectural Visualization & Spatial Normalization
-
-The 3D Campus Navigation Engine (`modules/three_d_map.py`) translates schematic 2D campus graphs into a rich, hardware-accelerated WebGL isometric world rendered via **Three.js r128**:
-
-1. **Coordinate Normalization:**
-   - Translates 2D layout coordinates $(X, Y)$ into normalized 3D coordinates $(X, Y, Z)$ centered around $(X_c = 30.0, Z_c = 27.5)$ scaled at $0.85\times$.
-   - Vertical elevation ($Y$): Ground Floor resides at $Y = 0.0$; First Floor resides at $Y = 8.0$ (elevated to $Y = 16.0$ in Exploded View).
-2. **Multi-Floor Circulation & Platforms:**
-   - **Ground & First Floor Slabs:** Semi-translucent glass slabs with emerald perimeter borders and architectural alignment grids.
-   - **Vertical Elevator Shaft:** Enclosed glass tower connecting Ground Floor Elevator Lobby (`LOC_04`) to First Floor Elevator Lobby (`LOC_10`) with an illuminated elevator cab.
-   - **Central Staircase:** 3D stepped staircase flight connecting Ground Floor (`LOC_05`) to First Floor (`LOC_11`) in amber accent.
-   - **West Ramp Entrance:** Sloped ramp approach connecting outside access (`LOC_09`) to campus dining and restrooms.
-3. **3D Interaction & HUD Camera Controls:**
-   - **360° Orbit Rotation:** Left-click and drag for full panoramic inspection.
-   - **Smooth Zoom & Pan:** Mouse wheel zoom and right-click panning.
-   - **Camera Presets:** Isometric (45°), Top-Down (bird's-eye), Front Elevation, and Reset buttons.
-   - **Floor Layer Controls:** Combined building view, Exploded floor view (+8.0 vertical elevation for floor clearance), Ground Floor only, and First Floor only.
-4. **Authoritative Python-to-JavaScript Data Contract:**
-   - All pathfinding and accessibility intelligence execute exclusively in Python (`RouteFinder`, `AccessibilityEngine`).
-   - The calculated path nodes are transformed into 3D spline curves (`THREE.CatmullRomCurve3`) and rendered as glowing 3D trajectory tubes with moving traversal light pulses.
-5. **Dynamic SQLite Barrier Synchronization:**
-   - Actively verified obstacle reports from SQLite immediately update affected 3D pathway meshes to glowing crimson red with physical hazard barrier blocks.
-   - Rerouting around verified hazards updates the 3D trajectory in real-time.
-   - Resolving obstacles restores the pathway to operational green.
-6. **System Requirements & WebGL Graceful Degradation:**
-   - Runs in standard modern browsers (Chrome, Edge, Firefox, Safari) with WebGL 1.0/2.0 enabled.
-   - If WebGL hardware acceleration is unavailable, a clear notice is displayed directing users to the 2D schematic map.
-
----
-
-## 💻 Streamlit Web Application Pages
-
-The application is structured into five cohesive pages accessible via the sidebar navigation:
-
-1. **📊 Dashboard (`pages/dashboard.py`):**
-   - High-level metric summary: Total locations (15), total pathways (17), accessible pathways (16), active verified obstacles, pending reports, and resolved issues.
-   - Interactive Plotly donut and bar charts showing pathway classifications and obstacle distribution (with empty-state handling).
-   - Infrastructure summary for elevators, access ramps, and stairs.
-   - Recent obstacle log and quick-action navigation shortcuts.
-2. **🧭 Find Accessible Route (`pages/navigation.py`):**
-   - Dropdown selectors for origin and destination with floor metadata.
-   - Toggle between Dijkstra's algorithm (minimizing distance or travel time) and Breadth-First Search (minimizing transitions).
-   - Wheelchair-only constraint toggle enforcing step-free routes through elevators and ramps.
-   - Turn-by-turn instruction sequence with directional badges and segment metrics.
-   - Alternative route suggestions.
-3. **🗺️ Campus Map (`pages/campus_map.py`):**
-   - Interactive indoor schematic map with floor filters (*Ground Floor*, *First Floor*, *All Floors*).
-   - In-map route visualization with path overlays, origin/destination pins, and elevator transfer callouts.
-   - Location details panel with connected link breakdown and active obstacle alerts.
-4. **🏢 3D Campus Map (`pages/3d_campus_map.py`):**
-   - Full Three.js WebGL isometric multi-floor 3D campus navigator.
-   - Exploded floor view separating Floor 1 vertically for unobstructed inspection of ground-level corridors.
-   - 3D route planning with animated traversal orbs, step-by-step guidance, and vertical elevator shaft movement.
-   - Interactive raycasting room inspector displaying facility amenities and wheelchair readiness.
-   - Dynamic synchronization with live SQLite obstacle states (blocked pathways render in glowing crimson red).
-5. **♿ Accessibility Overview (`pages/accessibility.py`):**
-   - Explanation of the 5 standardized accessibility classifications.
-   - Comprehensive inventory of all 17 campus connections with distances, times, and facilities.
-   - Single-location inspector analyzing node accessibility and special amenities.
-   - Prominent disclaimer regarding the algorithmic heuristic nature of the scores.
-6. **⚠️ Obstacle Reports (`pages/obstacle_reports.py`):**
-   - Complete incident audit log with filters by Status, Severity, and Category.
-   - In-app reporting accordion to log field obstructions directly into the SQLite database.
-   - Authorized verification queue for Field Staff and Administrators.
-7. **🔐 Account & Sign In (`pages/login.py`):**
-   - Secure authentication interface with brute-force lockout and session management.
-8. **🛡️ Administrative Console (`pages/admin_management.py`):**
-   - Governance console for user role assignment, status toggling, and immutable audit logs.
-   - In-app reporting accordion to log field obstructions directly into the SQLite database.
-
----
-
-## 🗄️ Database Architecture & Obstacle Management
-
-Persistent storage is implemented via Python's built-in `sqlite3` module with foreign key enforcement and parameterized SQL queries to prevent SQL injection vulnerabilities.
-
-### SQLite Database Schema (`obstacle_reports`)
-
-### SQLite Database Schema
-
-```sql
--- Obstacle & Barrier Reports
-CREATE TABLE IF NOT EXISTS obstacle_reports (
-    report_id TEXT PRIMARY KEY,
-    location_id TEXT,
-    source_location_id TEXT,
-    destination_location_id TEXT,
-    target_type TEXT NOT NULL CHECK(target_type IN ('location', 'pathway')),
-    obstacle_category TEXT NOT NULL,
-    description TEXT NOT NULL,
-    severity TEXT NOT NULL CHECK(severity IN ('Low', 'Medium', 'High', 'Critical')),
-    reported_at TEXT NOT NULL,
-    reporter_name TEXT NOT NULL,
-    status TEXT NOT NULL CHECK(status IN ('Pending', 'Verified', 'Resolved', 'Rejected')),
-    resolution_notes TEXT,
-    updated_at TEXT NOT NULL
-);
-
--- Registered User Accounts
-CREATE TABLE IF NOT EXISTS users (
-    user_id TEXT PRIMARY KEY,
-    full_name TEXT NOT NULL,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    salt TEXT NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('Student', 'Field Staff', 'Administrator')),
-    account_status TEXT NOT NULL CHECK(account_status IN ('Active', 'Inactive')),
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-);
-
--- Administrative & Operational Audit Trail
-CREATE TABLE IF NOT EXISTS administrative_audit_log (
-    audit_id TEXT PRIMARY KEY,
-    actor_user_id TEXT NOT NULL,
-    action TEXT NOT NULL,
-    target_type TEXT NOT NULL CHECK(target_type IN ('obstacle_report', 'user_account', 'system')),
-    target_id TEXT NOT NULL,
-    previous_status TEXT,
-    new_status TEXT,
-    timestamp TEXT NOT NULL,
-    notes TEXT
-);
-
--- Brute-Force Rate Limiting & Account Lockout
-CREATE TABLE IF NOT EXISTS login_rate_limits (
-    username TEXT NOT NULL,
-    attempt_time REAL NOT NULL
-);
-
--- Performance Indexes
-CREATE INDEX IF NOT EXISTS idx_obstacle_status ON obstacle_reports (status);
-CREATE INDEX IF NOT EXISTS idx_obstacle_location ON obstacle_reports (location_id);
-CREATE INDEX IF NOT EXISTS idx_obstacle_pathway ON obstacle_reports (source_location_id, destination_location_id);
-CREATE INDEX IF NOT EXISTS idx_obstacle_reported_at ON obstacle_reports (reported_at);
-CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
-CREATE INDEX IF NOT EXISTS idx_users_status ON users (account_status);
-CREATE INDEX IF NOT EXISTS idx_audit_actor ON administrative_audit_log (actor_user_id);
-CREATE INDEX IF NOT EXISTS idx_audit_action ON administrative_audit_log (action);
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON administrative_audit_log (timestamp);
-CREATE INDEX IF NOT EXISTS idx_rate_limit_user ON login_rate_limits (username, attempt_time);
+```
+                          ┌─────────────────────────────────────┐
+                          │     Streamlit 1.67.0 Web UI         │
+                          │   (Dark Green Glassmorphism)        │
+                          └──────────────────┬──────────────────┘
+                                             │
+             ┌───────────────────────────────┼───────────────────────────────┐
+             ▼                               ▼                               ▼
+┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
+│   3D Digital Twin       │     │   Navigation & Routing  │     │  Accessibility Engine   │
+│   (Three.js WebGL)      │     │  (Dijkstra, BFS, Detour)│     │  (0-100 Heuristic Score)│
+│ • Outdoor 300-acre map  │     │ • Multi-Route Tradeoffs │     │ • Step-free classification│
+│ • 5-Floor FET Building  │     │ • Turn-by-Turn Guidance │     │ • Wheelchair invariants │
+│ • Exploded & Cutaway    │     │ • Real-time avatar sync │     │ • Dynamic hazard alerts │
+└────────────┬────────────┘     └────────────┬────────────┘     └────────────┬────────────┘
+             │                               │                               │
+             └───────────────────────────────┼───────────────────────────────┘
+                                             ▼
+                               ┌───────────────────────────┐
+                               │     Service & Data Layer  │
+                               │  (NetworkX Graph Engine)  │
+                               └─────────────┬─────────────┘
+                                             │
+                      ┌──────────────────────┴──────────────────────┐
+                      ▼                                             ▼
+        ┌───────────────────────────┐                 ┌───────────────────────────┐
+        │   SQLite WAL Database     │                 │   Configuration & Logs    │
+        │ • Role-Based Access Control│                │ • AppConfig (.env)        │
+        │ • Obstacle Reports Queue  │                 │ • SensitiveDataFilter     │
+        │ • Navigation History      │                 │ • Automated Backups       │
+        │ • Saved Places & Feedback │                 │ • Docker & Nginx Proxy    │
+        └───────────────────────────┘                 └───────────────────────────┘
 ```
 
-### Report Verification Workflow & Lifecycle
+### 1. 3D Digital Twin & Procedural Architecture (Phases 12 & 13)
+- **Three.js WebGL Rendering Engine:** Realistic 3D canvas with shadow-casting directional sunlight, ambient fill lights, fog depth, and antialiased graphics.
+- **Architectural Faithfulness:** Faithful representation of the octagonal FET building complex derived from official satellite imagery and architectural floor plans.
+- **Five-Floor Vertical Exploration:** Instant toggle between individual floor slices (Levels 0–4), Stacked view, and **5-Floor Exploded View** with emerald vertical alignment guide rods.
+- **Procedural Interior Detailing:** Detailed computer science workstation arrays, electronics lab oscilloscopes, library stack rows, tiered auditorium desks, supercomputer server clusters with pulsating LEDs, and executive suites.
+- **Interactive Facility Inspector:** Real-time HUD detailing metadata, floor, department, step-free access status, and **"🎯 Focus on Room"** camera animation.
 
-1. **Submission (`Pending`):**
-   - User submits an obstacle report. Initial status is `Pending`. Pending reports **do not automatically block pathways**.
-   - The engine checks for duplicate or concurrent reports affecting the same location or connection and displays a warning notice.
-2. **Field Staff / Administrator Verification (`Verified`):**
-   - Authorized personnel review the pending queue and confirm the report. Status transitions to `Verified`.
-   - `ObstacleManager` applies a temporary `blocked` status to the affected live graph edge/node.
-   - Dijkstra and BFS automatically detour around the blocked segment.
-   - The map dynamically highlights the connection in dashed red (`#e63946`).
-   - Every verification records an audit trail record in `administrative_audit_log`.
-3. **Resolution (`Resolved`):**
-   - Field staff log mandatory resolution notes detailing maintenance.
-   - Pathway is restored to original operational status (`open`).
-4. **Rejection (`Rejected`):**
-   - Unsubstantiated reports are marked `Rejected` with a documented reason without affecting pathway availability.
+### 2. Intelligent Routing & Wayfinding (Phases 14, 15 & 16)
+- **Authoritative Graph Engine:** NetworkX-backed campus graph computing Dijkstra (Shortest Distance), Breadth-First Search (Fewest Step Turns), and Alternative Detours.
+- **Strict Wheelchair Accessibility:** ♿ Wheelchair toggle strictly enforces step-free paths, excluding all 18 staircase pathways and routing via the central elevator core or ADA-compliant ramps.
+- **Turn-by-Turn Instruction Engine:** Geometric cross-product analysis yielding natural instructions (`continue straight`, `turn left`, `turn right`, `take elevator to Floor X`, `enter building`, `exit building`).
+- **Compass & Directional Orientation:** True compass bearings ($0^\circ - 360^\circ$) and 8 cardinal quadrants (N, NE, E, SE, S, SW, W, NW) integrated with statutory navigation disclosures.
+- **Dynamic Obstacle Synchronization:** Live synchronization with SQLite hazard reports; verified obstacles display as glowing crimson red barriers and trigger automatic in-transit rerouting.
 
----
+### 3. Production Architecture & Robustness (Phase 17)
+- **Hierarchical Configuration (`config.py`):** Environment-driven settings with `AppConfig`, `DatabaseConfig`, `SecurityConfig`, `MapConfig`, and `LoggingConfig`.
+- **Domain Exception Hierarchy (`modules/exceptions.py`):** Structured domain exceptions (`AuthenticationError`, `PermissionDeniedError`, `RouteNotFoundError`, `ObstacleConflictError`).
+- **Data Protection & Masking (`modules/logging_config.py`):** Structured logging featuring `SensitiveDataFilter` to scrub passwords, salts, and secret tokens.
+- **Database Hardening (`database/db_manager.py`):** SQLite WAL (Write-Ahead Logging) mode, 5000ms busy timeout, automated point-in-time snapshotting, and `user_version` schema management.
+- **Enterprise Postgres Ready (`database/postgres_migration.py`):** Standalone migration pipeline with PostgreSQL DDL and JSON/CSV data export.
 
-## 🔒 Authentication, Roles & RBAC Architecture
+### 4. Inclusive UX & Intelligent Services (Phase 18)
+- **Multilingual Internationalization (`modules/i18n.py`):** Native language selection supporting **English (`en`)**, **Kannada (`kn`)**, and **Hindi (`hi`)**, including dynamic translation of directional instructions.
+- **High-Contrast & Reduced-Motion Modes:** Instant CSS theme injection ensuring WCAG AAA accessibility for visually impaired users and reduced animation for vestibular sensitivity.
+- **Personalized Bookmarks & Routes:** Securely saves favorite campus rooms and customized transit routes per authenticated user account.
+- **Community Feedback Pipeline:** User feedback collection across accessibility, routing, map clarity, and facility reports with administrative resolution workflows.
 
-The application enforces a multi-tier Role-Based Access Control (RBAC) model implemented with backend service-layer validation and cryptographically salted password hashing.
+### 5. Advanced Campus Intelligence & Analytics (Phase 19)
+- **Dual-Dataset Intelligence Engine (`modules/campus_analytics.py`):** High-level comparative analytics between the full JAIN Global Campus (79 nodes) and the Benchmark Model (15 nodes).
+- **Executive KPI Dashboard:** Real-time metrics tracking Step-Free Accessibility Ratio, Active Obstacle Rate, Average Transit Time, and Resolution Turnaround.
+- **Interactive Plotly Visualizations:** Pathway distribution donuts, floor-level hazard breakdowns, obstacle resolution efficiency gauges, and route telemetry.
 
-### User Roles & Permissions Matrix
+### 6. Enterprise Security & Quality Assurance (Phase 20)
+- **Cryptographic Password Security:** Salted PBKDF2-HMAC-SHA256 hashing upgraded to **600,000 iterations** with automatic legacy rehash on authentication.
+- **Brute-Force Attack Mitigation:** Account lockout enforcement after 5 consecutive failed login attempts.
+- **Role-Based Access Control (RBAC):** Backend privilege verification across `Student`, `Field Staff`, and `Administrator` roles, preventing sole-admin demotion.
+- **SQL Injection Defense:** Complete parameterized SQL queries across all database operations.
 
-| Capability / Action | Student / Campus User | Field Staff | Administrator |
-|:---|:---:|:---:|:---:|
-| **Browse Dashboard & Campus Map** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Calculate Accessible Routes (Dijkstra/BFS)** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Inspect Accessibility Classifications** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Submit Obstacle & Hazard Reports** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Track Report Status & View Own Reports** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Inspect Field Staff Verification Queue** | ❌ No | ✅ Yes | ✅ Yes |
-| **Verify Reports & Block Routes** | ❌ No | ✅ Yes | ✅ Yes |
-| **Reject Reports with Documented Reason** | ❌ No | ✅ Yes | ✅ Yes |
-| **Resolve Verified Obstacles (Mandatory Notes)** | ❌ No | ✅ Yes | ✅ Yes |
-| **Access Administrative Console** | ❌ No | ❌ No | ✅ Yes |
-| **Provision Field Staff / Admin Accounts** | ❌ No | ❌ No | ✅ Yes |
-| **Modify User Roles & Activate/Deactivate** | ❌ No | ❌ No | ✅ Yes |
-| **Inspect Administrative Audit Log** | ❌ No | ❌ No | ✅ Yes |
-
-### Password Security & Cryptography
-
-- **Algorithm:** PBKDF2 with HMAC-SHA256 (`hashlib.pbkdf2_hmac`).
-- **Work Factor & Iterations:** **600,000 hashing rounds** conforming to modern OWASP Password Storage Guidelines (upgraded from 100,000).
-- **Progressive Zero-Downtime Upgrade:** Existing accounts stored with legacy iterations are automatically verified and progressively upgraded to 600,000 rounds upon their next successful sign-in.
-- **Salting:** Cryptographically secure 16-byte random salt generated per user via `secrets.token_hex(16)`, stored in modern `<iterations>$<salt_hex>` format.
-- **Verification:** Constant-time hash comparison (`hmac.compare_digest`) preventing timing side-channel attacks.
-- **Brute-Force Rate Limiting:** Consecutive failed login attempts are tracked per account. Exceeding 5 failed attempts activates an automated 5-minute (300-second) lockout window, logging a `SECURITY_LOCKOUT` audit event. Successful authentication automatically resets the lockout counter.
-- **Password Complexity Policy:** Passwords must be at least 8 characters long and contain both alphabetic characters and numerical digits.
-- **Session Cleanup:** The `logout_user()` mechanism completely purges authentication state and removes any transient session cache keys.
-- **Sanitization:** Password hashes and salts are completely stripped from query results before reaching UI components or session state.
-- **Append-Only Audit Immutability:** The administrative audit log is strictly append-only; no application methods or interface actions permit altering or deleting historical audit records.
-
-### One-Time Initial Administrator Setup
-
-To eliminate insecure hardcoded credentials, the system features a one-time bootstrap mechanism:
-1. **Interactive Bootstrap UI:** If the database contains zero active Administrator accounts, navigating to the **Account & Sign In** page presents the **Primary Administrator Initialization** prompt to establish the lead administrator.
-2. **Environment Variable Bootstrap:** Alternatively, administrators can define `CAMPUS_ADMIN_USERNAME` and `CAMPUS_ADMIN_PASSWORD` in the execution environment, allowing headless automated provisioning during initial setup.
-3. Once initialized, self-registration of Administrator accounts is permanently disabled.
-
-### Backend Defense-in-Depth Enforcement
-
-UI navigation restrictions and button hiding are accompanied by mandatory validation in backend domain managers (`ObstacleManager`, `DatabaseManager`):
-- Attempting to verify, reject, or resolve obstacle reports without `Field Staff` or `Administrator` authority raises `PermissionError`.
-- Attempting to update user roles or account activation without `Administrator` authority raises `PermissionError`.
-- Self-demotion safeguards prevent the last remaining active Administrator from demoting or deactivating their own account.
-
-> [!NOTE]
-> **Security Notice:** This prototype demonstrates robust application-level access controls and PBKDF2 password hashing. It is designed for educational, research, and campus-scale prototype deployment. Enterprise deployment would benefit from additional network-level TLS enforcement and multi-factor authentication (MFA).
+### 7. Deployment & Release Engineering (Phase 21)
+- **Hardened Multi-Stage Container (`Dockerfile`):** `python:3.11-slim` base running under non-root user `appuser` (UID 10001) with internal Python health checking.
+- **Persistent Orchestration (`docker-compose.yml`):** Volume mounts for `./data`, `./database`, `./backups`, and `./logs` with `restart: unless-stopped`.
+- **Nginx Reverse Proxy (`nginx/nginx.conf`):** WebSocket upgrade rules (`/_stcore/stream`), security headers, and 25MB body upload buffers.
+- **Cross-Platform Automation:** Idempotent deployment scripts (`scripts/deploy.sh` and `scripts/deploy.ps1`) with automated pre-deploy database backups.
 
 ---
 
-## 🛠️ Technology Stack
+## 🏢 Multi-Floor FET Building Map Specification
 
-- **Core Programming Language:** Python 3.14
-- **Web Interface:** Streamlit (v1.67.0)
-- **Graph & Network Algorithms:** NetworkX, Custom Dijkstra & BFS implementations
-- **Mapping & Geospatial Visualization:** Plotly, Folium, streamlit-folium
-- **Data Processing & Manipulation:** Pandas
-- **Database & Storage:** SQLite3, JSON Data Schemas
-- **Security & Authentication:** Standard Library `hashlib`, `hmac`, `secrets` (Zero external dependencies)
+The Faculty of Engineering and Technology (FET) building is modeled across 5 physical levels with mathematically verified vertical shaft alignment:
 
----
-
-## 📁 Project Structure
-
-```text
-Campus navigation/
-│
-├── main.py                     # Primary Streamlit application entry point & router
-├── requirements.txt            # Project dependencies and pinned package versions
-├── README.md                   # Project documentation and architectural overview
-├── .gitignore                  # Git exclusions for environments, databases, and caches
-│
-├── algorithms/                 # Graph search & pathfinding algorithms
-│   ├── __init__.py
-│   ├── bfs.py                  # Breadth-First Search implementation
-│   └── dijkstra.py             # Dijkstra's shortest-path algorithm
-│
-├── modules/                    # Domain logic & business services
-│   ├── __init__.py
-│   ├── campus_map.py           # Campus network representation & graph loader
-│   ├── accessibility.py        # Accessibility classification, heuristics & scoring
-│   ├── route_finder.py         # Route calculation engine & path optimization
-│   ├── obstacle_manager.py     # Obstacle lifecycle, RBAC checks & dynamic detour management
-│   ├── navigation_session.py   # Stateful real-time navigation session & progress controller (Phase 15)
-│   ├── navigation_instructions.py # Turn-by-turn instruction engine & geometric turn angle approximations (Phase 15)
-│   ├── indoor_map.py           # Indoor map engine, floor filters & visualizer
-│   ├── three_d_map.py          # Three.js 3D isometric scene builder for benchmark campus
-│   ├── jain_digital_twin.py    # Three.js 3D Digital Twin engine for JAIN Global Campus & FET 5-floor complex
-│   └── ui_theme.py             # Shared styling, session services & user authentication
-│
-├── database/                   # Persistent data management
-│   ├── __init__.py
-│   └── db_manager.py           # SQLite connection, RBAC user schemas, audit log & parameterized queries
-│
-├── data/                       # Static graph & spatial datasets
-│   ├── campus_map.json         # Benchmark campus nodes, edges, coordinates, and attributes (15 nodes)
-│   └── jain_global_campus.json # JAIN Global Campus & FET 5-Floor full digital twin dataset (79 nodes, 106 edges)
-│
-├── pages/                      # Streamlit multi-page interface views
-│   ├── dashboard.py            # Overview & statistics dashboard
-│   ├── navigation.py           # Route query & turn-by-turn guidance page
-│   ├── campus_map.py           # Interactive indoor campus map & route visualizer
-│   ├── 3d_campus_map.py        # Interactive 3D JAIN Digital Twin & 5-floor FET building visualizer
-│   ├── accessibility.py        # Accessibility profiles & amenity directory
-│   ├── obstacle_reports.py     # Hazard reporting, duplicate warnings & field staff queue
-│   ├── login.py                # User authentication, registration & admin bootstrap
-│   └── admin_management.py     # Administrative console: users, roles, queue & audit logs
-│
-├── assets/                     # Media, icons, floor plans, and stylesheets
-│   └── floor_plans/            # Architectural floor plans and aerial campus references
-│
-├── scripts/                    # Demonstration & operational utilities
-│   ├── demo_setup.py           # Idempotent demo credentials initialization script
-│   └── build_jain_campus_dataset.py # Generator for JAIN Global Campus 5-floor dataset
-│
-├── tests/                      # Automated unit & integration test suites
-│   ├── __init__.py
-│   ├── test_campus_map.py      # Campus map parsing and data validation tests
-│   ├── test_bfs.py             # BFS routing and hop-count optimality tests
-│   ├── test_dijkstra.py        # Dijkstra distance/time optimization tests
-│   ├── test_route_finder.py    # Multi-modal routing & alternative route tests
-│   ├── test_accessibility.py   # Accessibility engine & heuristic scoring tests
-│   ├── test_obstacle_manager.py# Obstacle lifecycle, SQLite, and detour tests
-│   ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
-│   ├── test_three_d_map.py     # Three.js 3D isometric mapping and route tests
-│   ├── test_campus_graph_integrity.py # Phase 14 graph topology, reachability, concurrency & multi-route tests
-│   ├── test_real_time_wayfinding.py # Phase 15 stateful session, turn geometry, progress & dynamic detour tests
-│   ├── test_jain_campus.py     # JAIN Global Campus 5-floor digital twin engine tests
-│   ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
-│   ├── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
-│   └── test_demo_workflow.py   # 8-step complete academic demonstration workflow verification
-```
+| Floor Level | Elevation ($Z$) | Primary Facilities & Departments | Vertical Connectors |
+| :--- | :--- | :--- | :--- |
+| **Ground Floor (L0)** | $0.0\text{ m}$ | Main Entrance Portico, Central Amphitheater, Civil Lab, Workshop, West ADA Ramp, Admin Suites | Elevator Shaft `(-6.0, 18.0)`, North/East/South/West Stairs |
+| **First Floor (L1)** | $3.5\text{ m}$ | Electronics & Comm Labs, Microprocessor Lab, Smart Classrooms, Faculty Office Suites | Elevator Shaft `(-6.0, 18.0)`, North/East/South/West Stairs |
+| **Second Floor (L2)** | $7.0\text{ m}$ | Computer Science & AI Labs, HPC Supercomputer Cluster, Data Science Lab, Server Room | Elevator Shaft `(-6.0, 18.0)`, North/East/South/West Stairs |
+| **Third Floor (L3)** | $10.5\text{ m}$ | Mechanical CAD Lab, Robotics & Automation Wing, Mechatronics Research Centre | Elevator Shaft `(-6.0, 18.0)`, North/East/South/West Stairs |
+| **Fourth Floor (L4)** | $14.0\text{ m}$ | Central Library & Stacks, Digital Learning Center, Grand Auditorium, Terrace Pavilion | Elevator Shaft `(-6.0, 18.0)`, North/East/South/West Stairs |
 
 ---
 
-## 🧪 Running Automated Tests
+## 👥 Role-Based Access Control & Demonstration Accounts
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **131 automated tests** across 14 test suites:
+The platform includes pre-configured demonstration accounts for evaluating each user role:
 
-```powershell
-& ".venv\Scripts\python.exe" -m unittest discover tests -v
-```
-
-To run individual test suites:
-```powershell
-& ".venv\Scripts\python.exe" -m unittest tests/test_real_time_wayfinding.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_campus_graph_integrity.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_jain_campus.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_three_d_map.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_demo_workflow.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_security_audit.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_auth_rbac.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_indoor_map.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_obstacle_manager.py -v
-& ".venv\Scripts\python.exe" -m unittest tests/test_route_finder.py -v
-```
+| Role | Username | Password | Permitted Operations |
+| :--- | :--- | :--- | :--- |
+| **Student / Visitor** | `demo_student` | `DemoStudent2026!` | Explore 3D map, calculate routes, bookmark places, submit obstacle reports and feedback. |
+| **Field Staff** | `demo_staff` | `DemoStaff2026!` | Inspect pending reports queue, verify hazards (auto-block graph), resolve obstacles with notes. |
+| **Administrator** | `demo_admin` | `DemoAdmin2026!` | Manage user roles/statuses, audit trails, review community feedback, update data verification tiers. |
 
 ---
 
-## 🎓 Academic Demonstration Guide (8-Step Live Walkthrough)
+## 🚀 Getting Started & Quickstart Guide
 
-To support seamless project presentations and live academic evaluation, the system includes pre-configured, labeled demonstration credentials and an end-to-end operational script.
+### Option 1: Local Python Environment
 
-### Pre-Configured Demonstration Accounts
-
-Run the idempotent setup script to ensure all demonstration credentials exist with active status:
-```powershell
-& ".venv\Scripts\python.exe" scripts/demo_setup.py
-```
-
-| Role | Username | Password | Intended Workflow |
-|:---|:---|:---|:---|
-| **Student / Campus User** | `demo_student` | `DemoStudent2026!` | Explore map, calculate routes, submit field obstacle reports. |
-| **Field Staff** | `demo_staff` | `DemoStaff2026!` | Review pending report queue, verify hazards (auto-block), resolve with notes. |
-| **Administrator** | `demo_admin` | `DemoAdmin2026!` | User management, role elevation/demotion, inspect immutable audit trail. |
-
----
-
-### Step-by-Step Live Demonstration Script
-
-1. **Step 1: Campus Dashboard & Metric Overview**
-   - Navigate to **Dashboard**. Observe real-time KPI cards reflecting actual graph nodes (15), connections (17), and current database obstacle metrics.
-   - Point out the Plotly charts showcasing pathway classifications and current obstacle status.
-
-2. **Step 2: Cross-Floor Accessible Route Planning**
-   - Navigate to **Find Accessible Route**.
-   - Select Origin: `LOC_01 (Main Campus Entrance, Floor 0)` and Destination: `LOC_14 (Faculty Office Suite, Floor 1)`.
-   - Select **Dijkstra** algorithm optimized for **Distance**, with **Wheelchair Accessible** enabled.
-   - Point out how the route avoids vertical stairs (`LOC_05 -> LOC_11`) and safely routes via the elevator (`LOC_04 -> LOC_10`), achieving a *Fully Accessible* classification score.
-
-3. **Step 3: Multi-Floor Interactive Campus Map Exploration**
-   - Navigate to **Campus Map**.
-   - Toggle between **Ground Floor (Floor 0)**, **First Floor (Floor 1)**, and **All Floors (Architectural Overview)**.
-   - Show how the planned route overlays in gold with start pin, destination flag, and automated elevator transfer instructions.
-
-4. **Step 4: Field Obstacle Reporting (as Student)**
-   - Sign in via **Account & Sign In** using `demo_student` / `DemoStudent2026!`.
-   - Navigate to **Obstacle Reports**.
-   - Expand **Report an Obstacle or Accessibility Issue**.
-   - Report a barrier on pathway `Main Campus Entrance (LOC_01)` to `Central Reception & Info Desk (LOC_02)`, category `Blocked pathway`, severity `High`.
-   - Submit report. Confirm initial status is `Pending` and pathway remains open on the graph until verified.
-
-5. **Step 5: Inspection & Verification (as Field Staff)**
-   - Sign out and sign in using `demo_staff` / `DemoStaff2026!`.
-   - Navigate to **Obstacle Reports**. Observe the newly visible **Field Staff Verification Queue**.
-   - Click **Verify & Block Route**. The report transitions to `Verified`, and the edge is dynamically blocked in the live navigation graph.
-
-6. **Step 6: Dynamic Route Avoidance Verification**
-   - Navigate back to **Find Accessible Route**.
-   - Attempt routing between `LOC_01` and `LOC_02`.
-   - Observe that the navigation engine detects the active obstruction and avoids the blocked corridor.
-
-7. **Step 7: Maintenance Resolution & Route Restoration**
-   - Return to **Obstacle Reports** as Field Staff.
-   - Enter mandatory resolution notes: *"Barricades removed; flooring cleared for pedestrian use."*
-   - Click **Resolve & Clear Obstacle**.
-   - Confirm status transitions to `Resolved` and the pathway immediately returns to `open` status.
-
-8. **Step 8: Administrative Governance & Audit Trail Verification**
-   - Sign out and sign in using `demo_admin` / `DemoAdmin2026!`.
-   - Open the **Admin Console** (accessible exclusively to administrators).
-   - Review user account statuses, role assignments, and the immutable **Administrative Audit Log** documenting every user creation, verification, and resolution event.
-
----
-
-## 🚀 Getting Started & Launching the Web App
-
-1. **Activate Virtual Environment:**
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/rudrapratap17003-coder/Campus-navigation.git
+   cd "Campus-navigation"
    ```
 
-2. **Verify Dependencies:**
-   ```powershell
-   & ".venv\Scripts\python.exe" -m pip install -r requirements.txt
+2. **Activate Virtual Environment:**
+   - **Windows (PowerShell):**
+     ```powershell
+     .\.venv\Scripts\Activate.ps1
+     ```
+   - **Linux / macOS:**
+     ```bash
+     source .venv/bin/activate
+     ```
+
+3. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
    ```
 
-3. **Seed Demonstration Accounts:**
-   ```powershell
-   & ".venv\Scripts\python.exe" scripts/demo_setup.py
+4. **Initialize Database & Seed Demonstration Accounts:**
+   ```bash
+   python scripts/demo_setup.py
    ```
 
-4. **Launch the Streamlit Web Application:**
-   ```powershell
-   & ".venv\Scripts\python.exe" -m streamlit run main.py
+5. **Launch the Application:**
+   ```bash
+   streamlit run main.py
    ```
-   Open your browser to [http://localhost:8501](http://localhost:8501) to explore the interface.
+   Open [http://localhost:8501](http://localhost:8501) in your browser.
+
+---
+
+### Option 2: Docker & Docker Compose (Recommended for Production)
+
+1. **Automated One-Click Deployment:**
+   - **Linux / macOS:**
+     ```bash
+     bash scripts/deploy.sh
+     ```
+   - **Windows PowerShell:**
+     ```powershell
+     .\scripts\deploy.ps1
+     ```
+
+2. **Manual Docker Compose Launch:**
+   ```bash
+   docker compose up -d --build
+   ```
+   The application will be available at [http://localhost:8501](http://localhost:8501).
+
+---
+
+## 🧪 Test Suite and Quality Assurance
+
+The codebase features a comprehensive, 100% automated regression and verification test suite:
+
+```bash
+python -m unittest discover tests -v
+```
+
+### Test Coverage Highlights:
+- **`tests/test_phase16_data_accuracy.py`**: Validates 79 locations, 106 pathways, vertical alignment invariance, and destination intelligence.
+- **`tests/test_phase17_production_architecture.py`**: Validates environment configs, exception hierarchies, database backups, and logging filters.
+- **`tests/test_phase18_user_experience.py`**: Validates i18n translation strings, saved places, favourite routes, and community feedback pipelines.
+- **`tests/test_phase19_campus_analytics.py`**: Validates dual-dataset analytics, obstacle resolution KPIs, and administrative insights.
+- **`tests/test_phase20_security_and_qa.py`**: Validates SQL injection immunity, RBAC authorization boundaries, brute-force rate-limiting, and credential scrubbing.
+- **`tests/test_phase21_deployment.py`**: Validates Dockerfile security, compose volume mapping, `.dockerignore` coverage, Nginx proxy rules, and deploy scripts.
+
+**Latest Test Run Results:**
+```
+Ran 190 tests in 75.940s
+OK (failures=0, errors=0, skipped=0)
+```
+
+---
+
+## 📂 Repository Architecture
+
+```
+Campus-navigation/
+├── .streamlit/
+│   └── config.toml                  # Streamlit dark forest theme & server configuration
+├── data/
+│   ├── jain_global_campus.json      # Authoritative 79-location, 106-pathway campus dataset
+│   └── campus_map.json              # Canonical 15-location benchmark dataset
+├── database/
+│   ├── db_manager.py                # SQLite WAL manager, RBAC, reports, backups, & audit logs
+│   └── postgres_migration.py        # Production PostgreSQL schema migration & data exporter
+├── modules/
+│   ├── accessibility.py             # 0-100 heuristic scoring & barrier classification
+│   ├── campus_analytics.py          # Enterprise metrics, KPIs, and operational analytics
+│   ├── destination_search.py        # Search intelligence engine with colloquial synonym matching
+│   ├── exceptions.py                # Structured domain exception hierarchy
+│   ├── i18n.py                      # Multilingual internationalization (en, kn, hi)
+│   ├── indoor_map.py                # 2D schematic multi-floor SVG/HTML renderer
+│   ├── jain_digital_twin.py         # Authoritative 3D digital twin scene generator & NetworkX bridge
+│   ├── logging_config.py            # Structured logging & SensitiveDataFilter
+│   ├── obstacle_manager.py          # Dynamic hazard lifecycle manager
+│   ├── route_finder.py              # Dijkstra, BFS, and Detour routing algorithms
+│   ├── three_d_map.py               # Benchmark 3D scene builder
+│   └── ui_theme.py                  # Dark green glassmorphism theme & UI helper components
+├── nginx/
+│   └── nginx.conf                   # Production Nginx reverse proxy with WebSocket stream support
+├── pages/
+│   ├── 3d_campus_map.py             # Interactive Three.js 3D Campus Digital Twin & Wayfinding
+│   ├── accessibility.py             # Campus accessibility distribution & compliance audit
+│   ├── admin_management.py         # Administrative console, user management & audit logs
+│   ├── campus_map.py                # 2D multi-floor interactive map visualizer
+│   ├── dashboard.py                 # Executive analytics dashboard & KPI telemetry
+│   ├── login.py                     # Authentication, registration & account profile
+│   ├── navigation.py                # Multi-modal route calculation & algorithm comparison
+│   └── obstacle_reports.py          # Field hazard reporting & staff verification queue
+├── scripts/
+│   ├── demo_setup.py                # Seed default accounts & sample obstacle data
+│   ├── deploy.sh                    # POSIX bash automated deployment script
+│   └── deploy.ps1                   # Windows PowerShell automated deployment script
+├── tests/                           # 190 comprehensive automated test cases across 20 modules
+├── .dockerignore                    # Excludes sensitive data, venvs, and databases
+├── config.py                        # Centralized configuration dataclasses & environment loader
+├── docker-compose.yml               # Container orchestration & persistent volume specification
+├── Dockerfile                       # Multi-stage hardened Python 3.11-slim container
+├── main.py                          # Streamlit multi-page application entrypoint
+├── requirements.txt                 # Exact version-pinned production dependencies
+└── README.md                        # Complete project documentation & operator guide
+```
+
+---
+
+## 📄 License & Attribution
+
+Developed for the **Accessible Campus Navigator** initiative at **JAIN Global Campus — Faculty of Engineering and Technology (FET)**.  
+Released under the **MIT License**. All rights reserved.
