@@ -38,6 +38,14 @@ A Python-based college campus accessibility and navigation system designed to em
   - **Unified Outdoor/Indoor Navigation Graph:** 79 locations and 106 pathways connecting outdoor gateways directly to indoor research labs across all 5 floors. Powered by authoritative Python routing (BFS and Dijkstra).
   - **Dynamic Obstacle & Accessibility Integration:** Synchronized with the SQLite database; active verified obstacles display as glowing crimson red barriers with hazard blocks, while resolved obstacles return to operational green. ♿ Wheelchair toggle strictly enforces step-free paths, using ramps and elevators while avoiding stairs.
   - **Dual Environment Switching:** Toggle seamlessly between the comprehensive *JAIN Global Campus & FET 5-Floor Digital Twin* and the canonical *15-Node Schematic Benchmark Model*.
+- **Interactive Real-Time Indoor & Outdoor Wayfinding System (Phase 15):**
+  - **Stateful Navigation Session Controller:** Robust finite-state machine (`NavigationSession`) managing the complete wayfinding lifecycle (`IDLE`, `ROUTE_PREVIEW`, `NAVIGATING`, `PAUSED`, `FLOOR_TRANSITION`, `ARRIVED`, `REROUTING`, `NO_ACCESSIBLE_ROUTE`) persisted in Streamlit session state.
+  - **Turn-by-Turn Instruction Engine with Geometric Turn Approximations:** Automated directional guidance based on 2D vector cross-product ($u_x v_z - u_z v_x$) and dot-product geometry across 8 angular quadrants (`continue straight`, `turn left`, `turn right`, `turn around`, `enter_building`, `exit_building`, `elevator`, `stairs`, `ramp`, `arrive`), complete with simulated orientation disclosures and landmark references.
+  - **Live 3D User Avatar & Spline Progress Visualization:** Real-time Three.js avatar navigation marker featuring a pulsing ground ring, directional bearing pointer cone, emissive orb, local point light, dynamic segmented route tubes (completed vs. active vs. remaining), and synchronized vertical elevator cab transit during cross-floor steps.
+  - **Streamlit Live Navigation Dashboard HUD:** Dedicated real-time dashboard banner with dynamic progress bar (0–100%), remaining pathway distance and transit time estimations, completed vs. total step tracker, floor indicator, current instruction card, next instruction card, and responsive controls (*Start*, *Pause*, *Resume*, *Next Step*, *Restart*, *Cancel*).
+  - **Dynamic Obstacle Detection & Automatic Rerouting:** Real-time monitoring of upcoming route segments against verified SQLite hazard reports; dynamically triggers rerouting states, avoids blocked corridors, and recalculates alternative detours from the user's current location while preserving wheelchair constraints.
+  - **Wheelchair Safety & Graceful Disconnection Safeguards:** Strict enforcement of step-free routes avoiding all 18 staircase edges, prioritized elevator and ramp utilization, and graceful transition to `NO_ACCESSIBLE_ROUTE` when vertical connections are completely severed.
+  - **Destination Arrival Celebration & Summary Metrics:** Arrival confetti balloons and comprehensive journey metrics display (total distance, transit duration, floor transfers, and accessibility mode) with one-click navigation restart.
 - **Campus Digital Twin Intelligence, Navigation Accuracy & System Validation (Phase 14):**
   - **Topological Integrity & All-Pairs Reachability:** Verified mathematical graph connectivity for all 79 campus locations and 106 pathways across 5 physical floors. Achieved 100% reachability across all 6,162 directed pairs with zero isolated nodes in both standard pedestrian and wheelchair-accessible modes.
   - **Intelligent Multi-Route Trade-Off Comparison Engine:** Side-by-side metric comparison evaluating Dijkstra (Shortest Distance), Breadth-First Search (Fewest Step Turns), and Alternative Detour with distance, estimated walking time, turn counts, floor transitions, elevator vs. stairs usage, and decision rationales.
@@ -342,6 +350,8 @@ Campus navigation/
 │   ├── accessibility.py        # Accessibility classification, heuristics & scoring
 │   ├── route_finder.py         # Route calculation engine & path optimization
 │   ├── obstacle_manager.py     # Obstacle lifecycle, RBAC checks & dynamic detour management
+│   ├── navigation_session.py   # Stateful real-time navigation session & progress controller (Phase 15)
+│   ├── navigation_instructions.py # Turn-by-turn instruction engine & geometric turn angle approximations (Phase 15)
 │   ├── indoor_map.py           # Indoor map engine, floor filters & visualizer
 │   ├── three_d_map.py          # Three.js 3D isometric scene builder for benchmark campus
 │   ├── jain_digital_twin.py    # Three.js 3D Digital Twin engine for JAIN Global Campus & FET 5-floor complex
@@ -383,6 +393,7 @@ Campus navigation/
 │   ├── test_indoor_map.py      # Floor filtering, cross-floor transit & visualizer tests
 │   ├── test_three_d_map.py     # Three.js 3D isometric mapping and route tests
 │   ├── test_campus_graph_integrity.py # Phase 14 graph topology, reachability, concurrency & multi-route tests
+│   ├── test_real_time_wayfinding.py # Phase 15 stateful session, turn geometry, progress & dynamic detour tests
 │   ├── test_jain_campus.py     # JAIN Global Campus 5-floor digital twin engine tests
 │   ├── test_auth_rbac.py       # Authentication, PBKDF2 hashing, RBAC & audit tests
 │   ├── test_security_audit.py  # Security audit, progressive re-hash, lockout & end-to-end integration tests
@@ -393,7 +404,7 @@ Campus navigation/
 
 ## 🧪 Running Automated Tests
 
-All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **121 automated tests** across 13 test suites:
+All test suites use isolated in-memory or temporary databases to prevent altering the application database. The full regression suite consists of **131 automated tests** across 14 test suites:
 
 ```powershell
 & ".venv\Scripts\python.exe" -m unittest discover tests -v
@@ -401,6 +412,7 @@ All test suites use isolated in-memory or temporary databases to prevent alterin
 
 To run individual test suites:
 ```powershell
+& ".venv\Scripts\python.exe" -m unittest tests/test_real_time_wayfinding.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_campus_graph_integrity.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_jain_campus.py -v
 & ".venv\Scripts\python.exe" -m unittest tests/test_three_d_map.py -v

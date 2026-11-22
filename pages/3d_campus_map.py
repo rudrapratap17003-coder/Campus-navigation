@@ -28,6 +28,8 @@ from modules.jain_digital_twin import (
     load_jain_campus_map,
     render_jain_digital_twin_html,
 )
+from modules.navigation_instructions import format_floor_name
+from modules.navigation_session import NavigationSession, NavigationState
 from modules.route_finder import RouteFinder
 from modules.three_d_map import (
     build_3d_scene_payload,
@@ -263,6 +265,88 @@ with col_controls:
         )
 
     calculate_btn = st.button("🚀 Calculate 3D Route", type="primary", use_container_width=True)
+
+    # Initialize or retrieve persistent Navigation Session in session_state
+    if "nav_session" not in st.session_state or st.session_state["nav_session"] is None:
+        st.session_state["nav_session"] = NavigationSession()
+    nav_session: NavigationSession = st.session_state["nav_session"]
+
+    # Check if route calculation or preview update is needed
+    session_needs_update = (
+        calculate_btn
+        or nav_session.state == NavigationState.IDLE
+        or nav_session.origin_id != start_id
+        or nav_session.destination_id != dest_id
+        or nav_session.wheelchair_mode != wheelchair_only
+        or nav_session.algorithm != algo_choice.lower()
+    )
+
+    if session_needs_update and nav_session.state in (
+        NavigationState.IDLE,
+        NavigationState.ROUTE_PREVIEW,
+        NavigationState.NO_ACCESSIBLE_ROUTE,
+    ):
+        nav_session.start_preview(
+            origin_id=start_id,
+            destination_id=dest_id,
+            campus_map=active_cmap,
+            route_finder=active_rf,
+            algorithm=algo_choice.lower(),
+            wheelchair_mode=wheelchair_only,
+        )
+
+    # Real-Time Obstacle Detection & Automatic Rerouting
+    if nav_session.state in (NavigationState.NAVIGATING, NavigationState.PAUSED):
+        nav_session.detect_and_handle_obstacles(
+            obstacle_manager=obs_manager,
+            campus_map=active_cmap,
+            route_finder=active_rf,
+        )
+
+    # Real-Time Wayfinding Session Controller
+    st.markdown("---")
+    st.markdown("##### 🚶 Real-Time Wayfinding Controller")
+
+    if nav_session.state in (NavigationState.IDLE, NavigationState.ROUTE_PREVIEW):
+        if st.button("🚀 Start Live Navigation", type="primary", use_container_width=True, key="btn_start_nav"):
+            nav_session.start_navigation()
+            st.rerun()
+    elif nav_session.state == NavigationState.NAVIGATING:
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            if st.button("⏸️ Pause", use_container_width=True, key="btn_pause_nav"):
+                nav_session.pause_navigation()
+                st.rerun()
+        with c2:
+            if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav"):
+                nav_session.step_forward(active_cmap)
+                st.rerun()
+        with c3:
+            if st.button("⏹️ Cancel", use_container_width=True, key="btn_cancel_nav"):
+                nav_session.cancel_navigation()
+                st.rerun()
+    elif nav_session.state in (NavigationState.PAUSED, NavigationState.FLOOR_TRANSITION):
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            if st.button("▶️ Resume", type="primary", use_container_width=True, key="btn_resume_nav"):
+                nav_session.resume_navigation()
+                st.rerun()
+        with c2:
+            if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav_p"):
+                nav_session.step_forward(active_cmap)
+                st.rerun()
+        with c3:
+            if st.button("🔄 Restart", use_container_width=True, key="btn_restart_nav"):
+                nav_session.restart_navigation()
+                st.rerun()
+    elif nav_session.state == NavigationState.ARRIVED:
+        st.success("🎉 You have arrived at your destination!")
+        if st.button("🔄 Start New Navigation", type="primary", use_container_width=True, key="btn_arrived_new"):
+            nav_session.restart_navigation()
+            st.rerun()
+    elif nav_session.state == NavigationState.NO_ACCESSIBLE_ROUTE:
+        st.warning("⚠️ No accessible route currently available.")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Location Inspector Card in Sidebar
@@ -328,6 +412,7 @@ if is_jain_twin:
         wheelchair_accessible=wheelchair_only,
         selected_location_id=selected_inspect_id,
         view_mode="all_floors",
+        navigation_session=nav_session,
     )
     route_data = scene_payload.get("active_route")
     route_comparison = scene_payload.get("route_comparison")
@@ -349,6 +434,91 @@ else:
     html_3d = render_three_d_scene_html(scene_payload, height=750)
 
 with col_viewport:
+    # Phase 15: Live Navigation Dashboard & Status Banner
+    if nav_session and nav_session.state in (
+        NavigationState.NAVIGATING,
+        NavigationState.PAUSED,
+        NavigationState.FLOOR_TRANSITION,
+        NavigationState.ARRIVED,
+    ):
+        curr_instr = nav_session.get_current_instruction()
+        next_instr = nav_session.get_next_instruction()
+        dest_loc = active_cmap.get_location(nav_session.destination_id or "") or {}
+        dest_name = dest_loc.get("name", nav_session.destination_id)
+        dest_floor_name = format_floor_name(int(dest_loc.get("floor", 0)))
+
+        is_arr = nav_session.state == NavigationState.ARRIVED
+        state_color = "#10B981" if is_arr else ("#35D99A" if nav_session.state == NavigationState.NAVIGATING else "#F5B942")
+
+        st.markdown(
+            f"""
+            <div style="background: rgba(13, 31, 24, 0.95); border: 1.5px solid {state_color}; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div>
+                        <span style="background: rgba(53, 217, 154, 0.18); color: {state_color}; font-weight: 800; font-size: 11px; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.8px; border: 1px solid {state_color};">
+                            {nav_session.state.value}
+                        </span>
+                        <span style="font-size: 12px; color: #9CAFA5; margin-left: 10px;">
+                            Target: <b style="color: #F8FAFC;">{dest_name}</b> ({dest_floor_name})
+                        </span>
+                    </div>
+                    <div style="font-size: 13px; color: #35D99A; font-weight: 700;">
+                        {nav_session.remaining_distance:.1f} m remaining &nbsp;|&nbsp; ~{nav_session.remaining_time:.0f} s
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 12px; margin: 10px 0;">
+                    <div style="font-size: 26px; line-height: 1;">{curr_instr.icon if curr_instr else '🧭'}</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-size: 15px; font-weight: 700; color: #F8FAFC;">
+                            {curr_instr.text if curr_instr else 'Proceeding along active route...'}
+                        </div>
+                        {f'<div style="font-size: 11px; color: #9CAFA5; margin-top: 4px;"><b>Next Step:</b> {next_instr.text}</div>' if next_instr and not is_arr else ''}
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.08); height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px;">
+                    <div style="background: linear-gradient(90deg, #16A36A, #35D99A); width: {nav_session.progress_percentage:.1f}%; height: 100%; transition: width 0.4s ease;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9CAFA5; margin-top: 6px;">
+                    <span>Progress: <b>{nav_session.progress_percentage:.0f}%</b></span>
+                    <span>Steps: <b>{nav_session.completed_steps} of {nav_session.total_steps}</b></span>
+                    <span>Current Floor: <b>{format_floor_name(nav_session.current_floor)}</b></span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if is_arr:
+            st.balloons()
+            st.markdown(
+                f"""
+                <div style="background: rgba(16, 185, 129, 0.15); border: 2px solid #10B981; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px; text-align: center;">
+                    <div style="font-size: 22px; font-weight: 800; color: #35D99A; margin-bottom: 6px;">🎉 YOU HAVE ARRIVED!</div>
+                    <div style="font-size: 14px; color: #F8FAFC; margin-bottom: 10px;">
+                        Destination: <b>{dest_name}</b> | Building: <b>FET Complex</b> | Level: <b>{dest_floor_name}</b>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 24px; font-size: 12px; color: #A7F3D0;">
+                        <div>📏 <b>Distance:</b> {nav_session.total_distance:.1f} m</div>
+                        <div>⏱️ <b>Estimated Duration:</b> ~{(nav_session.total_time/60):.1f} min</div>
+                        <div>🛗 <b>Floor Transitions:</b> {nav_session.floor_transitions_count}</div>
+                        <div>♿ <b>Mode:</b> {"Wheelchair Step-Free" if nav_session.wheelchair_mode else "Standard Pedestrian"}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        if nav_session.is_rerouted:
+            st.markdown(
+                f"""
+                <div style="background: rgba(245, 185, 66, 0.15); border: 1px solid #F5B942; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: #F8FAFC;">
+                    <b>⚠️ Active Obstacle Detour Notice:</b> {nav_session.reroute_reason}<br>
+                    The navigation engine has dynamically rerouted you around the blocked segment to guarantee continuous accessibility.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
     # Render Three.js HTML Container
     components.html(html_3d, height=760, scrolling=False)
 
@@ -444,14 +614,33 @@ if route_data and route_data.get("success"):
     with st.expander("📋 Turn-by-Turn Navigational Guidance", expanded=True):
         steps = route_data.get("steps", [])
         for step in steps:
+            s_num = step['step_number']
+            is_active_step = (
+                nav_session.state in (NavigationState.NAVIGATING, NavigationState.PAUSED, NavigationState.FLOOR_TRANSITION)
+                and s_num == nav_session.current_step_index + 1
+            )
+            is_completed_step = (
+                nav_session.state in (NavigationState.NAVIGATING, NavigationState.PAUSED, NavigationState.FLOOR_TRANSITION, NavigationState.ARRIVED)
+                and s_num < nav_session.current_step_index + 1
+            )
+
+            box_border = "2px solid #35D99A" if is_active_step else "1px solid rgba(156, 175, 165, 0.2)"
+            box_bg = "rgba(53, 217, 154, 0.14)" if is_active_step else "rgba(13, 31, 24, 0.6)"
+            box_opacity = "0.65" if is_completed_step else "1.0"
+            status_badge = ""
+            if is_active_step:
+                status_badge = '<span style="background: #16A36A; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 8px;">📍 YOU ARE HERE</span>'
+            elif is_completed_step:
+                status_badge = '<span style="background: rgba(16, 185, 129, 0.2); color: #35D99A; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 8px;">✅ COMPLETED</span>'
+
             icon = "🛗" if step.get("has_elevator") else "🪜" if step.get("has_stairs") else "♿" if step.get("has_ramp") else "🚶"
             st.markdown(
                 f"""
-                <div class="step-box">
-                    <div class="step-number">{step['step_number']}</div>
+                <div class="step-box" style="border: {box_border}; background: {box_bg}; opacity: {box_opacity}; transition: all 0.3s ease;">
+                    <div class="step-number" style="{'background: #35D99A; color: #07130F; font-weight: 800;' if is_active_step else ''}">{s_num}</div>
                     <div style="flex-grow: 1;">
-                        <div style="font-weight: 600; font-size: 14px; color: {WHITE};">
-                            {icon} {step['instruction']}
+                        <div style="font-weight: 600; font-size: 14px; color: {WHITE}; display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                            <span>{icon} {step['instruction']}</span> {status_badge}
                         </div>
                         <div style="font-size: 11px; color: {SECONDARY_TEXT}; margin-top: 4px;">
                             Segment: <b>{step['from_name']}</b> (Floor {step['from_floor']}) ➔ <b>{step['to_name']}</b> (Floor {step['to_floor']}) &nbsp;|&nbsp;

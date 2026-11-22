@@ -429,6 +429,7 @@ def build_jain_digital_twin_payload(
     wheelchair_accessible: bool = False,
     selected_location_id: Optional[str] = None,
     view_mode: str = "all_floors",
+    navigation_session: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Assemble complete consolidated JSON payload for JAIN Global Campus and FET 5-Floor Twin."""
     raw_json_data = {}
@@ -466,6 +467,10 @@ def build_jain_digital_twin_payload(
         except Exception:
             active_obstacles = []
 
+    nav_session_dict = None
+    if navigation_session and hasattr(navigation_session, "to_dict"):
+        nav_session_dict = navigation_session.to_dict()
+
     payload = {
         "metadata": {
             "name": "JAIN Global Campus 3D Digital Twin",
@@ -485,6 +490,7 @@ def build_jain_digital_twin_payload(
         "active_route": active_route,
         "route_comparison": route_comparison,
         "active_obstacles": active_obstacles,
+        "navigation_session": nav_session_dict,
     }
 
     return payload
@@ -743,6 +749,114 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       transform: translate(-50%, -120%);
       white-space: nowrap;
     }}
+    /* Phase 15: Real-Time Interactive Navigation HUD Panel */
+    .nav-live-hud {{
+      position: absolute;
+      bottom: 24px;
+      left: 20px;
+      width: 340px;
+      max-width: calc(100% - 40px);
+      background: rgba(7, 19, 15, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid #16A36A;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(53, 217, 154, 0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      z-index: 25;
+      font-family: inherit;
+      color: #F8FAFC;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }}
+    .nav-live-hud.hidden {{
+      display: none;
+    }}
+    .nav-hud-header {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }}
+    .nav-hud-badge {{
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(53, 217, 154, 0.2);
+      color: #35D99A;
+      border: 1px solid rgba(53, 217, 154, 0.4);
+    }}
+    .nav-hud-badge.arrived {{
+      background: rgba(16, 185, 129, 0.3);
+      color: #10B981;
+      border-color: #10B981;
+    }}
+    .nav-hud-badge.rerouting {{
+      background: rgba(248, 113, 113, 0.25);
+      color: #F87171;
+      border-color: #F87171;
+    }}
+    .nav-hud-metric {{
+      font-size: 11px;
+      color: #A7F3D0;
+      font-weight: 600;
+    }}
+    .nav-hud-instruction {{
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }}
+    .nav-hud-icon {{
+      font-size: 20px;
+      line-height: 1;
+    }}
+    .nav-hud-text {{
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #F8FAFC;
+    }}
+    .nav-hud-progress-bg {{
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }}
+    .nav-hud-progress-fill {{
+      height: 100%;
+      background: linear-gradient(90deg, #16A36A, #35D99A);
+      transition: width 0.3s ease;
+    }}
+    .nav-hud-footer {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #9CAFA5;
+    }}
+    .nav-hud-controls {{
+      display: flex;
+      gap: 6px;
+    }}
+    .nav-ctrl-btn {{
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #F8FAFC;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }}
+    .nav-ctrl-btn:hover {{
+      background: rgba(53, 217, 154, 0.3);
+      border-color: #35D99A;
+    }}
     #webgl-fallback {{
       display: none;
       position: absolute;
@@ -855,6 +969,30 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       <div class="legend-item" id="toggle-layer-stairs"><div class="legend-dot" style="background: #F5B942;"></div><span>Cardinal Stairwells</span></div>
       <div class="legend-item" id="toggle-layer-blocked"><div class="legend-dot" style="background: #F87171;"></div><span>Verified Barrier</span></div>
       <div class="legend-item" id="legend-route" style="display: none;"><div class="legend-dot" style="background: #F59E0B;"></div><span>Active Trajectory</span></div>
+    </div>
+
+    <!-- Real-Time Interactive Navigation HUD Panel -->
+    <div id="nav-live-card" class="nav-live-hud hidden">
+      <div class="nav-hud-header">
+        <span class="nav-hud-badge" id="nav-hud-state">NAVIGATING</span>
+        <span class="nav-hud-metric" id="nav-hud-dist">Remaining: 0 m</span>
+      </div>
+      <div class="nav-hud-instruction" id="nav-hud-instruction">
+        <span class="nav-hud-icon" id="nav-hud-icon">🧭</span>
+        <span class="nav-hud-text" id="nav-hud-text">Starting navigation...</span>
+      </div>
+      <div class="nav-hud-progress-bg">
+        <div class="nav-hud-progress-fill" id="nav-hud-progress" style="width: 0%;"></div>
+      </div>
+      <div class="nav-hud-footer">
+        <span id="nav-hud-step-count">Step 1 of 5</span>
+        <div class="nav-hud-controls">
+          <button class="nav-ctrl-btn" id="nav-btn-prev" title="Previous Step">⏮️</button>
+          <button class="nav-ctrl-btn" id="nav-btn-playpause" title="Pause / Resume">⏸️</button>
+          <button class="nav-ctrl-btn" id="nav-btn-next" title="Next Step">⏭️</button>
+          <button class="nav-ctrl-btn" id="nav-btn-restart" title="Restart Navigation">🔄</button>
+        </div>
+      </div>
     </div>
 
     <div id="hover-tooltip"></div>
@@ -1619,33 +1757,107 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         }}
       }});
 
-      // 10. Live 3D Navigation Route Spline & Traversal Light Orb
+      // 10. Live 3D Navigation Route Spline & Traversal Light Orb (Phase 15 Upgraded)
       let routeCurve = null;
       let traversalOrb = null;
+      let navAvatarGroup = null;
+      let navRingMesh = null;
+      let navConeMesh = null;
+      let activeSegmentTube = null;
       let routeAnimProgress = 0;
       let isRouteAnimating = true;
       let animSpeedMultiplier = 1.0;
 
+      // Navigation session state variables
+      let navWaypoints = [];
+      let navSteps = [];
+      let currentNavStepIndex = 0;
+      let navStepInterpolation = 0.0;
+      let isNavigationActive = false;
+      let hasArrivedAtDestination = false;
+
+      const navCard = document.getElementById('nav-live-card');
+      const navBadge = document.getElementById('nav-hud-state');
+      const navDistText = document.getElementById('nav-hud-dist');
+      const navIcon = document.getElementById('nav-hud-icon');
+      const navInstructionText = document.getElementById('nav-hud-text');
+      const navProgressBar = document.getElementById('nav-hud-progress');
+      const navStepCountText = document.getElementById('nav-hud-step-count');
+
+      const btnNavPrev = document.getElementById('nav-btn-prev');
+      const btnNavPlayPause = document.getElementById('nav-btn-playpause');
+      const btnNavNext = document.getElementById('nav-btn-next');
+      const btnNavRestart = document.getElementById('nav-btn-restart');
+
+      function updateNavHUD() {{
+        if (!navCard || navWaypoints.length < 2) return;
+        navCard.classList.remove('hidden');
+
+        const totalSteps = Math.max(1, navWaypoints.length - 1);
+        const currIdx = Math.min(currentNavStepIndex, totalSteps - 1);
+        const stepData = (navSteps && navSteps[currIdx]) ? navSteps[currIdx] : null;
+
+        if (hasArrivedAtDestination) {{
+          navBadge.className = 'nav-hud-badge arrived';
+          navBadge.innerText = 'ARRIVED';
+          navIcon.innerText = '🎯';
+          const destName = navWaypoints[navWaypoints.length - 1].name || 'Destination';
+          navInstructionText.innerText = 'You have arrived at ' + destName + '!';
+          navDistText.innerText = '0 m remaining';
+          navProgressBar.style.width = '100%';
+          navStepCountText.innerText = 'Completed (' + totalSteps + '/' + totalSteps + ')';
+          btnNavPlayPause.innerText = '🔄';
+          return;
+        }}
+
+        if (stepData && stepData.has_elevator) {{
+          navBadge.className = 'nav-hud-badge';
+          navBadge.innerText = 'ELEVATOR';
+        }} else if (stepData && stepData.has_stairs) {{
+          navBadge.className = 'nav-hud-badge';
+          navBadge.innerText = 'STAIRWAY';
+        }} else {{
+          navBadge.className = 'nav-hud-badge';
+          navBadge.innerText = isNavigationActive ? 'NAVIGATING' : 'PAUSED';
+        }}
+
+        if (stepData) {{
+          navIcon.innerText = stepData.has_elevator ? '🛗' : (stepData.has_stairs ? '🪜' : (stepData.has_ramp ? '♿' : '🚶'));
+          navInstructionText.innerText = stepData.instruction || ('Head to ' + stepData.to_name);
+          navDistText.innerText = stepData.distance + ' m segment';
+        }} else {{
+          navIcon.innerText = '🧭';
+          navInstructionText.innerText = 'Proceed along active route.';
+        }}
+
+        const overallPct = Math.min(100, Math.round(((currIdx + navStepInterpolation) / totalSteps) * 100));
+        navProgressBar.style.width = overallPct + '%';
+        navStepCountText.innerText = 'Step ' + (currIdx + 1) + ' of ' + totalSteps;
+        btnNavPlayPause.innerText = isNavigationActive ? '⏸️' : '▶️';
+      }}
+
       if (DATA.active_route && DATA.active_route.success && DATA.active_route.waypoints.length > 1) {{
         document.getElementById('legend-route').style.display = 'flex';
 
-        const waypoints = DATA.active_route.waypoints;
-        const curvePoints = waypoints.map(wp => new THREE.Vector3(wp.x, wp.y, wp.z));
+        navWaypoints = DATA.active_route.waypoints;
+        navSteps = DATA.active_route.steps || [];
+
+        const curvePoints = navWaypoints.map(wp => new THREE.Vector3(wp.x, wp.y, wp.z));
         routeCurve = new THREE.CatmullRomCurve3(curvePoints, false, 'catmullrom', 0.2);
 
-        // Glowing 3D Trajectory Tube
-        const tubeGeo = new THREE.TubeGeometry(routeCurve, Math.max(70, waypoints.length * 20), 0.45, 12, false);
+        // 1. Base Pathway Trajectory Tube (Amber Gold)
+        const tubeGeo = new THREE.TubeGeometry(routeCurve, Math.max(70, navWaypoints.length * 20), 0.38, 12, false);
         const tubeMat = new THREE.MeshStandardMaterial({{
           color: 0xF59E0B,
-          emissive: 0xF59E0B,
-          emissiveIntensity: 1.4,
-          roughness: 0.1,
-          metalness: 0.8
+          emissive: 0xB45309,
+          emissiveIntensity: 0.8,
+          roughness: 0.3,
+          metalness: 0.7
         }});
         const routeTube = new THREE.Mesh(tubeGeo, tubeMat);
         routeGroup.add(routeTube);
 
-        // Origin Beacon Pin
+        // 2. Origin Beacon Pin
         const startPt = curvePoints[0];
         const startPin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 1.0, 3.5, 16), new THREE.MeshStandardMaterial({{
           color: 0x35D99A, emissive: 0x16A36A, emissiveIntensity: 1.2
@@ -1653,21 +1865,123 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         startPin.position.set(startPt.x, startPt.y + 1.75, startPt.z);
         routeGroup.add(startPin);
 
-        // Destination Flag Sphere
+        // 3. Destination Flag Sphere
         const destPt = curvePoints[curvePoints.length - 1];
-        const destPin = new THREE.Mesh(new THREE.SphereGeometry(1.0, 16, 16), new THREE.MeshStandardMaterial({{
+        const destPin = new THREE.Mesh(new THREE.SphereGeometry(1.1, 16, 16), new THREE.MeshStandardMaterial({{
           color: 0xEF4444, emissive: 0xDC2626, emissiveIntensity: 1.5
         }}));
         destPin.position.set(destPt.x, destPt.y + 1.5, destPt.z);
         routeGroup.add(destPin);
 
-        // Traveling Light Orb
-        traversalOrb = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 16), new THREE.MeshBasicMaterial({{ color: 0xFFFFFF }}));
-        traversalOrb.position.copy(startPt);
-        routeGroup.add(traversalOrb);
+        // 4. Interactive Real-Time Navigation Avatar Marker (User Position)
+        navAvatarGroup = new THREE.Group();
+        navAvatarGroup.position.copy(startPt);
 
-        const orbLight = new THREE.PointLight(0xF59E0B, 3.2, 25);
-        traversalOrb.add(orbLight);
+        // Base ground pulsing ring
+        const ringGeo = new THREE.RingGeometry(0.85, 1.25, 32);
+        ringGeo.rotateX(-Math.PI / 2);
+        const ringMat = new THREE.MeshBasicMaterial({{
+          color: 0x35D99A,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.85
+        }});
+        navRingMesh = new THREE.Mesh(ringGeo, ringMat);
+        navRingMesh.position.y = 0.05;
+        navAvatarGroup.add(navRingMesh);
+
+        // Heading directional cone
+        const coneGeo = new THREE.ConeGeometry(0.5, 1.4, 16);
+        coneGeo.rotateX(Math.PI / 2);
+        const coneMat = new THREE.MeshStandardMaterial({{
+          color: 0x10B981,
+          emissive: 0x35D99A,
+          emissiveIntensity: 1.4,
+          metalness: 0.4,
+          roughness: 0.2
+        }});
+        navConeMesh = new THREE.Mesh(coneGeo, coneMat);
+        navConeMesh.position.y = 0.7;
+        navAvatarGroup.add(navConeMesh);
+
+        // Glowing center light orb
+        const avatarOrb = new THREE.Mesh(
+          new THREE.SphereGeometry(0.42, 16, 16),
+          new THREE.MeshBasicMaterial({{ color: 0xFFFFFF }})
+        );
+        avatarOrb.position.y = 1.6;
+        navAvatarGroup.add(avatarOrb);
+
+        const avatarLight = new THREE.PointLight(0x35D99A, 3.5, 20);
+        avatarLight.position.y = 1.6;
+        navAvatarGroup.add(avatarLight);
+
+        routeGroup.add(navAvatarGroup);
+
+        // Synchronize with navigation session if provided
+        if (DATA.navigation_session) {{
+          currentNavStepIndex = Math.min(
+            DATA.navigation_session.current_step_index || 0,
+            navWaypoints.length - 1
+          );
+          if (DATA.navigation_session.state === 'NAVIGATING') {{
+            isNavigationActive = true;
+          }} else if (DATA.navigation_session.state === 'ARRIVED') {{
+            hasArrivedAtDestination = true;
+            currentNavStepIndex = navWaypoints.length - 1;
+          }}
+        }} else {{
+          isNavigationActive = true;
+        }}
+
+        updateNavHUD();
+
+        // Attach Navigation HUD Button Event Handlers
+        if (btnNavPlayPause) {{
+          btnNavPlayPause.addEventListener('click', () => {{
+            if (hasArrivedAtDestination) {{
+              hasArrivedAtDestination = false;
+              currentNavStepIndex = 0;
+              navStepInterpolation = 0.0;
+              isNavigationActive = true;
+            }} else {{
+              isNavigationActive = !isNavigationActive;
+            }}
+            updateNavHUD();
+          }});
+        }}
+        if (btnNavNext) {{
+          btnNavNext.addEventListener('click', () => {{
+            if (currentNavStepIndex < navWaypoints.length - 2) {{
+              currentNavStepIndex++;
+              navStepInterpolation = 0.0;
+            }} else {{
+              currentNavStepIndex = navWaypoints.length - 1;
+              hasArrivedAtDestination = true;
+              isNavigationActive = false;
+            }}
+            updateNavHUD();
+          }});
+        }}
+        if (btnNavPrev) {{
+          btnNavPrev.addEventListener('click', () => {{
+            hasArrivedAtDestination = false;
+            if (currentNavStepIndex > 0) {{
+              currentNavStepIndex--;
+              navStepInterpolation = 0.0;
+            }}
+            updateNavHUD();
+          }});
+        }}
+        if (btnNavRestart) {{
+          btnNavRestart.addEventListener('click', () => {{
+            hasArrivedAtDestination = false;
+            currentNavStepIndex = 0;
+            navStepInterpolation = 0.0;
+            isNavigationActive = true;
+            updateNavHUD();
+          }});
+        }}
       }}
 
       // 11. Raycasting & Location Inspector
@@ -1936,8 +2250,57 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
           elevatorCab.position.y = 2.0 + (Math.sin(time * 0.8) + 1.0) * 10.0;
         }}
 
-        // Animate Route Traversal Light Orb
-        if (routeCurve && traversalOrb && isRouteAnimating) {{
+        // Animate Real-Time Navigation Avatar Marker (Phase 15 Upgraded)
+        if (navAvatarGroup && navWaypoints.length > 1) {{
+          // Pulse the ground ring
+          if (navRingMesh) {{
+            const ringScale = 1.0 + Math.sin(time * 4.0) * 0.15;
+            navRingMesh.scale.set(ringScale, ringScale, 1.0);
+          }}
+
+          if (isNavigationActive && !hasArrivedAtDestination) {{
+            navStepInterpolation += delta * 0.35 * animSpeedMultiplier;
+            if (navStepInterpolation >= 1.0) {{
+              navStepInterpolation = 0.0;
+              currentNavStepIndex++;
+              if (currentNavStepIndex >= navWaypoints.length - 1) {{
+                currentNavStepIndex = navWaypoints.length - 1;
+                hasArrivedAtDestination = true;
+                isNavigationActive = false;
+              }}
+              updateNavHUD();
+            }}
+
+            const pStart = navWaypoints[currentNavStepIndex];
+            const pEnd = navWaypoints[Math.min(currentNavStepIndex + 1, navWaypoints.length - 1)];
+
+            if (pStart && pEnd) {{
+              const curX = pStart.x + (pEnd.x - pStart.x) * navStepInterpolation;
+              const curY = pStart.y + (pEnd.y - pStart.y) * navStepInterpolation;
+              const curZ = pStart.z + (pEnd.z - pStart.z) * navStepInterpolation;
+              navAvatarGroup.position.set(curX, curY, curZ);
+
+              // Orient cone forward along trajectory
+              if (navConeMesh) {{
+                const targetVec = new THREE.Vector3(pEnd.x, curY + 0.7, pEnd.z);
+                navConeMesh.lookAt(targetVec);
+              }}
+
+              // If elevator transition is occurring, animate elevator cab to match marker Y
+              const currStepData = (navSteps && navSteps[currentNavStepIndex]) ? navSteps[currentNavStepIndex] : null;
+              if (currStepData && currStepData.has_elevator && elevatorCab) {{
+                elevatorCab.position.y = curY;
+              }}
+            }}
+          }} else if (hasArrivedAtDestination) {{
+            const destPt = navWaypoints[navWaypoints.length - 1];
+            navAvatarGroup.position.set(destPt.x, destPt.y, destPt.z);
+            if (navRingMesh) {{
+              const pulse = 1.0 + (Math.sin(time * 6.0) + 1.0) * 0.35;
+              navRingMesh.scale.set(pulse, pulse, 1.0);
+            }}
+          }}
+        }} else if (routeCurve && traversalOrb && isRouteAnimating) {{
           routeAnimProgress = (routeAnimProgress + delta * 0.12 * animSpeedMultiplier) % 1.0;
           const pt = routeCurve.getPoint(routeAnimProgress);
           traversalOrb.position.copy(pt);

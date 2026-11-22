@@ -38,6 +38,16 @@ from modules.jain_digital_twin import (
     load_jain_campus_map,
     render_jain_digital_twin_html,
 )
+from modules.navigation_instructions import (
+    NavigationInstruction,
+    compute_turn_angle,
+    format_floor_name,
+    generate_turn_by_turn_instructions,
+)
+from modules.navigation_session import (
+    NavigationSession,
+    NavigationState,
+)
 from modules.ui_theme import (
     apply_custom_theme,
     apply_plotly_dark_theme,
@@ -102,4 +112,10 @@ __all__ = [
     "get_jain_multi_route_comparison",
     "build_jain_digital_twin_payload",
     "render_jain_digital_twin_html",
+    "NavigationState",
+    "NavigationSession",
+    "NavigationInstruction",
+    "generate_turn_by_turn_instructions",
+    "compute_turn_angle",
+    "format_floor_name",
 ]
