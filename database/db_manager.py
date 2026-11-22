@@ -15,23 +15,46 @@ import sqlite3
 import time
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
+try:
+    from modules.exceptions import (
+        DatabaseError,
+        DatabaseConnectionError,
+        DatabaseQueryError,
+        SecurityLockoutError,
+    )
+except ImportError:
+    class DatabaseError(Exception):
+        """Base exception for SQLite database operation failures."""
+        pass
 
-class DatabaseError(Exception):
-    """Base exception for SQLite database operation failures."""
+    class SecurityLockoutError(DatabaseError):
+        """Exception raised when an account is temporarily locked due to excessive failed attempts."""
+        pass
 
-    pass
+    class DatabaseConnectionError(DatabaseError):
+        pass
 
+    class DatabaseQueryError(DatabaseError):
+        pass
 
-class SecurityLockoutError(DatabaseError):
-    """Exception raised when an account is temporarily locked due to excessive failed attempts."""
+try:
+    from modules.logging_config import get_logger
+    logger = get_logger("db_manager")
+except ImportError:
+    import logging
+    logger = logging.getLogger("campus_navigator.db_manager")
 
-    pass
+try:
+    from config import get_config
+except ImportError:
+    get_config = None
 
 
 class DatabaseManager:
     """Manages persistent SQLite storage for campus navigation, user authentication, and obstacle reports."""
 
     DEFAULT_DB_FILE = "campus_navigation.db"
+    SCHEMA_VERSION = 2
     PBKDF2_RECOMMENDED_ITERATIONS = 600_000
     PBKDF2_LEGACY_ITERATIONS = 100_000
     PBKDF2_ITERATIONS = PBKDF2_RECOMMENDED_ITERATIONS
@@ -147,19 +170,27 @@ class DatabaseManager:
             db_path: Path to SQLite database file. Pass ':memory:' for transient in-memory database.
                      If None, defaults to 'data/campus_navigation.db' relative to project root.
         """
+        db_cfg = get_config().database if get_config else None
+        self.timeout_seconds: float = db_cfg.timeout_seconds if db_cfg else 10.0
+        self.busy_timeout_ms: int = db_cfg.busy_timeout_ms if db_cfg else 5000
+        self.journal_mode: str = db_cfg.journal_mode if db_cfg else "WAL"
+        self.synchronous: str = db_cfg.synchronous if db_cfg else "NORMAL"
+
         if db_path is None:
             project_root = Path(__file__).resolve().parent.parent
             self.db_path: Union[str, Path] = project_root / "data" / self.DEFAULT_DB_FILE
             # Ensure parent data directory exists
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+            self._memory_conn = None
         elif str(db_path) == ":memory:":
             self.db_path = ":memory:"
             # Keep a persistent connection for in-memory DB so tables don't vanish
             self._memory_conn: Optional[sqlite3.Connection] = sqlite3.connect(
-                ":memory:", detect_types=sqlite3.PARSE_DECLTYPES
+                ":memory:", timeout=self.timeout_seconds, detect_types=sqlite3.PARSE_DECLTYPES
             )
             self._memory_conn.row_factory = sqlite3.Row
             self._memory_conn.execute("PRAGMA foreign_keys = ON;")
+            self._memory_conn.execute(f"PRAGMA busy_timeout = {self.busy_timeout_ms};")
         else:
             self.db_path = Path(db_path)
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,7 +215,7 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        """Context manager yielding a configured SQLite connection with foreign keys enabled."""
+        """Context manager yielding a configured SQLite connection with foreign keys and WAL enabled."""
         if str(self.db_path) == ":memory:" and self._memory_conn is not None:
             try:
                 yield self._memory_conn
@@ -194,9 +225,20 @@ class DatabaseManager:
                 raise DatabaseError(f"Database operation failed: {exc}") from exc
             return
 
-        conn = sqlite3.connect(str(self.db_path), detect_types=sqlite3.PARSE_DECLTYPES)
+        conn = sqlite3.connect(
+            str(self.db_path),
+            timeout=self.timeout_seconds,
+            detect_types=sqlite3.PARSE_DECLTYPES,
+        )
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute(f"PRAGMA busy_timeout = {self.busy_timeout_ms};")
+        if str(self.db_path) != ":memory:":
+            try:
+                conn.execute(f"PRAGMA journal_mode = {self.journal_mode};")
+                conn.execute(f"PRAGMA synchronous = {self.synchronous};")
+            except sqlite3.Error:
+                pass
         try:
             yield conn
             conn.commit()
@@ -207,15 +249,70 @@ class DatabaseManager:
             conn.close()
 
     def initialize_schema(self) -> None:
-        """Create required tables and performance indexes if they do not exist."""
+        """Create required tables and performance indexes, ensuring schema version is tracked."""
         try:
             with self.get_connection() as conn:
                 for table_sql in self.CREATE_TABLES_SQL:
                     conn.execute(table_sql)
                 for index_sql in self.CREATE_INDEXES_SQL:
                     conn.execute(index_sql)
+
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA user_version;")
+                row = cursor.fetchone()
+                current_ver = int(row[0]) if row else 0
+                if current_ver < self.SCHEMA_VERSION:
+                    conn.execute(f"PRAGMA user_version = {self.SCHEMA_VERSION};")
+                    logger.info("Database schema version updated from %d to %d", current_ver, self.SCHEMA_VERSION)
         except sqlite3.Error as exc:
+            logger.error("Failed to initialize database schema: %s", exc)
             raise DatabaseError(f"Failed to initialize database schema: {exc}") from exc
+
+    def get_schema_version(self) -> int:
+        """Retrieve current SQLite PRAGMA user_version."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA user_version;")
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
+
+    def backup_database(self, backup_path: Optional[Union[str, Path]] = None) -> str:
+        """Perform an online, non-locking backup of SQLite database using native backup API.
+
+        Args:
+            backup_path: Optional destination file path. If None, saves to backups/ with timestamp.
+
+        Returns:
+            Absolute string path to created backup file.
+        """
+        if str(self.db_path) == ":memory:":
+            if backup_path is None:
+                raise DatabaseError("backup_path must be provided when backing up an in-memory database")
+            target_path = Path(backup_path)
+        else:
+            if backup_path is None:
+                project_root = Path(__file__).resolve().parent.parent
+                backup_dir = project_root / "backups"
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                target_path = backup_dir / f"campus_navigation_backup_{timestamp}.db"
+            else:
+                target_path = Path(backup_path)
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with self.get_connection() as src_conn:
+            target_conn = sqlite3.connect(str(target_path))
+            try:
+                src_conn.backup(target_conn)
+            except sqlite3.Error as exc:
+                logger.error("Failed to backup database to %s: %s", target_path, exc)
+                raise DatabaseError(f"Database backup failed: {exc}") from exc
+            finally:
+                target_conn.close()
+
+        logger.info("Successfully created database backup: %s", target_path)
+        return str(target_path.resolve())
 
     def insert_report(self, report_data: Dict[str, Any]) -> str:
         """Insert a new obstacle report into the database using parameterized queries.

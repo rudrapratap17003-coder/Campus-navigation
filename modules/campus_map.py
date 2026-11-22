@@ -2,11 +2,27 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import networkx as nx
+
+# Global memory cache for parsed JSON data indexed by (resolved_path, mtime)
+_FILE_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+
+
+def invalidate_cache(file_path: Optional[Union[str, Path]] = None) -> None:
+    """Invalidate in-memory JSON file cache for campus map datasets.
+
+    Args:
+        file_path: Specific file path to invalidate, or None to clear all.
+    """
+    if file_path is None:
+        _FILE_CACHE.clear()
+    else:
+        _FILE_CACHE.pop(str(Path(file_path).resolve()), None)
 
 
 class CampusDataValidationError(ValueError):
@@ -73,23 +89,42 @@ class CampusMap:
         """Return raw list of connections."""
         return self._connections
 
-    def load_from_json(self, file_path: Union[str, Path]) -> None:
-        """Load, validate, and build graph from a JSON file.
+    def clone(self) -> CampusMap:
+        """Create an isolated, fast in-memory copy of this CampusMap instance."""
+        new_map = CampusMap()
+        new_map.data_path = self.data_path
+        new_map._raw_data = copy.deepcopy(self._raw_data)
+        new_map._locations_by_id = {k: v.copy() for k, v in self._locations_by_id.items()}
+        new_map._connections = [conn.copy() for conn in self._connections]
+        new_map._graph = self._graph.copy()
+        return new_map
+
+    def load_from_json(self, file_path: Union[str, Path], use_cache: bool = True) -> None:
+        """Load, validate, and build graph from a JSON file with memory caching.
 
         Args:
             file_path: Path to the JSON data file.
+            use_cache: If True, reuses in-memory cached JSON if file modification time matches.
 
         Raises:
             FileNotFoundError: If the file does not exist.
             json.JSONDecodeError: If the file is not valid JSON.
             CampusDataValidationError: If the loaded data violates schema constraints.
         """
-        target_path = Path(file_path)
+        target_path = Path(file_path).resolve()
         if not target_path.exists():
             raise FileNotFoundError(f"Campus data file not found: {target_path}")
 
-        with open(target_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
+        mtime = target_path.stat().st_mtime
+        cache_key = str(target_path)
+
+        if use_cache and cache_key in _FILE_CACHE and _FILE_CACHE[cache_key][0] == mtime:
+            data = copy.deepcopy(_FILE_CACHE[cache_key][1])
+        else:
+            with open(target_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if use_cache:
+                _FILE_CACHE[cache_key] = (mtime, copy.deepcopy(data))
 
         self.data_path = target_path
         self.load_from_dict(data)

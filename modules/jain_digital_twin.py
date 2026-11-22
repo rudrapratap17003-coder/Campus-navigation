@@ -43,7 +43,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from modules.campus_map import CampusMap
+from modules.campus_map import CampusMap, invalidate_cache
 from modules.navigation_instructions import compute_bearing_and_cardinal
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder, RouteResult
@@ -99,9 +99,29 @@ PALETTE = {
 }
 
 
-def load_jain_campus_map(file_path: Optional[Path] = None) -> CampusMap:
-    """Load the JAIN Global Campus and FET 5-Floor dataset into a CampusMap instance."""
+_JAIN_MAP_INSTANCE: Optional[CampusMap] = None
+
+
+def invalidate_jain_campus_cache() -> None:
+    """Clear cached Jain CampusMap instance and underlying JSON file cache."""
+    global _JAIN_MAP_INSTANCE
+    _JAIN_MAP_INSTANCE = None
+    invalidate_cache(JAIN_DATA_FILE)
+
+
+def load_jain_campus_map(file_path: Optional[Path] = None, reload: bool = False) -> CampusMap:
+    """Load the JAIN Global Campus and FET 5-Floor dataset into a CampusMap instance.
+
+    Reuses cached base map for default JAIN_DATA_FILE and returns an isolated clone.
+    """
+    global _JAIN_MAP_INSTANCE
     target_path = file_path if file_path is not None else JAIN_DATA_FILE
+
+    if target_path == JAIN_DATA_FILE and not reload:
+        if _JAIN_MAP_INSTANCE is None:
+            _JAIN_MAP_INSTANCE = CampusMap(target_path)
+        return _JAIN_MAP_INSTANCE.clone()
+
     return CampusMap(target_path)
 
 
