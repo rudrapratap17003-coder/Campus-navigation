@@ -46,16 +46,18 @@ db_manager = services.get("db_manager")
 st.markdown(
     """
     <div class="hero-banner">
-        <div class="hero-title">📊 Campus Intelligence & Accessibility Analytics</div>
-        <div class="hero-subtitle">
-            Authoritative, evidence-based spatial analytics, barrier distributions, and wayfinding telemetry
-            for JAIN Global Campus and the Faculty of Engineering & Technology (FET).
+        <div class="hero-title">🧭 Accessible Campus Navigator</div>
+        <div class="hero-subtitle" style="font-size: 1.05rem; font-weight: 500; color: #A7F3D0; margin-bottom: 6px;">
+            An intelligent campus wayfinding system designed to make university spaces easier to explore and more accessible for everyone.
+        </div>
+        <div class="hero-description" style="color: #9CAFA5; font-size: 0.9rem; margin-bottom: 12px;">
+            Find destinations, explore campus buildings, discover accessible routes, and report obstacles through a unified digital navigation platform.
         </div>
         <div class="hero-chips">
             <span class="hero-chip">🏛️ JAIN Global Campus</span>
-            <span class="hero-chip">🏢 5-Floor Spatial Coverage</span>
-            <span class="hero-chip">♿ Verified Step-Free Metrics</span>
-            <span class="hero-chip">⚠️ Obstacle Lifecycle Audits</span>
+            <span class="hero-chip">🏢 5-Floor FET Digital Twin</span>
+            <span class="hero-chip">♿ Heuristic Step-Free Routing</span>
+            <span class="hero-chip">⚠️ Dynamic Obstacle Management</span>
         </div>
     </div>
     """,

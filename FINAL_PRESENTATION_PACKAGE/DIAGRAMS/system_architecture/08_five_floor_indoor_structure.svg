@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <rect width="1000" height="600" fill="#07130F" rx="16"/>
+  <text x="500" y="45" fill="#35D99A" font-family="Segoe UI, Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle">Five-Floor FET Building Indoor Navigation Structure</text>
+  <text x="500" y="75" fill="#9CAFA5" font-family="Segoe UI, Arial, sans-serif" font-size="14" text-anchor="middle">Multi-Storey 2D Coordinate Slices Connected via Vertical Transition Edges</text>
+  
+  <rect x="440" y="110" width="120" height="440" fill="#0D1F18" stroke="#16A36A" stroke-width="2" stroke-dasharray="6 4" rx="8"/>
+  <text x="500" y="135" fill="#35D99A" font-family="Segoe UI, Arial, sans-serif" font-size="13" font-weight="bold" text-anchor="middle">VERTICAL SPINE</text>
+  <text x="500" y="155" fill="#A7F3D0" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Elevators (Step-Free)</text>
+  <text x="500" y="175" fill="#F5B942" font-family="Segoe UI, Arial, sans-serif" font-size="11" text-anchor="middle">Staircases (Standard)</text>
+
+  <rect x="60" y="120" width="350" height="65" fill="#122820" stroke="#16A36A" stroke-width="1.5" rx="6"/>
+  <text x="80" y="150" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="14" font-weight="bold">Floor 4: Aeronautical and Prop. Labs</text>
+  <text x="80" y="170" fill="#9CAFA5" font-family="Segoe UI, Arial" font-size="11">Advanced UAV Lab - Wind Tunnel - Research Cabins</text>
+  <line x1="410" y1="152" x2="440" y2="152" stroke="#35D99A" stroke-width="2"/>
+
+  <rect x="60" y="205" width="350" height="65" fill="#122820" stroke="#16A36A" stroke-width="1.5" rx="6"/>
+  <text x="80" y="235" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="14" font-weight="bold">Floor 3: Civil and Environmental Eng.</text>
+  <text x="80" y="255" fill="#9CAFA5" font-family="Segoe UI, Arial" font-size="11">Geotech Lab - Concrete Testing - Seminar Hall C</text>
+  <line x1="410" y1="237" x2="440" y2="237" stroke="#35D99A" stroke-width="2"/>
+
+  <rect x="60" y="290" width="350" height="65" fill="#122820" stroke="#35D99A" stroke-width="2" rx="6"/>
+  <text x="80" y="320" fill="#35D99A" font-family="Segoe UI, Arial" font-size="14" font-weight="bold">Floor 2: AIML, Data Science and CSE</text>
+  <text x="80" y="340" fill="#A7F3D0" font-family="Segoe UI, Arial" font-size="11">HPC Cluster - Robotics Lab - AI Workstations</text>
+  <line x1="410" y1="322" x2="440" y2="322" stroke="#35D99A" stroke-width="2"/>
+
+  <rect x="60" y="375" width="350" height="65" fill="#122820" stroke="#16A36A" stroke-width="1.5" rx="6"/>
+  <text x="80" y="405" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="14" font-weight="bold">Floor 1: Electrical and Electronics</text>
+  <text x="80" y="425" fill="#9CAFA5" font-family="Segoe UI, Arial" font-size="11">Embedded Systems - VLSI Design - Faculty Lounge</text>
+  <line x1="410" y1="407" x2="440" y2="407" stroke="#35D99A" stroke-width="2"/>
+
+  <rect x="60" y="460" width="350" height="65" fill="#122820" stroke="#16A36A" stroke-width="1.5" rx="6"/>
+  <text x="80" y="490" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="14" font-weight="bold">Floor 0 (Ground): Foyer and Administration</text>
+  <text x="80" y="510" fill="#9CAFA5" font-family="Segoe UI, Arial" font-size="11">Main Entrance - Dean Office - Auditorium - Cafeteria</text>
+  <line x1="410" y1="492" x2="440" y2="492" stroke="#35D99A" stroke-width="2"/>
+
+  <rect x="590" y="120" width="350" height="405" fill="#0D1F18" stroke="#16A36A" stroke-width="1" rx="8"/>
+  <text x="765" y="155" fill="#35D99A" font-family="Segoe UI, Arial" font-size="16" font-weight="bold" text-anchor="middle">Graph Modeling Principles</text>
+  <text x="615" y="200" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="13">1. Node Attributes: floor_id in {0, 1, 2, 3, 4}</text>
+  <text x="615" y="240" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="13">2. Horizontal Edges: Connect same-floor rooms</text>
+  <text x="615" y="280" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="13">3. Vertical Edges: edge_type in {'elevator', 'stairs'}</text>
+  <text x="615" y="320" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="13">4. Wheelchair Pruning: Excludes 'stairs' edges</text>
+  <text x="615" y="360" fill="#F8FAFC" font-family="Segoe UI, Arial" font-size="13">5. Elevation Cost: Extra edge weight per floor</text>
+  <text x="615" y="400" fill="#A7F3D0" font-family="Segoe UI, Arial" font-size="13">6. Unified Graph: Solved natively with Dijkstra</text>
+  <rect x="615" y="440" width="300" height="60" fill="#122820" stroke="#35D99A" stroke-width="1" rx="6"/>
+  <text x="765" y="465" fill="#35D99A" font-family="Segoe UI, Arial" font-size="12" font-weight="bold" text-anchor="middle">Deterministic Cross-Floor Traversal</text>
+  <text x="765" y="485" fill="#9CAFA5" font-family="Segoe UI, Arial" font-size="11" text-anchor="middle">O(E + V log V) Dijkstra execution time</text>
+</svg>
