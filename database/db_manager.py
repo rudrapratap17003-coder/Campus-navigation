@@ -392,7 +392,7 @@ class DatabaseManager:
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         now_iso = datetime.now(timezone.utc).isoformat()
-        report_id = str(report_data.get("report_id"))
+        report_id = str(report_data.get("report_id")) if report_data.get("report_id") else f"rep_{secrets.token_hex(8)}"
 
         params = (
             report_id,
@@ -1307,6 +1307,38 @@ class DatabaseManager:
             return session_id
         except sqlite3.Error as exc:
             raise DatabaseError(f"Failed to record navigation session: {exc}") from exc
+
+    def log_navigation_history(
+        self,
+        session_id: str,
+        user_id: Optional[str],
+        starting_location: str,
+        destination: str,
+        navigation_mode: str,
+        selected_route: Any,
+        distance_completed: float,
+        total_distance: float,
+        estimated_duration: float,
+        floor_transitions: int = 0,
+        rerouted: int = 0,
+        completion_status: str = "completed",
+    ) -> str:
+        """Helper to log navigation telemetry session from parameter arguments."""
+        data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "starting_location": starting_location,
+            "destination": destination,
+            "navigation_mode": navigation_mode,
+            "selected_route": selected_route,
+            "distance_completed": distance_completed,
+            "total_distance": total_distance,
+            "estimated_duration": estimated_duration,
+            "floor_transitions": floor_transitions,
+            "rerouted": rerouted,
+            "completion_status": completion_status,
+        }
+        return self.record_navigation_session(data)
 
     def update_navigation_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
         """Update an existing navigation session record in SQLite."""
