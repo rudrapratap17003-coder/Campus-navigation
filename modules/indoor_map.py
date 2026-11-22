@@ -176,9 +176,11 @@ def calculate_display_coordinates(
 ) -> Dict[str, Tuple[float, float]]:
     """Compute schematic (X, Y) rendering coordinates for campus nodes.
 
-    - When viewing a single floor (e.g. 0 or 1), uses original node layout coordinates.
-    - When viewing 'All Floors', side-by-side plate separation is applied:
+    - When viewing a single floor (e.g. 0, 1, or outdoor -1), uses original node layout coordinates.
+    - When viewing 'All Floors' on benchmark map, side-by-side plate separation is applied:
       Floor 0 appears on the left plate, and Floor 1 is offset to the right by X + 65.0.
+    - When viewing 'All Floors' on JAIN digital twin, horizontal multi-plate separation is applied
+      across outdoor grounds and 5 FET levels.
     - Missing coordinates are assigned deterministic fallback layout positions to ensure
       the visualizer never crashes.
 
@@ -191,12 +193,16 @@ def calculate_display_coordinates(
     """
     coords: Dict[str, Tuple[float, float]] = {}
     fallback_index = 0
+    is_jain = len(campus_map.locations) > 20
 
     for loc in campus_map.get_all_locations():
         loc_id = loc["id"]
         raw_x = loc.get("x")
         raw_y = loc.get("y")
-        floor = loc.get("floor", 0)
+        try:
+            floor = int(loc.get("floor", 0))
+        except (ValueError, TypeError):
+            floor = 0
 
         # Handle missing coordinates gracefully with fallback grid position
         if raw_x is None or raw_y is None:
@@ -212,11 +218,18 @@ def calculate_display_coordinates(
                 y_val = 10.0 + (fallback_index // 4) * 15.0
                 fallback_index += 1
 
-        # Multi-floor side-by-side offset: Floor 1 is offset horizontally by 65 units
-        if floor_filter is None and floor == 1:
-            display_x = x_val + 65.0
+        # Multi-floor side-by-side offset
+        if is_jain:
+            if floor_filter is None:
+                offset_map = {-1: 0.0, 0: 210.0, 1: 330.0, 2: 450.0, 3: 570.0, 4: 690.0}
+                display_x = x_val + offset_map.get(floor, 0.0)
+            else:
+                display_x = x_val
         else:
-            display_x = x_val
+            if floor_filter is None and floor == 1:
+                display_x = x_val + 65.0
+            else:
+                display_x = x_val
 
         display_y = y_val
         coords[loc_id] = (display_x, display_y)
@@ -372,17 +385,41 @@ def create_indoor_map_figure(
 
     # --- 3. RENDER CAMPUS LOCATION NODES ---
     category_colors = {
-        "entrance": "#1b4332",
-        "lobby": "#2d6a4f",
-        "elevator": "#2a9d8f",
-        "stairs": "#e76f51",
-        "restroom": "#457b9d",
-        "classroom": "#3a86ff",
-        "auditorium": "#8338ec",
-        "cafeteria": "#f4a261",
-        "lab": "#06d6a0",
-        "library": "#118ab2",
-        "office": "#073b4c",
+        "entrance": "#10B981",
+        "gate": "#059669",
+        "lobby": "#16A36A",
+        "elevator": "#38BDF8",
+        "stairs": "#F59E0B",
+        "restroom": "#818CF8",
+        "classroom": "#60A5FA",
+        "auditorium": "#A855F7",
+        "cafeteria": "#FB923C",
+        "lab": "#35D99A",
+        "library": "#0EA5E9",
+        "office": "#64748B",
+        "sports": "#EAB308",
+        "admin": "#14B8A6",
+        "ramp": "#34D399",
+        "parking": "#6366F1",
+    }
+
+    category_icons = {
+        "entrance": "🚪",
+        "gate": "⛩️",
+        "lobby": "🏛️",
+        "elevator": "🛗",
+        "stairs": "🪜",
+        "restroom": "🚻",
+        "classroom": "🏫",
+        "auditorium": "🎭",
+        "cafeteria": "🥪",
+        "lab": "🔬",
+        "library": "📚",
+        "office": "💼",
+        "sports": "⚽",
+        "admin": "🏛️",
+        "ramp": "♿",
+        "parking": "🅿️",
     }
 
     # Group locations by category for clean Plotly legend
@@ -396,15 +433,19 @@ def create_indoor_map_figure(
         cat_xs = [coords[loc["id"]][0] for loc in loc_list]
         cat_ys = [coords[loc["id"]][1] for loc in loc_list]
         cat_color = category_colors.get(cat, "#4a5568")
+        icon = category_icons.get(cat, "📍")
 
         hover_texts = []
         for loc in loc_list:
-            fl_text = f"Floor {loc.get('floor', 0)}"
+            fl_val = loc.get("floor", 0)
+            fl_text = "Outdoor Grounds" if fl_val == -1 else f"Floor {fl_val}"
+            acc_str = "✅ Step-Free Accessible" if loc.get("wheelchair_accessible", True) else "⚠️ Stair Access"
             ht = (
                 f"<b>[{loc['id']}] {loc['name']}</b><br>"
                 f"Building: {loc.get('building', 'Academic Complex')}<br>"
                 f"Level: {fl_text} · Category: {cat.capitalize()}<br>"
-                f"Schematic Layout Pos: ({loc.get('x')}, {loc.get('y')})"
+                f"Accessibility: {acc_str}<br>"
+                f"Coordinates: ({loc.get('x')}, {loc.get('y')})"
             )
             hover_texts.append(ht)
 
@@ -414,13 +455,13 @@ def create_indoor_map_figure(
                 y=cat_ys,
                 mode="markers+text",
                 marker=dict(
-                    size=15,
+                    size=16,
                     color=cat_color,
                     line=dict(width=2, color="#07130F"),
                 ),
-                text=[loc["id"] for loc in loc_list],
+                text=[f"{icon} {loc['id']}" for loc in loc_list],
                 textposition="top center",
-                textfont=dict(size=10, color="#F8FAFC"),
+                textfont=dict(size=9.5, color="#F8FAFC", family="Arial, sans-serif"),
                 name=cat.capitalize(),
                 hoverinfo="text",
                 hovertext=hover_texts,
@@ -500,79 +541,334 @@ def create_indoor_map_figure(
                 )
             )
 
-    # --- 5. RENDER FLOOR BOUNDARIES & HEADERS FOR ALL-FLOORS VIEW ---
+    # --- 5. RENDER ARCHITECTURAL FLOOR BOUNDARIES & ZONES ---
     annotations = []
     shapes = []
+    is_jain = len(campus_map.locations) > 20
 
-    if floor_filter is None:
-        # Ground Floor Plate Boundary
-        shapes.append(
-            dict(
-                type="rect",
-                x0=0,
-                y0=5,
-                x1=60,
-                y1=50,
-                line=dict(color="rgba(53, 217, 154, 0.4)", width=1.5, dash="dot"),
-                fillcolor="rgba(18, 40, 32, 0.45)",
-                layer="below",
+    if is_jain:
+        if floor_filter in (0, 1, 2, 3, 4):
+            # FET 5-Floor Architectural Floor Plan
+            floor_names = {
+                0: "Ground Floor (Level 0) - Foundation Labs & Foyer",
+                1: "First Floor (Level 1) - Computing & Electronics",
+                2: "Second Floor (Level 2) - Software & Department Classrooms",
+                3: "Third Floor (Level 3) - Core Sciences & Design Studios",
+                4: "Fourth Floor (Level 4) - Executive Dean & High-Performance Computing",
+            }
+            # Central Atrium & Rotunda circle
+            shapes.append(
+                dict(
+                    type="circle",
+                    x0=-15,
+                    y0=-15,
+                    x1=15,
+                    y1=15,
+                    line=dict(color="rgba(53, 217, 154, 0.45)", width=2),
+                    fillcolor="rgba(18, 40, 32, 0.6)",
+                    layer="below",
+                )
             )
-        )
-        annotations.append(
-            dict(
-                x=30,
-                y=52,
-                text="<b>Ground Floor (Floor 0) Plate</b>",
-                font=dict(size=13, color="#35D99A"),
-                showarrow=False,
+            # South Entrance & Elevator Foyer
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=-18,
+                    y0=12,
+                    x1=18,
+                    y1=28,
+                    line=dict(color="rgba(53, 217, 154, 0.35)", width=1.5),
+                    fillcolor="rgba(22, 163, 106, 0.12)",
+                    layer="below",
+                )
             )
-        )
+            # West Academic Wing
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=-38,
+                    y0=-18,
+                    x1=-16,
+                    y1=18,
+                    line=dict(color="rgba(96, 165, 250, 0.35)", width=1.5),
+                    fillcolor="rgba(13, 31, 24, 0.5)",
+                    layer="below",
+                )
+            )
+            # East Academic Wing
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=16,
+                    y0=-18,
+                    x1=38,
+                    y1=18,
+                    line=dict(color="rgba(96, 165, 250, 0.35)", width=1.5),
+                    fillcolor="rgba(13, 31, 24, 0.5)",
+                    layer="below",
+                )
+            )
+            # North Wing
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=-16,
+                    y0=-34,
+                    x1=16,
+                    y1=-16,
+                    line=dict(color="rgba(96, 165, 250, 0.35)", width=1.5),
+                    fillcolor="rgba(13, 31, 24, 0.5)",
+                    layer="below",
+                )
+            )
 
-        # First Floor Plate Boundary
-        shapes.append(
-            dict(
-                type="rect",
-                x0=65,
-                y0=5,
-                x1=125,
-                y1=50,
-                line=dict(color="rgba(96, 165, 250, 0.4)", width=1.5, dash="dot"),
-                fillcolor="rgba(13, 31, 24, 0.45)",
-                layer="below",
+            annotations.append(
+                dict(
+                    x=0,
+                    y=33,
+                    text=f"<b>🏛️ FET Complex: {floor_names.get(floor_filter, '')}</b>",
+                    font=dict(size=13, color="#35D99A"),
+                    showarrow=False,
+                )
             )
-        )
-        annotations.append(
-            dict(
-                x=95,
-                y=52,
-                text="<b>First Floor (Floor 1) Plate</b>",
-                font=dict(size=13, color="#60A5FA"),
-                showarrow=False,
+            annotations.append(
+                dict(
+                    x=0,
+                    y=0,
+                    text="<b>Central Atrium & Rotunda</b>",
+                    font=dict(size=10.5, color="rgba(167, 243, 208, 0.7)"),
+                    showarrow=False,
+                )
             )
-        )
+            annotations.append(
+                dict(
+                    x=-27,
+                    y=0,
+                    text="<b>West Wing</b>",
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=27,
+                    y=0,
+                    text="<b>East Wing</b>",
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=0,
+                    y=-25,
+                    text="<b>North Wing & Seminar</b>",
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=0,
+                    y=20,
+                    text="<b>South Entrance & Elevators</b>",
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    showarrow=False,
+                )
+            )
 
-        x_range = [-5, 130]
-        y_range = [0, 56]
+            x_range = [-46, 46]
+            y_range = [-40, 38]
+
+        elif floor_filter == -1:
+            # JAIN Outdoor Campus Grounds
+            # Stadium & Sports Complex
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=-35,
+                    y0=-120,
+                    x1=115,
+                    y1=-55,
+                    line=dict(color="rgba(234, 179, 8, 0.35)", width=1.5, dash="dot"),
+                    fillcolor="rgba(18, 40, 32, 0.45)",
+                    layer="below",
+                )
+            )
+            # Central Quad & Admin Plaza
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=15,
+                    y0=45,
+                    x1=55,
+                    y1=80,
+                    line=dict(color="rgba(53, 217, 154, 0.35)", width=1.5),
+                    fillcolor="rgba(22, 163, 106, 0.12)",
+                    layer="below",
+                )
+            )
+            # FET Building Footprint
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=-30,
+                    y0=-18,
+                    x1=30,
+                    y1=28,
+                    line=dict(color="rgba(96, 165, 250, 0.4)", width=2),
+                    fillcolor="rgba(13, 31, 24, 0.65)",
+                    layer="below",
+                )
+            )
+
+            annotations.append(
+                dict(
+                    x=35,
+                    y=155,
+                    text="<b>🌳 JAIN Global Campus - Outdoor Grounds & Pathways</b>",
+                    font=dict(size=13, color="#35D99A"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=40,
+                    y=-88,
+                    text="<b>⚽ International Sports Arena & Cricket Grounds</b>",
+                    font=dict(size=11, color="#F5B942"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=0,
+                    y=5,
+                    text="<b>🏢 FET Academic Complex</b>",
+                    font=dict(size=11, color="#60A5FA"),
+                    showarrow=False,
+                )
+            )
+            annotations.append(
+                dict(
+                    x=35,
+                    y=62,
+                    text="<b>🏛️ Central Quadrangle & Administration</b>",
+                    font=dict(size=10.5, color="#A7F3D0"),
+                    showarrow=False,
+                )
+            )
+
+            x_range = [-80, 125]
+            y_range = [-130, 165]
+
+        else:
+            # JAIN All Floors & Outdoor Combined Overview
+            plates = [
+                (-1, "Outdoor Grounds", -75, 120, "#35D99A"),
+                (0, "Ground Floor", 175, 245, "#10B981"),
+                (1, "1st Floor", 295, 365, "#38BDF8"),
+                (2, "2nd Floor", 415, 485, "#60A5FA"),
+                (3, "3rd Floor", 535, 605, "#818CF8"),
+                (4, "4th Floor (HPC)", 655, 725, "#A855F7"),
+            ]
+            for fl, name, px0, px1, col in plates:
+                shapes.append(
+                    dict(
+                        type="rect",
+                        x0=px0,
+                        y0=-125 if fl == -1 else -38,
+                        x1=px1,
+                        y1=150 if fl == -1 else 35,
+                        line=dict(color=f"{col}55", width=1.5, dash="dot"),
+                        fillcolor="rgba(13, 31, 24, 0.45)",
+                        layer="below",
+                    )
+                )
+                annotations.append(
+                    dict(
+                        x=(px0 + px1) / 2,
+                        y=156 if fl == -1 else 42,
+                        text=f"<b>{name}</b>",
+                        font=dict(size=11, color=col),
+                        showarrow=False,
+                    )
+                )
+
+            x_range = [-85, 740]
+            y_range = [-135, 168]
+
     else:
-        # Isolated single floor view
-        floor_name = "Ground Floor (Floor 0)" if floor_filter == 0 else f"Floor {floor_filter}"
-        annotations.append(
-            dict(
-                x=30,
-                y=48,
-                text=f"<b>{floor_name} - Schematic Indoor Layout</b>",
-                font=dict(size=13, color="#35D99A"),
-                showarrow=False,
+        # Benchmark 15-Node Topological Reference Map
+        if floor_filter is None:
+            # Ground Floor Plate Boundary
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=0,
+                    y0=5,
+                    x1=60,
+                    y1=50,
+                    line=dict(color="rgba(53, 217, 154, 0.4)", width=1.5, dash="dot"),
+                    fillcolor="rgba(18, 40, 32, 0.45)",
+                    layer="below",
+                )
             )
-        )
-        x_range = [0, 60]
-        y_range = [5, 52]
+            annotations.append(
+                dict(
+                    x=30,
+                    y=52,
+                    text="<b>Ground Floor (Floor 0) Plate</b>",
+                    font=dict(size=13, color="#35D99A"),
+                    showarrow=False,
+                )
+            )
+
+            # First Floor Plate Boundary
+            shapes.append(
+                dict(
+                    type="rect",
+                    x0=65,
+                    y0=5,
+                    x1=125,
+                    y1=50,
+                    line=dict(color="rgba(96, 165, 250, 0.4)", width=1.5, dash="dot"),
+                    fillcolor="rgba(13, 31, 24, 0.45)",
+                    layer="below",
+                )
+            )
+            annotations.append(
+                dict(
+                    x=95,
+                    y=52,
+                    text="<b>First Floor (Floor 1) Plate</b>",
+                    font=dict(size=13, color="#60A5FA"),
+                    showarrow=False,
+                )
+            )
+
+            x_range = [-5, 130]
+            y_range = [0, 56]
+        else:
+            # Isolated single floor view
+            floor_name = "Ground Floor (Floor 0)" if floor_filter == 0 else f"Floor {floor_filter}"
+            annotations.append(
+                dict(
+                    x=30,
+                    y=48,
+                    text=f"<b>{floor_name} - Schematic Indoor Layout</b>",
+                    font=dict(size=13, color="#35D99A"),
+                    showarrow=False,
+                )
+            )
+            x_range = [0, 60]
+            y_range = [5, 52]
 
     fig.update_layout(
-        height=520,
+        height=540,
         margin=dict(l=20, r=20, t=35, b=25),
         xaxis=dict(
-            title="Schematic X Position",
+            title="Schematic X Coordinate",
             range=x_range,
             showgrid=True,
             gridcolor="rgba(53, 217, 154, 0.08)",
@@ -581,7 +877,7 @@ def create_indoor_map_figure(
             tickfont=dict(color="#9CAFA5", size=10),
         ),
         yaxis=dict(
-            title="Schematic Y Position",
+            title="Schematic Y Coordinate",
             range=y_range,
             showgrid=True,
             gridcolor="rgba(53, 217, 154, 0.08)",
@@ -598,7 +894,7 @@ def create_indoor_map_figure(
             y=-0.28,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, color="#F8FAFC"),
+            font=dict(size=10.5, color="#F8FAFC"),
         ),
         plot_bgcolor="#07130F",
         paper_bgcolor="rgba(13, 31, 24, 0.75)",

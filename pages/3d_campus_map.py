@@ -105,7 +105,7 @@ st.markdown(
 )
 
 # Language & Accessibility Preferences (Phase 18)
-col_pref1, col_pref2, col_pref3 = st.columns([1.5, 1.0, 1.0])
+col_pref1, col_pref2, col_pref3, col_pref4 = st.columns([1.3, 0.85, 0.85, 1.1])
 with col_pref1:
     selected_lang = st.selectbox(
         "🌐 Language / ಭಾಷೆ / भाषा:",
@@ -130,6 +130,10 @@ with col_pref3:
         key="pref_reduced_motion",
         help="Disables smooth transitions and motion animations for cognitive accessibility.",
     )
+with col_pref4:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    if st.button("🗺️ 2D Floor Plan", use_container_width=True, help="Switch to 2D Architectural Floor Plan"):
+        st.switch_page("pages/campus_map.py")
 
 if pref_high_contrast:
     st.markdown(
@@ -263,7 +267,7 @@ else:
             default_dest_idx = idx
 
 # --- LAYOUT: 3D VIEWPORT & CONTROL CONSOLE ---
-col_viewport, col_controls = st.columns([2.3, 1.0], gap="medium")
+col_viewport, col_controls = st.columns([2.8, 1.2], gap="medium")
 
 with col_controls:
     st.markdown('<div class="ui-card">', unsafe_allow_html=True)
@@ -279,10 +283,20 @@ with col_controls:
     )
     start_id = loc_options[start_label]
 
+    # Quick Destination Suggestions Pills
+    st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
+    pill_cols = st.columns(4)
+    quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain_twin else ["Classroom", "Lab", "Restroom", "Elevator"]
+    for i, kw in enumerate(quick_keywords):
+        with pill_cols[i]:
+            if st.button(kw, key=f"3d_pill_{kw}", use_container_width=True):
+                st.session_state["3d_dest_search_input"] = kw
+                st.rerun()
+
     # Destination Search with Keyword Intelligence
     dest_search_query = st.text_input(
         "🔍 Search Destination (Lab, Room, Dept, Keyword):",
-        value="",
+        value=st.session_state.get("3d_dest_search_input", ""),
         placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
         key="3d_dest_search_input",
         help="Search 79 campus locations by room name, department, category, abbreviation, or keywords.",
@@ -582,6 +596,23 @@ with col_controls:
         """,
         unsafe_allow_html=True,
     )
+
+    # 1-Click Quick Actions for Inspected Facility
+    c_fi1, c_fi2 = st.columns(2)
+    with c_fi1:
+        if st.button("🚩 Set as Start", key="3d_btn_inspect_start", use_container_width=True):
+            st.session_state["3d_route_start"] = inspect_label
+            st.rerun()
+    with c_fi2:
+        if st.button("🎯 Set as Dest", key="3d_btn_inspect_dest", use_container_width=True):
+            st.session_state["3d_route_dest"] = inspect_label
+            if "3d_dest_search_input" in st.session_state:
+                st.session_state["3d_dest_search_input"] = ""
+            st.rerun()
+
+    if st.button("🗺️ Switch to 2D Architectural Map", key="btn_switch_2d_from_3d", use_container_width=True):
+        st.switch_page("pages/campus_map.py")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Active Verified Hazards Summary
@@ -933,26 +964,35 @@ if db_manager and hasattr(db_manager, "get_navigation_history"):
     if hist_records:
         with st.expander("🔍 View Recent Wayfinding Log", expanded=False):
             for rec in hist_records:
-                stat_color = "#10B981" if rec["status"] == "ARRIVED" else ("#F87171" if rec["status"] == "CANCELLED" else ("#F5B942" if rec["status"] == "REROUTED" else ("#35D99A" if rec["status"] == "NAVIGATING" else "#9CAFA5")))
+                status_val = rec.get("status") or rec.get("state") or "COMPLETED"
+                stat_color = "#10B981" if status_val == "ARRIVED" else ("#F87171" if status_val == "CANCELLED" else ("#F5B942" if status_val == "REROUTED" else ("#35D99A" if status_val == "NAVIGATING" else "#9CAFA5")))
+                orig_disp = rec.get("origin_name") or rec.get("origin_id", "Origin")
+                dest_disp = rec.get("destination_name") or rec.get("destination_id", "Destination")
+                tot_dist = float(rec.get("total_distance") or 0.0)
+                tot_time = float(rec.get("total_time") or 0.0)
+                algo_str = str(rec.get("algorithm") or "dijkstra").upper()
+                wc_str = "Yes" if rec.get("wheelchair_mode") else "Standard"
+                reroute_str = "Yes" if rec.get("is_rerouted") else "No"
+                created_str = str(rec.get("created_at") or "")[:19]
                 st.markdown(
                     f"""
                     <div style="background: rgba(13, 31, 24, 0.6); border: 1px solid rgba(156, 175, 165, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-weight: 700; color: #F8FAFC; font-size: 13px;">
-                                🚀 {rec.get('origin_name', rec['origin_id'])} ➔ {rec.get('destination_name', rec['destination_id'])}
+                                🚀 {orig_disp} ➔ {dest_disp}
                             </span>
                             <span style="background: rgba(255,255,255,0.06); color: {stat_color}; border: 1px solid {stat_color}; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
-                                {rec['status']}
+                                {status_val}
                             </span>
                         </div>
                         <div style="font-size: 11px; color: #9CAFA5; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 16px;">
-                            <span>Session: <code>{rec['session_id']}</code></span>
-                            <span>Distance: <b>{rec['total_distance']:.1f} m</b></span>
-                            <span>Time: <b>{rec['total_time']:.0f} s</b></span>
-                            <span>Algorithm: <b>{rec['algorithm'].upper()}</b></span>
-                            <span>Wheelchair: <b>{'Yes' if rec['wheelchair_mode'] else 'Standard'}</b></span>
-                            <span>Rerouted: <b>{'Yes' if rec['is_rerouted'] else 'No'}</b></span>
-                            <span>Logged: <b>{rec['created_at'][:19] if rec.get('created_at') else ''}</b></span>
+                            <span>Session: <code>{rec.get('session_id', 'N/A')}</code></span>
+                            <span>Distance: <b>{tot_dist:.1f} m</b></span>
+                            <span>Time: <b>{tot_time:.0f} s</b></span>
+                            <span>Algorithm: <b>{algo_str}</b></span>
+                            <span>Wheelchair: <b>{wc_str}</b></span>
+                            <span>Rerouted: <b>{reroute_str}</b></span>
+                            <span>Logged: <b>{created_str}</b></span>
                         </div>
                     </div>
                     """,

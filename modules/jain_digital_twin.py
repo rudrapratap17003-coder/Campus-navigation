@@ -569,58 +569,59 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       height: 100%;
       outline: none;
     }}
-    /* Top HUD Controls */
+    /* Top HUD Controls - Compact & Responsive Toolbar */
     .hud-bar-top {{
       position: absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
+      top: 10px;
+      left: 10px;
+      right: 10px;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       pointer-events: none;
       z-index: 10;
     }}
     .hud-group {{
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 5px;
-      background: rgba(13, 31, 24, 0.92);
-      border: 1px solid rgba(53, 217, 154, 0.3);
-      border-radius: 10px;
-      padding: 5px 8px;
+      gap: 3px;
+      background: rgba(13, 31, 24, 0.94);
+      border: 1px solid rgba(53, 217, 154, 0.35);
+      border-radius: 8px;
+      padding: 3px 6px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       pointer-events: auto;
     }}
     .hud-title {{
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #35D99A;
-      margin-right: 3px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }}
-    .hud-btn {{
-      background: rgba(22, 163, 106, 0.15);
-      border: 1px solid rgba(53, 217, 154, 0.3);
-      color: #F8FAFC;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      margin-right: 2px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
+      letter-spacing: 0.2px;
+    }}
+    .hud-btn {{
+      background: rgba(22, 163, 106, 0.18);
+      border: 1px solid rgba(53, 217, 154, 0.28);
+      color: #F8FAFC;
+      border-radius: 5px;
+      padding: 3px 7px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       white-space: nowrap;
     }}
     .hud-btn:hover {{
-      background: rgba(53, 217, 154, 0.35);
+      background: rgba(53, 217, 154, 0.4);
       border-color: #35D99A;
       transform: translateY(-1px);
     }}
@@ -628,7 +629,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       background: #16A36A;
       color: #FFFFFF;
       border-color: #35D99A;
-      box-shadow: 0 0 10px rgba(53, 217, 154, 0.4);
+      box-shadow: 0 0 8px rgba(53, 217, 154, 0.5);
     }}
     /* Location Inspector Drawer */
     #location-card {{
@@ -914,51 +915,43 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
   <div id="viewport-container">
     <canvas id="webgl-canvas"></canvas>
 
-    <!-- Top HUD Controls -->
+    <!-- Top HUD Controls - Compact & Intuitive Toolbar -->
     <div class="hud-bar-top">
-      <!-- Camera Presets -->
+      <!-- Campus Area -->
+      <div class="hud-group">
+        <span class="hud-title">🏛️ Area:</span>
+        <button class="hud-btn active" id="btn-mode-all" title="View Entire Campus Grounds & Buildings">All Campus</button>
+        <button class="hud-btn" id="btn-mode-outdoor" title="View Outdoor Pathways & Sports Complex">Outdoor</button>
+        <button class="hud-btn" id="btn-mode-fet" title="Focus exclusively on the 5-Floor FET Building">FET Building</button>
+      </div>
+
+      <!-- Floor Selection -->
+      <div class="hud-group" id="group-floors">
+        <span class="hud-title">🏢 Floor:</span>
+        <button class="hud-btn active" id="btn-fl-all" title="View All Floors Stacked">All</button>
+        <button class="hud-btn" id="btn-fl-exploded" title="Exploded Multi-Floor View">💥 Exploded</button>
+        <button class="hud-btn" id="btn-fl-0" title="Ground Floor (Level 0)">G</button>
+        <button class="hud-btn" id="btn-fl-1" title="First Floor (Level 1)">1F</button>
+        <button class="hud-btn" id="btn-fl-2" title="Second Floor (Level 2)">2F</button>
+        <button class="hud-btn" id="btn-fl-3" title="Third Floor (Level 3)">3F</button>
+        <button class="hud-btn" id="btn-fl-4" title="Fourth Floor (Level 4)">4F</button>
+      </div>
+
+      <!-- Camera Controls -->
       <div class="hud-group">
         <span class="hud-title">📐 Camera:</span>
-        <button class="hud-btn active" id="btn-cam-iso">Isometric</button>
-        <button class="hud-btn" id="btn-cam-top">Top</button>
-        <button class="hud-btn" id="btn-cam-front">Front</button>
-        <button class="hud-btn" id="btn-cam-side">Side</button>
-        <button class="hud-btn" id="btn-cam-fet">FET Close</button>
-        <button class="hud-btn" id="btn-cam-reset">🔄</button>
+        <button class="hud-btn active" id="btn-cam-iso" title="Default 45° Isometric Campus View">Default</button>
+        <button class="hud-btn" id="btn-cam-top" title="Top-down Floor Plan View">Top</button>
+        <button class="hud-btn" id="btn-cam-front" title="Front Architectural Elevation">Front</button>
+        <button class="hud-btn" id="btn-cam-rotate" title="Toggle Smooth Campus Auto-Rotation">🔄 Rotate</button>
+        <button class="hud-btn" id="btn-cam-reset" title="Reset View and Center Model">Reset</button>
       </div>
 
-      <!-- Domain View Mode -->
+      <!-- Display Options -->
       <div class="hud-group">
-        <span class="hud-title">🌐 Domain:</span>
-        <button class="hud-btn active" id="btn-mode-all">All Campus</button>
-        <button class="hud-btn" id="btn-mode-outdoor">Outdoor</button>
-        <button class="hud-btn" id="btn-mode-fet">FET Only</button>
-      </div>
-
-      <!-- View Style (Exterior vs Cutaway Interior) -->
-      <div class="hud-group">
-        <span class="hud-title">👁️ View:</span>
-        <button class="hud-btn active" id="btn-view-exterior">Exterior</button>
-        <button class="hud-btn" id="btn-view-cutaway">Cutaway</button>
-      </div>
-
-      <!-- FET 5-Floor Isolation & Exploded Controls -->
-      <div class="hud-group" id="group-floors">
-        <span class="hud-title">🏢 Floors:</span>
-        <button class="hud-btn active" id="btn-fl-all">Stacked</button>
-        <button class="hud-btn" id="btn-fl-exploded">💥 Exploded</button>
-        <button class="hud-btn" id="btn-fl-0">G</button>
-        <button class="hud-btn" id="btn-fl-1">1F</button>
-        <button class="hud-btn" id="btn-fl-2">2F</button>
-        <button class="hud-btn" id="btn-fl-3">3F</button>
-        <button class="hud-btn" id="btn-fl-4">4F</button>
-      </div>
-
-      <!-- Route Animation & Accessibility Controls -->
-      <div class="hud-group">
-        <button class="hud-btn active" id="btn-anim-toggle" title="Play or Pause Traversal">⏯️ Route</button>
-        <button class="hud-btn" id="btn-anim-speed" title="Adjust Traversal Speed">⚡ 1x</button>
-        <button class="hud-btn active" id="btn-labels-toggle" title="Toggle Room Labels">🏷️</button>
+        <button class="hud-btn active" id="btn-labels-toggle" title="Intelligent Room Labels (Smart LOD / Off)">🏷️ Labels</button>
+        <button class="hud-btn active" id="btn-anim-toggle" title="Play / Pause Route Traversal">⏯️ Route</button>
+        <button class="hud-btn" id="btn-view-cutaway" title="Toggle Cutaway Interior Corridor Mode">🏢 Cutaway</button>
       </div>
     </div>
 
@@ -1067,10 +1060,10 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       // 1. Scene, Camera, and Renderer Setup
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x07130F);
-      scene.fog = new THREE.FogExp2(0x07130F, 0.0032);
+      scene.fog = new THREE.FogExp2(0x07130F, 0.0028);
 
       const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.5, 2000);
-      camera.position.set(110, 120, 140);
+      camera.position.set(55, 46, 62);
 
       const renderer = new THREE.WebGLRenderer({{
         canvas: canvas,
@@ -1081,7 +1074,7 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.18;
+      renderer.toneMappingExposure = 1.28;
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -1089,29 +1082,33 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
       controls.maxPolarAngle = Math.PI / 2 - 0.02;
-      controls.minDistance = 10;
-      controls.maxDistance = 550;
-      controls.target.set(10, 8, 10);
+      controls.minDistance = 8;
+      controls.maxDistance = 450;
+      controls.target.set(0, 8, 0);
 
-      // Lighting Rig
-      const ambientLight = new THREE.AmbientLight(0x133829, 0.95);
+      // Natural Architectural High-Clarity Lighting Rig
+      const hemiLight = new THREE.HemisphereLight(0xD1FAE5, 0x061E14, 0.95);
+      scene.add(hemiLight);
+
+      const ambientLight = new THREE.AmbientLight(0x133829, 0.65);
       scene.add(ambientLight);
 
-      const sunLight = new THREE.DirectionalLight(0xFFFFFF, 1.25);
-      sunLight.position.set(150, 240, 130);
+      const sunLight = new THREE.DirectionalLight(0xFFFFFF, 1.35);
+      sunLight.position.set(120, 190, 110);
       sunLight.castShadow = true;
       sunLight.shadow.mapSize.width = 2048;
       sunLight.shadow.mapSize.height = 2048;
       sunLight.shadow.camera.near = 10;
-      sunLight.shadow.camera.far = 600;
-      sunLight.shadow.camera.left = -190;
-      sunLight.shadow.camera.right = 190;
-      sunLight.shadow.camera.top = 190;
-      sunLight.shadow.camera.bottom = -190;
+      sunLight.shadow.camera.far = 500;
+      sunLight.shadow.camera.left = -160;
+      sunLight.shadow.camera.right = 160;
+      sunLight.shadow.camera.top = 160;
+      sunLight.shadow.camera.bottom = -160;
+      sunLight.shadow.bias = -0.0005;
       scene.add(sunLight);
 
-      const blueFill = new THREE.DirectionalLight(0x60A5FA, 0.45);
-      blueFill.position.set(-150, 100, -150);
+      const blueFill = new THREE.DirectionalLight(0x7DD3FC, 0.55);
+      blueFill.position.set(-120, 90, -120);
       scene.add(blueFill);
 
       // Groups for Layer & View Control
@@ -1135,9 +1132,9 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       scene.add(routeGroup);
 
       // 2. Material Palette (PBR Quality)
-      const concreteMat = new THREE.MeshStandardMaterial({{ color: 0x22362C, roughness: 0.8, metalness: 0.1 }});
-      const slabMat = new THREE.MeshStandardMaterial({{ color: 0x0E261D, roughness: 0.45, metalness: 0.25 }});
-      const glassCurtainMat = new THREE.MeshStandardMaterial({{ color: 0x38BDF8, roughness: 0.1, metalness: 0.85, transparent: true, opacity: 0.55 }});
+      const concreteMat = new THREE.MeshStandardMaterial({{ color: 0x274034, roughness: 0.75, metalness: 0.1 }});
+      const slabMat = new THREE.MeshStandardMaterial({{ color: 0x163D2E, roughness: 0.45, metalness: 0.25 }});
+      const glassCurtainMat = new THREE.MeshStandardMaterial({{ color: 0x38BDF8, roughness: 0.1, metalness: 0.85, transparent: true, opacity: 0.28 }});
       const mullionMat = new THREE.MeshStandardMaterial({{ color: 0x1E293B, roughness: 0.3, metalness: 0.9 }});
       const parapetMat = new THREE.MeshStandardMaterial({{ color: 0x162A20, roughness: 0.7 }});
       const waterMat = new THREE.MeshStandardMaterial({{ color: 0x0284C7, roughness: 0.1, metalness: 0.8, transparent: true, opacity: 0.85 }});
@@ -1642,30 +1639,75 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         floorGroup.add(fGroup);
       }}
 
-      // 8. Render All Locations & 3D Spatial Nodes
-      function createTextSprite(text, isOutdoor, floorNum) {{
-        const canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 70;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = isOutdoor ? 'rgba(10, 28, 20, 0.92)' : 'rgba(7, 19, 15, 0.92)';
-        ctx.roundRect ? ctx.roundRect(4, 4, 292, 62, 10) : ctx.rect(4, 4, 292, 62);
-        ctx.fill();
-        ctx.strokeStyle = isOutdoor ? '#35D99A' : (floorNum === 0 ? '#10B981' : '#60A5FA');
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
+      // 8. Intelligent Labeling Engine & 3D Spatial Nodes
+      const labelTextureCache = {{}};
+      const allLabelSprites = [];
+      let activeFloorFilter = -1; // -1 for all floors
+      let isSmartLabelsOn = true;
+      let needsLabelUpdate = true;
 
-        ctx.font = 'bold 21px sans-serif';
-        ctx.fillStyle = '#F8FAFC';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const displayTxt = text.length > 21 ? text.substring(0, 20) + '...' : text;
-        ctx.fillText(displayTxt, 150, 35);
+      function createTextSprite(loc, isOutdoor, floorNum) {{
+        const text = loc.name || loc.id;
+        const locId = loc.id;
+        const isLandmark = isOutdoor ||
+          locId.includes('GATE') ||
+          locId.includes('ADMIN') ||
+          locId.includes('ELEVATOR') ||
+          locId.includes('HPC') ||
+          locId.includes('LIBRARY') ||
+          locId.includes('DEAN') ||
+          locId.includes('AUDITORIUM') ||
+          locId.includes('RAMP');
 
-        const tex = new THREE.CanvasTexture(canvas);
-        const mat = new THREE.SpriteMaterial({{ map: tex, depthTest: false }});
+        const cacheKey = text + '_' + (isLandmark ? 'lm' : 'rm');
+        let tex = labelTextureCache[cacheKey];
+
+        if (!tex) {{
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 64;
+          const ctx = canvas.getContext('2d');
+
+          // High-contrast badge background
+          ctx.fillStyle = isLandmark ? 'rgba(7, 24, 18, 0.94)' : 'rgba(11, 28, 22, 0.88)';
+          ctx.beginPath();
+          if (ctx.roundRect) {{
+            ctx.roundRect(3, 3, 250, 58, 8);
+          }} else {{
+            ctx.rect(3, 3, 250, 58);
+          }}
+          ctx.fill();
+
+          // Border coding
+          ctx.strokeStyle = isLandmark ? '#35D99A' : (floorNum === 0 ? '#10B981' : (isOutdoor ? '#35D99A' : '#60A5FA'));
+          ctx.lineWidth = isLandmark ? 2.5 : 1.8;
+          ctx.stroke();
+
+          // Typography
+          ctx.font = isLandmark ? 'bold 18px -apple-system, BlinkMacSystemFont, sans-serif' : '600 16px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = isLandmark ? '#FFFFFF' : '#E2E8F0';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          let displayTxt = text;
+          if (displayTxt.length > 18) {{
+            displayTxt = displayTxt.substring(0, 17) + '…';
+          }}
+          ctx.fillText(displayTxt, 128, 32);
+
+          tex = new THREE.CanvasTexture(canvas);
+          tex.minFilter = THREE.LinearFilter;
+          labelTextureCache[cacheKey] = tex;
+        }}
+
+        const mat = new THREE.SpriteMaterial({{
+          map: tex,
+          depthTest: true,
+          depthWrite: false,
+          transparent: true
+        }});
         const sprite = new THREE.Sprite(mat);
-        sprite.scale.set(6.2, 1.45, 1);
+        sprite.scale.set(5.2, 1.3, 1);
         return sprite;
       }}
 
@@ -1699,17 +1741,41 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         nodeMesh.castShadow = true;
         nodeMesh.receiveShadow = true;
 
-        // Floating Gem
+        // Floating Gem Indicator
         const gemGeo = new THREE.OctahedronGeometry(0.55, 0);
         const gemMat = new THREE.MeshStandardMaterial({{ color: nodeColor, emissive: nodeColor, emissiveIntensity: 0.8 }});
         const gemMesh = new THREE.Mesh(gemGeo, gemMat);
         gemMesh.position.set(0, boxHeight / 2 + 0.8, 0);
         nodeMesh.add(gemMesh);
 
-        // Billboarding Text Sprite
-        const sprite = createTextSprite(loc.name, isOutdoor, floor);
+        // Intelligent Sprite Creation with Priority Metadata
+        const locId = loc.id;
+        const isLandmark = isOutdoor ||
+          locId.includes('GATE') ||
+          locId.includes('ADMIN') ||
+          locId.includes('ELEVATOR') ||
+          locId.includes('HPC') ||
+          locId.includes('LIBRARY') ||
+          locId.includes('DEAN') ||
+          locId.includes('AUDITORIUM') ||
+          locId.includes('RAMP');
+
+        const sprite = createTextSprite(loc, isOutdoor, floor);
         sprite.position.set(pos.x, pos.y + boxHeight + 1.8, pos.z);
+
+        sprite.userData = {{
+          locationId: loc.id,
+          name: loc.name,
+          floor: floor,
+          isOutdoor: isOutdoor,
+          isLandmark: isLandmark,
+          isSelected: (loc.id === DATA.selected_location_id),
+          isOrigin: (DATA.active_route && DATA.active_route.path && DATA.active_route.path[0] === loc.id),
+          isDest: (DATA.active_route && DATA.active_route.path && DATA.active_route.path[DATA.active_route.path.length - 1] === loc.id)
+        }};
+
         labelsGroup.add(sprite);
+        allLabelSprites.push(sprite);
 
         nodeMesh.userData = {{
           locationData: loc,
@@ -1729,6 +1795,78 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         interactiveLocations.push(nodeMesh);
         locationMeshMap[loc.id] = nodeMesh;
       }});
+
+      // Intelligent Label Visibility & Screen-Space Decluttering
+      function updateSmartLabels() {{
+        if (!isSmartLabelsOn) {{
+          labelsGroup.visible = false;
+          return;
+        }}
+        labelsGroup.visible = true;
+
+        const camDist = camera.position.distanceTo(controls.target);
+        const tempV = new THREE.Vector3();
+        const visibleScreenPoints = [];
+
+        allLabelSprites.forEach(sprite => {{
+          const u = sprite.userData;
+
+          // Priority 1: Selected target, route origin, route destination ALWAYS stay visible!
+          if (u.isSelected || u.isOrigin || u.isDest) {{
+            sprite.visible = true;
+            sprite.scale.set(6.8, 1.7, 1);
+            return;
+          }}
+
+          // Priority 2: Floor isolation filter
+          if (activeFloorFilter >= 0) {{
+            if (u.floor !== activeFloorFilter) {{
+              sprite.visible = false;
+              return;
+            }}
+          }}
+
+          // Priority 3: Distance Level of Detail (LOD)
+          if (camDist > 120) {{
+            // Far zoom: only major landmarks
+            sprite.visible = u.isLandmark;
+          }} else if (camDist > 65) {{
+            // Medium zoom: landmarks, outdoor points, or active floor points
+            sprite.visible = u.isLandmark || (activeFloorFilter >= 0 && u.floor === activeFloorFilter);
+          }} else {{
+            // Close zoom: show room labels on the visible floor
+            sprite.visible = (activeFloorFilter >= 0) ? (u.floor === activeFloorFilter) : (u.isLandmark || u.floor === 0 || u.floor === 4);
+          }}
+
+          // Priority 4: Screen-space density decluttering (Prevent overlapping!)
+          if (sprite.visible) {{
+            tempV.copy(sprite.position);
+            tempV.project(camera);
+
+            // Outside screen frustum
+            if (tempV.z > 1.0 || Math.abs(tempV.x) > 1.15 || Math.abs(tempV.y) > 1.15) {{
+              sprite.visible = false;
+              return;
+            }}
+
+            const sx = (tempV.x * 0.5 + 0.5) * container.clientWidth;
+            const sy = (-(tempV.y * 0.5) + 0.5) * container.clientHeight;
+
+            // Check distance against already visible labels
+            for (let i = 0; i < visibleScreenPoints.length; i++) {{
+              const p = visibleScreenPoints[i];
+              const distSq = (sx - p.x) * (sx - p.x) + (sy - p.y) * (sy - p.y);
+              if (distSq < 1500) {{ // closer than ~38px
+                if (!u.isLandmark) {{
+                  sprite.visible = false;
+                  return;
+                }}
+              }}
+            }}
+            visibleScreenPoints.push({{ x: sx, y: sy }});
+          }}
+        }});
+      }}
 
       // 9. Render Pathways (Corridors, Ramps, Roads, Vertical Elevators & Stairs)
       const pathwayMeshes = {{
@@ -2139,61 +2277,108 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
       }}
 
       // Camera Presets
-      document.getElementById('btn-cam-iso').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
-      }});
-      document.getElementById('btn-cam-top').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(0, 240, 0.1), new THREE.Vector3(0, 0, 0));
-      }});
-      document.getElementById('btn-cam-front').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(0, 28, 185), new THREE.Vector3(0, 10, 0));
-      }});
-      document.getElementById('btn-cam-side').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(185, 28, 0), new THREE.Vector3(0, 10, 0));
-      }});
-      document.getElementById('btn-cam-fet').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
-      }});
-      document.getElementById('btn-cam-reset').addEventListener('click', () => {{
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
-      }});
-
-      // Domain Modes
-      document.getElementById('btn-mode-all').addEventListener('click', () => {{
-        outdoorGroup.visible = true;
-        fetBuildingGroup.visible = true;
-        tweenCamera(new THREE.Vector3(110, 120, 140), new THREE.Vector3(15, 6, 15));
-      }});
-      document.getElementById('btn-mode-outdoor').addEventListener('click', () => {{
-        outdoorGroup.visible = true;
-        fetBuildingGroup.visible = true;
-        tweenCamera(new THREE.Vector3(140, 150, 180), new THREE.Vector3(40, 0, 30));
-      }});
-      document.getElementById('btn-mode-fet').addEventListener('click', () => {{
-        outdoorGroup.visible = false;
-        fetBuildingGroup.visible = true;
-        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
-      }});
-
-      // View Modes: Exterior vs Cutaway (Interior)
-      document.getElementById('btn-view-exterior').addEventListener('click', (e) => {{
-        document.getElementById('btn-view-exterior').classList.add('active');
-        document.getElementById('btn-view-cutaway').classList.remove('active');
-        exteriorCurtainWalls.forEach(w => {{
-          w.visible = true;
-          w.material.opacity = 0.55;
+      const btnCamIso = document.getElementById('btn-cam-iso');
+      if (btnCamIso) {{
+        btnCamIso.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          tweenCamera(new THREE.Vector3(55, 46, 62), new THREE.Vector3(0, 8, 0));
         }});
-      }});
-      document.getElementById('btn-view-cutaway').addEventListener('click', (e) => {{
-        document.getElementById('btn-view-cutaway').classList.add('active');
-        document.getElementById('btn-view-exterior').classList.remove('active');
-        exteriorCurtainWalls.forEach(w => {{
-          w.visible = true;
-          w.material.opacity = 0.12; // transparent cutaway
-        }});
-      }});
+      }}
 
-      // Floor Modes: Stacked vs Exploded
+      const btnCamTop = document.getElementById('btn-cam-top');
+      if (btnCamTop) {{
+        btnCamTop.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          tweenCamera(new THREE.Vector3(0, 125, 0.1), new THREE.Vector3(0, 0, 0));
+        }});
+      }}
+
+      const btnCamFront = document.getElementById('btn-cam-front');
+      if (btnCamFront) {{
+        btnCamFront.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          tweenCamera(new THREE.Vector3(0, 24, 105), new THREE.Vector3(0, 8, 0));
+        }});
+      }}
+
+      let isAutoRotating = false;
+      const btnCamRotate = document.getElementById('btn-cam-rotate');
+      if (btnCamRotate) {{
+        btnCamRotate.addEventListener('click', (e) => {{
+          isAutoRotating = !isAutoRotating;
+          controls.autoRotate = isAutoRotating;
+          controls.autoRotateSpeed = 1.0;
+          e.target.classList.toggle('active', isAutoRotating);
+        }});
+      }}
+
+      const btnCamReset = document.getElementById('btn-cam-reset');
+      if (btnCamReset) {{
+        btnCamReset.addEventListener('click', () => {{
+          if (btnCamIso) setActiveBtnInGroup(btnCamIso);
+          tweenCamera(new THREE.Vector3(55, 46, 62), new THREE.Vector3(0, 8, 0));
+        }});
+      }}
+
+      function setActiveBtnInGroup(targetBtn) {{
+        if (!targetBtn || !targetBtn.parentElement) return;
+        targetBtn.parentElement.querySelectorAll('.hud-btn').forEach(b => b.classList.remove('active'));
+        targetBtn.classList.add('active');
+      }}
+
+      // Campus Area Domain Modes
+      const btnModeAll = document.getElementById('btn-mode-all');
+      if (btnModeAll) {{
+        btnModeAll.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          outdoorGroup.visible = true;
+          fetBuildingGroup.visible = true;
+          activeFloorFilter = -1;
+          resetFloorPositions();
+          tweenCamera(new THREE.Vector3(55, 46, 62), new THREE.Vector3(0, 8, 0));
+          needsLabelUpdate = true;
+        }});
+      }}
+
+      const btnModeOutdoor = document.getElementById('btn-mode-outdoor');
+      if (btnModeOutdoor) {{
+        btnModeOutdoor.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          outdoorGroup.visible = true;
+          fetBuildingGroup.visible = true;
+          activeFloorFilter = -1;
+          tweenCamera(new THREE.Vector3(80, 75, 110), new THREE.Vector3(20, 0, 40));
+          needsLabelUpdate = true;
+        }});
+      }}
+
+      const btnModeFet = document.getElementById('btn-mode-fet');
+      if (btnModeFet) {{
+        btnModeFet.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          outdoorGroup.visible = false;
+          fetBuildingGroup.visible = true;
+          activeFloorFilter = -1;
+          tweenCamera(new THREE.Vector3(42, 34, 48), new THREE.Vector3(0, 10, 0));
+          needsLabelUpdate = true;
+        }});
+      }}
+
+      // Cutaway Interior View Toggle
+      let isCutawayActive = false;
+      const btnViewCutaway = document.getElementById('btn-view-cutaway');
+      if (btnViewCutaway) {{
+        btnViewCutaway.addEventListener('click', (e) => {{
+          isCutawayActive = !isCutawayActive;
+          e.target.classList.toggle('active', isCutawayActive);
+          exteriorCurtainWalls.forEach(w => {{
+            w.visible = true;
+            w.material.opacity = isCutawayActive ? 0.08 : 0.28;
+          }});
+        }});
+      }}
+
+      // Floor Modes: Stacked, Exploded, and Isolated Levels
       let isExploded = false;
 
       function resetFloorPositions() {{
@@ -2205,56 +2390,79 @@ def render_jain_digital_twin_html(payload: Dict[str, Any], height: int = 760) ->
         guideRodsGroup.visible = false;
       }}
 
-      document.getElementById('btn-fl-all').addEventListener('click', () => {{
-        isExploded = false;
-        resetFloorPositions();
-        tweenCamera(new THREE.Vector3(48, 42, 52), new THREE.Vector3(0, 12, 0));
-      }});
-
-      document.getElementById('btn-fl-exploded').addEventListener('click', () => {{
-        isExploded = true;
-        for (let fl = 0; fl < 5; fl++) {{
-          fetFloorGroups[fl].visible = true;
-          fetFloorGroups[fl].position.y = fl * 14.0; // Elevate floors vertically
-        }}
-        verticalConnectorsGroup.visible = true;
-        guideRodsGroup.visible = true;
-        tweenCamera(new THREE.Vector3(75, 90, 100), new THREE.Vector3(0, 35, 0));
-      }});
-
-      for (let fl = 0; fl < 5; fl++) {{
-        document.getElementById('btn-fl-' + fl).addEventListener('click', () => {{
+      const btnFlAll = document.getElementById('btn-fl-all');
+      if (btnFlAll) {{
+        btnFlAll.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
           isExploded = false;
-          for (let f = 0; f < 5; f++) {{
-            fetFloorGroups[f].visible = (f === fl);
-            fetFloorGroups[f].position.y = 0;
-          }}
-          verticalConnectorsGroup.visible = false;
-          guideRodsGroup.visible = false;
-          tweenCamera(new THREE.Vector3(42, 32, 46), new THREE.Vector3(0, floorElevations[fl], 0));
+          activeFloorFilter = -1;
+          resetFloorPositions();
+          tweenCamera(new THREE.Vector3(55, 46, 62), new THREE.Vector3(0, 8, 0));
+          needsLabelUpdate = true;
         }});
       }}
 
+      const btnFlExploded = document.getElementById('btn-fl-exploded');
+      if (btnFlExploded) {{
+        btnFlExploded.addEventListener('click', (e) => {{
+          setActiveBtnInGroup(e.target);
+          isExploded = true;
+          activeFloorFilter = -1;
+          for (let fl = 0; fl < 5; fl++) {{
+            fetFloorGroups[fl].visible = true;
+            fetFloorGroups[fl].position.y = fl * 14.0;
+          }}
+          verticalConnectorsGroup.visible = true;
+          guideRodsGroup.visible = true;
+          tweenCamera(new THREE.Vector3(75, 90, 100), new THREE.Vector3(0, 35, 0));
+          needsLabelUpdate = true;
+        }});
+      }}
+
+      for (let fl = 0; fl < 5; fl++) {{
+        const btnFl = document.getElementById('btn-fl-' + fl);
+        if (btnFl) {{
+          btnFl.addEventListener('click', (e) => {{
+            setActiveBtnInGroup(e.target);
+            isExploded = false;
+            activeFloorFilter = fl;
+            for (let f = 0; f < 5; f++) {{
+              fetFloorGroups[f].visible = (f === fl);
+              fetFloorGroups[f].position.y = 0;
+            }}
+            verticalConnectorsGroup.visible = true;
+            guideRodsGroup.visible = false;
+            tweenCamera(new THREE.Vector3(38, 28, 42), new THREE.Vector3(0, floorElevations[fl], 0));
+            needsLabelUpdate = true;
+          }});
+        }}
+      }}
+
       // Route Animation Controls
-      document.getElementById('btn-anim-toggle').addEventListener('click', (e) => {{
-        isRouteAnimating = !isRouteAnimating;
-        e.target.classList.toggle('active', isRouteAnimating);
+      const btnAnimToggle = document.getElementById('btn-anim-toggle');
+      if (btnAnimToggle) {{
+        btnAnimToggle.addEventListener('click', (e) => {{
+          isRouteAnimating = !isRouteAnimating;
+          e.target.classList.toggle('active', isRouteAnimating);
+        }});
+      }}
+
+      const btnLabelsToggle = document.getElementById('btn-labels-toggle');
+      if (btnLabelsToggle) {{
+        btnLabelsToggle.addEventListener('click', (e) => {{
+          isSmartLabelsOn = !isSmartLabelsOn;
+          e.target.classList.toggle('active', isSmartLabelsOn);
+          updateSmartLabels();
+        }});
+      }}
+
+      // Listen to controls changes to update labels dynamically
+      controls.addEventListener('change', () => {{
+        needsLabelUpdate = true;
       }});
 
-      const speeds = [1.0, 2.0, 0.5];
-      let speedIdx = 0;
-      document.getElementById('btn-anim-speed').addEventListener('click', (e) => {{
-        speedIdx = (speedIdx + 1) % speeds.length;
-        animSpeedMultiplier = speeds[speedIdx];
-        e.target.innerText = '⚡ ' + animSpeedMultiplier + 'x';
-      }});
-
-      let areLabelsOn = true;
-      document.getElementById('btn-labels-toggle').addEventListener('click', (e) => {{
-        areLabelsOn = !areLabelsOn;
-        labelsGroup.visible = areLabelsOn;
-        e.target.classList.toggle('active', areLabelsOn);
-      }});
+      // Initial label evaluation
+      updateSmartLabels();
 
       // 13. Animation Loop & Resize
       function onWindowResize() {{
