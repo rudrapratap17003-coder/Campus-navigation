@@ -468,6 +468,78 @@ def apply_custom_theme() -> None:
             border-radius: 10px !important;
             color: #F8FAFC !important;
         }
+
+        /* =====================================================================
+           RESPONSIVE VIEWPORT BREAKPOINTS (360px to 1920px+)
+           ===================================================================== */
+        /* Mobile Breakpoint: 360px to 480px (Phones) */
+        @media (max-width: 480px) {
+            .main .block-container {
+                padding-left: 0.8rem !important;
+                padding-right: 0.8rem !important;
+                padding-top: 1.0rem !important;
+            }
+            .ui-card {
+                padding: 12px 14px !important;
+                margin-bottom: 10px !important;
+            }
+            .ui-card-value {
+                font-size: 1.45rem !important;
+            }
+            .ui-card-title {
+                font-size: 0.72rem !important;
+            }
+            div.stButton > button {
+                width: 100% !important;
+                padding: 8px 14px !important;
+                font-size: 0.88rem !important;
+            }
+            .step-box {
+                padding: 10px 12px !important;
+            }
+            .step-header {
+                font-size: 0.88rem !important;
+            }
+            .step-instruction {
+                font-size: 0.82rem !important;
+            }
+        }
+
+        /* Tablet Breakpoint: 481px to 768px */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .main .block-container {
+                padding-left: 1.2rem !important;
+                padding-right: 1.2rem !important;
+                padding-top: 1.2rem !important;
+            }
+            .ui-card {
+                padding: 16px 18px !important;
+            }
+            .ui-card-value {
+                font-size: 1.7rem !important;
+            }
+        }
+
+        /* Laptop Breakpoint: 769px to 1024px */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .main .block-container {
+                max-width: 960px !important;
+            }
+        }
+
+        /* Standard Desktop Breakpoint: 1025px to 1440px */
+        @media (min-width: 1025px) and (max-width: 1440px) {
+            .main .block-container {
+                max-width: 1200px !important;
+            }
+        }
+
+        /* High-Resolution Wide Displays: 1441px to 1920px+ */
+        @media (min-width: 1441px) {
+            .main .block-container {
+                max-width: 1400px !important;
+            }
+        }
         </style>
         """,
         unsafe_allow_html=True,
