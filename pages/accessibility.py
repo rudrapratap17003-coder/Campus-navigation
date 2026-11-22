@@ -22,10 +22,6 @@ from modules.ui_theme import (
 apply_custom_theme()
 services = get_app_services()
 
-cmap = services["campus_map"]
-acc_engine = services["accessibility_engine"]
-summary = acc_engine.get_accessibility_summary()
-
 st.markdown(
     """
     <div class="hero-banner">
@@ -38,6 +34,27 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Dataset Selector
+c_acc1, c_acc2 = st.columns([2.6, 1.4])
+with c_acc1:
+    acc_env_choice = st.radio(
+        "🏛️ Target Campus Model:",
+        options=[
+            "JAIN Global Campus & 5-Floor FET Building (79 Locations, 106 Pathways)",
+            "Schematic Benchmark Model (15 Locations, 17 Pathways)",
+        ],
+        index=0,
+        horizontal=True,
+        key="accessibility_env_choice",
+    )
+is_jain = "JAIN" in acc_env_choice
+
+from modules.jain_digital_twin import load_jain_campus_map
+from modules.accessibility import AccessibilityEngine
+cmap = load_jain_campus_map() if is_jain else services["campus_map"]
+acc_engine = AccessibilityEngine(cmap)
+summary = acc_engine.get_accessibility_summary()
 
 # Mandatory Disclaimer
 st.markdown(

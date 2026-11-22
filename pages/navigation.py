@@ -1,9 +1,17 @@
-"""Navigation Page - Route planning, turn-by-turn guidance, and accessibility evaluation."""
+"""Navigation Page - Route planning, turn-by-turn guidance, and accessibility evaluation.
+
+Supports both JAIN Global Campus (79 locations across 6 levels) and the Benchmark Model (15 locations).
+"""
 
 from __future__ import annotations
 
+from typing import Any, Dict
 import streamlit as st
 
+from modules.accessibility import AccessibilityEngine
+from modules.destination_search import search_destinations
+from modules.jain_digital_twin import load_jain_campus_map
+from modules.route_finder import RouteFinder
 from modules.ui_theme import (
     ACCENT_GREEN,
     ERROR,
@@ -19,10 +27,6 @@ from modules.ui_theme import (
 apply_custom_theme()
 services = get_app_services()
 
-cmap = services["campus_map"]
-route_finder = services["route_finder"]
-acc_engine = services["accessibility_engine"]
-
 st.markdown(
     """
     <div class="hero-banner">
@@ -31,40 +35,133 @@ st.markdown(
             Calculate barrier-free pedestrian routes across campus facilities.
             Automatically avoids stairways and active hazard reports while utilizing code-compliant ramps and elevators.
         </div>
+        <div class="hero-chips">
+            <span class="hero-chip">🏛️ JAIN Global Campus & FET</span>
+            <span class="hero-chip">🏢 Multi-Floor Wayfinding</span>
+            <span class="hero-chip">♿ Step-Free Routing</span>
+            <span class="hero-chip">🛗 Elevator Guidance</span>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-locations = cmap.get_all_locations()
-# Create options sorted by floor then name
-location_options = {
-    f"[{loc['id']}] {loc['name']} (Floor {loc['floor']})": loc["id"]
-    for loc in sorted(locations, key=lambda x: (x["floor"], x["name"]))
-}
+# --- CAMPUS ENVIRONMENT SELECTOR & TOOLBAR ---
+c_env1, c_env2 = st.columns([2.6, 1.4])
+with c_env1:
+    campus_model_choice = st.radio(
+        "🏛️ Active Campus Environment:",
+        options=[
+            "JAIN Global Campus & 5-Floor FET Building (79 Locations)",
+            "Schematic Benchmark Model (15 Locations)",
+        ],
+        index=0,
+        horizontal=True,
+        key="nav_campus_env_choice",
+    )
+is_jain = "JAIN" in campus_model_choice
+
+with c_env2:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    if st.button("🏢 Switch to 3D Digital Twin", use_container_width=True, help="Open 3D WebGL Digital Twin navigation"):
+        st.switch_page("pages/3d_campus_map.py")
+
+if is_jain:
+    cmap = load_jain_campus_map()
+    route_finder = RouteFinder(cmap)
+    acc_engine = AccessibilityEngine(cmap)
+else:
+    cmap = services["campus_map"]
+    route_finder = services["route_finder"]
+    acc_engine = services["accessibility_engine"]
+
+locations = sorted(cmap.get_all_locations(), key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))))
+
+def format_nav_label(loc: Dict[str, Any]) -> str:
+    fl = int(loc.get("floor", 0))
+    fl_tag = "Outdoor" if fl == -1 else f"Floor {fl}"
+    return f"[{fl_tag}] {loc['name']} ({loc['id']})"
+
+location_options = {format_nav_label(loc): loc["id"] for loc in locations}
+loc_labels = list(location_options.keys())
 
 # --- ROUTE INPUT FORM CARD ---
 with st.container():
     st.markdown('<div class="ui-card">', unsafe_allow_html=True)
     st.markdown("#### ⚙️ Route Configuration & Criteria")
+
+    # Quick suggestions pills
+    st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
+    pill_cols = st.columns(4)
+    quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain else ["Classroom", "Lab", "Restroom", "Elevator"]
+    for i, kw in enumerate(quick_keywords):
+        with pill_cols[i]:
+            if st.button(kw, key=f"nav_pill_{kw}", use_container_width=True):
+                st.session_state["nav_dest_search_query"] = kw
+                st.rerun()
+
+    # Destination Search with Keyword Intelligence
+    dest_search_query = st.text_input(
+        "🔍 Search Destination (Lab, Room, Department, Keyword):",
+        value=st.session_state.get("nav_dest_search_query", ""),
+        placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
+        key="nav_dest_search_query",
+    )
+
+    matched_dest_id = None
+    if dest_search_query.strip() and is_jain:
+        search_matches = search_destinations(dest_search_query, cmap, limit=10)
+        if search_matches:
+            st.caption(f"✨ Found {len(search_matches)} match(es) for '{dest_search_query}'")
+            search_opts = {
+                f"[{'Outdoor' if m.floor == -1 else f'Floor {m.floor}'}] {m.name} ({m.location_id})": m.location_id
+                for m in search_matches
+            }
+            sel_match_label = st.selectbox(
+                "Select Matched Facility:",
+                options=list(search_opts.keys()),
+                index=0,
+                key="nav_matched_dest_select",
+            )
+            matched_dest_id = search_opts[sel_match_label]
+        else:
+            st.caption("ℹ️ No exact keyword matches found.")
+
     c1, c2 = st.columns(2)
 
     with c1:
+        default_start_idx = 0
+        if is_jain:
+            for idx, label in enumerate(loc_labels):
+                if "OUT_GATE_MAIN" in label:
+                    default_start_idx = idx
+                    break
         start_label = st.selectbox(
             "Start Location (Origin):",
-            options=list(location_options.keys()),
-            index=0,  # Main Campus Entrance (LOC_01)
+            options=loc_labels,
+            index=default_start_idx if default_start_idx < len(loc_labels) else 0,
+            key="nav_start_loc_select",
         )
         source_id = location_options[start_label]
 
     with c2:
-        dest_default_idx = min(len(location_options) - 1, 13)
-        dest_label = st.selectbox(
-            "Destination Location:",
-            options=list(location_options.keys()),
-            index=dest_default_idx,
-        )
-        dest_id = location_options[dest_label]
+        if matched_dest_id:
+            dest_id = matched_dest_id
+            st.markdown(f"<div style='font-size: 12px; color: #35D99A; margin-top: 28px;'><b>Selected Target:</b> {matched_dest_id}</div>", unsafe_allow_html=True)
+        else:
+            default_dest_idx = min(len(loc_labels) - 1, 13)
+            if is_jain:
+                for idx, label in enumerate(loc_labels):
+                    if "FET_4F_HPC_CLUSTER" in label:
+                        default_dest_idx = idx
+                        break
+            dest_label = st.selectbox(
+                "Destination Location:",
+                options=loc_labels,
+                index=default_dest_idx,
+                key="nav_dest_loc_select",
+            )
+            dest_id = location_options[dest_label]
 
     opt_col1, opt_col2, opt_col3 = st.columns(3)
 

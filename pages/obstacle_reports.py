@@ -19,11 +19,15 @@ from modules.ui_theme import (
     render_kpi_card,
 )
 
+from modules.jain_digital_twin import load_jain_campus_map
+
 apply_custom_theme()
 services = get_app_services()
 
 obs_manager = services["obstacle_manager"]
-cmap = services["campus_map"]
+benchmark_cmap = services["campus_map"]
+jain_cmap = load_jain_campus_map()
+cmap = benchmark_cmap
 
 current_user = get_current_user()
 user_role = current_user.get("role") if current_user else None
@@ -114,11 +118,11 @@ if is_staff_or_admin:
             for p in pending_list:
                 with st.expander(f"Pending #{p['report_id']} - {p['obstacle_category']} ({p['severity']})", expanded=True):
                     if p["target_type"] == "pathway":
-                        s_loc = cmap.get_location(p["source_location_id"])
-                        d_loc = cmap.get_location(p["destination_location_id"])
+                        s_loc = cmap.get_location(p["source_location_id"]) or jain_cmap.get_location(p["source_location_id"])
+                        d_loc = cmap.get_location(p["destination_location_id"]) or jain_cmap.get_location(p["destination_location_id"])
                         tgt_name = f"Pathway: {s_loc['name'] if s_loc else p['source_location_id']} ↔ {d_loc['name'] if d_loc else p['destination_location_id']}"
                     else:
-                        loc = cmap.get_location(p["location_id"])
+                        loc = cmap.get_location(p["location_id"]) or jain_cmap.get_location(p["location_id"])
                         tgt_name = f"Location: {loc['name'] if loc else p['location_id']}"
 
                     st.markdown(f"**Target:** `{tgt_name}` | **Severity:** `{p['severity']}` | **Filed by:** `{p['reporter_name']}`")
@@ -235,13 +239,13 @@ else:
     table_data = []
     for r in filtered_reports:
         if r["target_type"] == "pathway":
-            src_name = cmap.get_location(r["source_location_id"])
-            dst_name = cmap.get_location(r["destination_location_id"])
+            src_name = cmap.get_location(r["source_location_id"]) or jain_cmap.get_location(r["source_location_id"])
+            dst_name = cmap.get_location(r["destination_location_id"]) or jain_cmap.get_location(r["destination_location_id"])
             s_str = src_name["name"] if src_name else r["source_location_id"]
             d_str = dst_name["name"] if dst_name else r["destination_location_id"]
             target_str = f"Pathway: {s_str} ↔ {d_str}"
         else:
-            loc = cmap.get_location(r["location_id"])
+            loc = cmap.get_location(r["location_id"]) or jain_cmap.get_location(r["location_id"])
             loc_str = loc["name"] if loc else r["location_id"]
             target_str = f"Location: {loc_str}"
 
@@ -270,14 +274,28 @@ else:
 with st.expander("➕ Log a New Obstacle or Hazard Report", expanded=False):
     st.write("File a field report regarding an accessibility obstacle, broken lift, or construction closure.")
 
+    rep_dataset = st.radio(
+        "Campus Dataset for Report Target:",
+        options=["🏛️ JAIN Global Campus (79 Locations)", "📐 Benchmark Model (15 Locations)"],
+        index=0,
+        horizontal=True,
+        key="obs_rep_dataset_select",
+    )
+    active_form_cmap = jain_cmap if "JAIN" in rep_dataset else benchmark_cmap
+
     sub_c1, sub_c2 = st.columns(2)
     with sub_c1:
         rep_type = st.radio("Obstacle Target Type:", options=["Single Location", "Pathway Connection"], horizontal=True)
         rep_category = st.selectbox("Obstacle Category:", options=obs_manager.ALLOWED_CATEGORIES)
         rep_severity = st.selectbox("Severity Level:", options=obs_manager.ALLOWED_SEVERITIES, index=1)
 
-    all_locs = sorted(cmap.get_all_locations(), key=lambda x: (x["floor"], x["name"]))
-    loc_map = {f"[{loc['id']}] {loc['name']}": loc["id"] for loc in all_locs}
+    all_locs = sorted(active_form_cmap.get_all_locations(), key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))))
+    def _get_loc_tag(l: dict) -> str:
+        fl_val = int(l.get("floor", 0))
+        fl_str = "Outdoor" if fl_val == -1 else f"Floor {fl_val}"
+        return f"[{fl_str}] {l['name']} ({l['id']})"
+
+    loc_map = {_get_loc_tag(loc): loc["id"] for loc in all_locs}
 
     with sub_c2:
         if rep_type == "Single Location":
@@ -315,7 +333,7 @@ with st.expander("➕ Log a New Obstacle or Hazard Report", expanded=False):
             st.error("Please enter a description for the obstacle report.")
         elif rep_type == "Pathway Connection" and target_src_id == target_dst_id:
             st.error("Pathway source and destination cannot be the same location.")
-        elif rep_type == "Pathway Connection" and not cmap.graph.has_edge(target_src_id, target_dst_id):
+        elif rep_type == "Pathway Connection" and not active_form_cmap.graph.has_edge(target_src_id, target_dst_id):
             st.error("There is no direct pathway connection between the selected locations.")
         else:
             try:
