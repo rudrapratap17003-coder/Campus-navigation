@@ -21,31 +21,48 @@ DATABASE_DIR: Path = BASE_DIR / "database"
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
+    """Retrieve configuration value prioritizing st.secrets, then os.environ, then default.
+
+    Ensures seamless dual-compatibility with Streamlit Community Cloud (st.secrets),
+    Docker container environments (os.environ), and local development .env configurations.
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and st.secrets is not None and key in st.secrets:
+            val = st.secrets[key]
+            if val is not None:
+                return str(val)
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
+
 @dataclass
 class DatabaseConfig:
     """Database connection and reliability configuration."""
 
     db_path: str = field(
-        default_factory=lambda: os.getenv(
+        default_factory=lambda: get_secret(
             "CAMPUS_DB_PATH",
             str(DATABASE_DIR / "campus_navigation.db"),
         )
     )
     timeout_seconds: float = field(
-        default_factory=lambda: float(os.getenv("CAMPUS_DB_TIMEOUT", "10.0"))
+        default_factory=lambda: float(get_secret("CAMPUS_DB_TIMEOUT", "10.0"))
     )
     busy_timeout_ms: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_DB_BUSY_TIMEOUT_MS", "5000"))
+        default_factory=lambda: int(get_secret("CAMPUS_DB_BUSY_TIMEOUT_MS", "5000"))
     )
     journal_mode: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_DB_JOURNAL_MODE", "WAL")
+        default_factory=lambda: get_secret("CAMPUS_DB_JOURNAL_MODE", "WAL")
     )
     synchronous: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_DB_SYNCHRONOUS", "NORMAL")
+        default_factory=lambda: get_secret("CAMPUS_DB_SYNCHRONOUS", "NORMAL")
     )
     foreign_keys: bool = True
     auto_backup_on_startup: bool = field(
-        default_factory=lambda: os.getenv("CAMPUS_AUTO_BACKUP", "false").lower() == "true"
+        default_factory=lambda: get_secret("CAMPUS_AUTO_BACKUP", "false").lower() == "true"
     )
     backup_dir: Path = field(default_factory=lambda: BASE_DIR / "backups")
 
@@ -55,29 +72,29 @@ class SecurityConfig:
     """Security, password hashing, and session authentication configuration."""
 
     password_salt_bytes: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_SALT_BYTES", "32"))
+        default_factory=lambda: int(get_secret("CAMPUS_SALT_BYTES", "32"))
     )
     pbkdf2_iterations: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_HASH_ITERATIONS", "600000"))
+        default_factory=lambda: int(get_secret("CAMPUS_HASH_ITERATIONS", "600000"))
     )
     min_password_length: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_MIN_PASSWORD_LEN", "8"))
+        default_factory=lambda: int(get_secret("CAMPUS_MIN_PASSWORD_LEN", "8"))
     )
     require_alpha_num: bool = True
     session_lifetime_hours: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_SESSION_HOURS", "12"))
+        default_factory=lambda: int(get_secret("CAMPUS_SESSION_HOURS", "12"))
     )
     max_login_attempts: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_MAX_LOGIN_ATTEMPTS", "5"))
+        default_factory=lambda: int(get_secret("CAMPUS_MAX_LOGIN_ATTEMPTS", "5"))
     )
     lockout_duration_seconds: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_LOCKOUT_SECONDS", "300"))
+        default_factory=lambda: int(get_secret("CAMPUS_LOCKOUT_SECONDS", "300"))
     )
     secret_key: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_SECRET_KEY", "")
+        default_factory=lambda: get_secret("CAMPUS_SECRET_KEY", "")
     )
     cookie_secure: bool = field(
-        default_factory=lambda: os.getenv("CAMPUS_COOKIE_SECURE", "false").lower() == "true"
+        default_factory=lambda: get_secret("CAMPUS_COOKIE_SECURE", "false").lower() == "true"
     )
 
 
@@ -87,12 +104,12 @@ class MapConfig:
 
     jain_data_file: Path = field(
         default_factory=lambda: Path(
-            os.getenv("CAMPUS_JAIN_DATA_FILE", str(DATA_DIR / "jain_global_campus.json"))
+            get_secret("CAMPUS_JAIN_DATA_FILE", str(DATA_DIR / "jain_global_campus.json"))
         )
     )
     benchmark_data_file: Path = field(
         default_factory=lambda: Path(
-            os.getenv("CAMPUS_BENCHMARK_DATA_FILE", str(DATA_DIR / "campus_data.json"))
+            get_secret("CAMPUS_BENCHMARK_DATA_FILE", str(DATA_DIR / "campus_data.json"))
         )
     )
     cache_graph_in_memory: bool = True
@@ -105,17 +122,17 @@ class LoggingConfig:
     """Structured application logging configuration."""
 
     log_level: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_LOG_LEVEL", "INFO").upper()
+        default_factory=lambda: get_secret("CAMPUS_LOG_LEVEL", "INFO").upper()
     )
     log_file: Path = field(default_factory=lambda: LOGS_DIR / "campus_navigator.log")
     max_log_bytes: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_LOG_MAX_BYTES", str(10 * 1024 * 1024)))
+        default_factory=lambda: int(get_secret("CAMPUS_LOG_MAX_BYTES", str(10 * 1024 * 1024)))
     )
     backup_count: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_LOG_BACKUP_COUNT", "5"))
+        default_factory=lambda: int(get_secret("CAMPUS_LOG_BACKUP_COUNT", "5"))
     )
     json_format: bool = field(
-        default_factory=lambda: os.getenv("CAMPUS_LOG_JSON", "false").lower() == "true"
+        default_factory=lambda: get_secret("CAMPUS_LOG_JSON", "false").lower() == "true"
     )
     redact_sensitive_keys: bool = True
 
@@ -127,16 +144,16 @@ class AppConfig:
     app_name: str = "Accessible Campus Navigator"
     app_version: str = "2.1.0"
     environment: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_ENV", "development").lower()
+        default_factory=lambda: get_secret("CAMPUS_ENV", "development").lower()
     )
     debug: bool = field(
-        default_factory=lambda: os.getenv("CAMPUS_DEBUG", "false").lower() == "true"
+        default_factory=lambda: get_secret("CAMPUS_DEBUG", "false").lower() == "true"
     )
     server_port: int = field(
-        default_factory=lambda: int(os.getenv("CAMPUS_PORT", "8501"))
+        default_factory=lambda: int(get_secret("CAMPUS_PORT", "8501"))
     )
     allowed_hosts: str = field(
-        default_factory=lambda: os.getenv("CAMPUS_ALLOWED_HOSTS", "*")
+        default_factory=lambda: get_secret("CAMPUS_ALLOWED_HOSTS", "*")
     )
 
     database: DatabaseConfig = field(default_factory=DatabaseConfig)

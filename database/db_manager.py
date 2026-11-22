@@ -246,9 +246,14 @@ class DatabaseManager:
 
         self.initialize_schema()
 
-        # Check environment variables for initial admin bootstrap if configured
-        env_admin_user = os.environ.get("CAMPUS_ADMIN_USERNAME")
-        env_admin_pass = os.environ.get("CAMPUS_ADMIN_PASSWORD")
+        # Check environment variables or st.secrets for initial admin bootstrap if configured
+        try:
+            from config import get_secret
+            env_admin_user = get_secret("CAMPUS_ADMIN_USERNAME")
+            env_admin_pass = get_secret("CAMPUS_ADMIN_PASSWORD")
+        except Exception:
+            env_admin_user = os.environ.get("CAMPUS_ADMIN_USERNAME")
+            env_admin_pass = os.environ.get("CAMPUS_ADMIN_PASSWORD")
         if env_admin_user and env_admin_pass and not self.has_admin_user():
             try:
                 self.create_user(
