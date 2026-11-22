@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080F0D"/>
+      <stop offset="100%" stop-color="#11221C"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142620"/>
+      <stop offset="100%" stop-color="#1A332B"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="1200" height="60" fill="#0C1A15"/>
+  <line x1="0" y1="60" x2="1200" y2="60" stroke="#1E3B32" stroke-width="2"/>
+  <rect x="24" y="16" width="6" height="28" rx="3" fill="#10B981"/>
+  <text x="40" y="37" fill="#F1F5F9" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold">04 — Dijkstra's Weighted Routing & Relaxation Flow</text>
+  <text x="1176" y="37" fill="#64748B" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">Accessible Campus Navigator • JAIN (Deemed-to-be University)</text>
+
+  <!-- Main Content -->
+  
+    <rect x="80" y="100" width="1040" height="570" rx="12" fill="url(#cardGrad)" stroke="#1E3B32" stroke-width="2" filter="url(#shadow)"/>
+    <text x="110" y="140" fill="#10B981" font-family="sans-serif" font-size="18" font-weight="bold">DIJKSTRA'S WEIGHTED SHORTEST PATH ALGORITHM</text>
+    <text x="110" y="165" fill="#94A3B8" font-family="sans-serif" font-size="13">Priority Queue (Min-Heap) Optimization for Globally Shortest Physical Distance</text>
+
+    <!-- Priority Queue & Dist Array -->
+    <rect x="110" y="200" width="280" height="430" rx="8" fill="#162E25" stroke="#10B981" stroke-width="1.5"/>
+    <text x="130" y="230" fill="#10B981" font-family="sans-serif" font-size="14" font-weight="bold">Data Structures</text>
+    
+    <rect x="130" y="250" width="240" height="150" rx="6" fill="#0C1A15" stroke="#255243" stroke-width="1"/>
+    <text x="145" y="275" fill="#38BDF8" font-family="sans-serif" font-size="12" font-weight="bold">Distances Table d[u]</text>
+    <text x="145" y="300" fill="#94A3B8" font-family="sans-serif" font-size="11">d[start] = 0.0</text>
+    <text x="145" y="325" fill="#94A3B8" font-family="sans-serif" font-size="11">d[node_1] = 45.2 m</text>
+    <text x="145" y="350" fill="#94A3B8" font-family="sans-serif" font-size="11">d[node_2] = 88.0 m</text>
+    <text x="145" y="375" fill="#64748B" font-family="sans-serif" font-size="11">d[others] = ∞</text>
+
+    <rect x="130" y="420" width="240" height="190" rx="6" fill="#0C1A15" stroke="#255243" stroke-width="1"/>
+    <text x="145" y="445" fill="#F59E0B" font-family="sans-serif" font-size="12" font-weight="bold">Min-Heap Priority Queue</text>
+    <text x="145" y="470" fill="#94A3B8" font-family="sans-serif" font-size="11">heapq.heappush(pq, (dist, u))</text>
+    <text x="145" y="495" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Extract minimum distance</text>
+    <text x="145" y="520" fill="#E2E8F0" font-family="sans-serif" font-size="11">• O(log V) extraction speed</text>
+    <text x="145" y="545" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Dynamic obstacle penalty:</text>
+    <text x="155" y="568" fill="#F43F5E" font-family="sans-serif" font-size="11">w' = w + 10,000 if blocked</text>
+
+    <!-- Edge Relaxation Process -->
+    <rect x="430" y="200" width="660" height="210" rx="8" fill="#162E25" stroke="#255243" stroke-width="1.5"/>
+    <text x="455" y="230" fill="#38BDF8" font-family="sans-serif" font-size="15" font-weight="bold">Edge Relaxation Step (Core Equation)</text>
+    
+    <rect x="455" y="250" width="610" height="50" rx="6" fill="#0C1A15" stroke="#38BDF8" stroke-width="1"/>
+    <text x="760" y="282" fill="#38BDF8" font-family="monospace" font-size="15" font-weight="bold" text-anchor="middle">if d[u] + weight(u, v) &lt; d[v]:  d[v] = d[u] + weight(u, v)</text>
+
+    <text x="455" y="325" fill="#E2E8F0" font-family="sans-serif" font-size="12">1. When examining edge (u, v), check if path through u offers a shorter overall route.</text>
+    <text x="455" y="350" fill="#E2E8F0" font-family="sans-serif" font-size="12">2. Update predecessor pointer: parent[v] = u.</text>
+    <text x="455" y="375" fill="#E2E8F0" font-family="sans-serif" font-size="12">3. Push updated distance tuple (d[v], v) into the min-heap priority queue.</text>
+
+    <!-- Obstacle & Complexity Summary -->
+    <rect x="430" y="430" width="660" height="200" rx="8" fill="#162E25" stroke="#255243" stroke-width="1.5"/>
+    <text x="455" y="460" fill="#F59E0B" font-family="sans-serif" font-size="15" font-weight="bold">Obstacle Penalty &amp; Complexity Profile</text>
+    
+    <text x="455" y="495" fill="#E2E8F0" font-family="sans-serif" font-size="12">• Active Obstacle Weighting: Temporarily increases edge cost by 10,000 meters,</text>
+    <text x="470" y="515" fill="#94A3B8" font-family="sans-serif" font-size="12">causing Dijkstra's min-heap to explore safe detour paths automatically.</text>
+    
+    <text x="455" y="545" fill="#10B981" font-family="sans-serif" font-size="13" font-weight="bold">• Time Complexity: O((E + V) log V) via Binary Min-Heap</text>
+    <text x="455" y="570" fill="#10B981" font-family="sans-serif" font-size="13" font-weight="bold">• Space Complexity: O(V) for distance table and parent mapping</text>
+    <text x="455" y="595" fill="#94A3B8" font-family="sans-serif" font-size="12">• Verified Benchmark: &lt; 5 milliseconds execution time across 79-node campus graph</text>
+    
+  
+  <!-- Footer -->
+  <line x1="0" y1="720" x2="1200" y2="720" stroke="#1E3B32" stroke-width="1"/>
+  <text x="24" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Student: Rudra Pratap | USN: 25BTRCL214 | B.Tech AIML Section D</text>
+  <text x="1176" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11" text-anchor="end">Academic Architecture Documentation</text>
+</svg>

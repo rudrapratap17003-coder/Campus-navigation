@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080F0D"/>
+      <stop offset="100%" stop-color="#11221C"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142620"/>
+      <stop offset="100%" stop-color="#1A332B"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="1200" height="60" fill="#0C1A15"/>
+  <line x1="0" y1="60" x2="1200" y2="60" stroke="#1E3B32" stroke-width="2"/>
+  <rect x="24" y="16" width="6" height="28" rx="3" fill="#10B981"/>
+  <text x="40" y="37" fill="#F1F5F9" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold">06 — Dynamic Obstacle Lifecycle & Rerouting Architecture</text>
+  <text x="1176" y="37" fill="#64748B" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">Accessible Campus Navigator • JAIN (Deemed-to-be University)</text>
+
+  <!-- Main Content -->
+  
+    <rect x="80" y="100" width="1040" height="570" rx="12" fill="url(#cardGrad)" stroke="#1E3B32" stroke-width="2" filter="url(#shadow)"/>
+    <text x="110" y="140" fill="#F59E0B" font-family="sans-serif" font-size="18" font-weight="bold">COMMUNITY OBSTACLE REPORTING &amp; DYNAMIC REROUTING LIFECYCLE</text>
+    <text x="110" y="165" fill="#94A3B8" font-family="sans-serif" font-size="13">End-to-End Workflow: Student Submission → Administrative Governance → Real-Time Graph Detour</text>
+
+    <!-- Step 1: User Submission -->
+    <rect x="110" y="210" width="210" height="160" rx="8" fill="#162E25" stroke="#F59E0B" stroke-width="1.5"/>
+    <circle cx="135" cy="235" r="12" fill="#F59E0B"/>
+    <text x="135" y="239" fill="#000" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">1</text>
+    <text x="155" y="239" fill="#FFF" font-family="sans-serif" font-size="13" font-weight="bold">User Submits Report</text>
+    
+    <text x="125" y="270" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Location: FET_1F_CORRIDOR_E</text>
+    <text x="125" y="290" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Hazard: Floor cleaning / spill</text>
+    <text x="125" y="310" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Severity: Medium (slippery)</text>
+    <text x="125" y="330" fill="#F59E0B" font-family="sans-serif" font-size="11">• Initial Status: 'pending'</text>
+    <text x="125" y="350" fill="#94A3B8" font-family="sans-serif" font-size="10">Saved to SQLite obstacles table</text>
+
+    <!-- Arrow 1 to 2 -->
+    <line x1="320" y1="290" x2="370" y2="290" stroke="#F59E0B" stroke-width="2"/>
+
+    <!-- Step 2: Governance & Review -->
+    <rect x="370" y="210" width="220" height="160" rx="8" fill="#162E25" stroke="#38BDF8" stroke-width="1.5"/>
+    <circle cx="395" cy="235" r="12" fill="#38BDF8"/>
+    <text x="395" y="239" fill="#000" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">2</text>
+    <text x="415" y="239" fill="#FFF" font-family="sans-serif" font-size="13" font-weight="bold">Admin Governance</text>
+    
+    <text x="385" y="270" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Admin logs into Console</text>
+    <text x="385" y="290" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Reviews pending submissions</text>
+    <text x="385" y="310" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Action: Verify or Dismiss</text>
+    <text x="385" y="330" fill="#10B981" font-family="sans-serif" font-size="11">• Transition: → 'verified'</text>
+    <text x="385" y="350" fill="#94A3B8" font-family="sans-serif" font-size="10">Logged in audit_logs with admin ID</text>
+
+    <!-- Arrow 2 to 3 -->
+    <line x1="590" y1="290" x2="640" y2="290" stroke="#10B981" stroke-width="2"/>
+
+    <!-- Step 3: Graph Rerouting -->
+    <rect x="640" y="210" width="220" height="160" rx="8" fill="#162E25" stroke="#10B981" stroke-width="1.5"/>
+    <circle cx="665" cy="235" r="12" fill="#10B981"/>
+    <text x="665" y="239" fill="#000" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">3</text>
+    <text x="685" y="239" fill="#FFF" font-family="sans-serif" font-size="13" font-weight="bold">Dynamic Graph Mutation</text>
+    
+    <text x="655" y="270" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Routing Engine loads obstacles</text>
+    <text x="655" y="290" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Affected edge identified</text>
+    <text x="655" y="310" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Severity 'high': edge omitted</text>
+    <text x="655" y="330" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Severity 'med': weight + 10km</text>
+    <text x="655" y="350" fill="#10B981" font-family="sans-serif" font-size="10">Active routes re-evaluated</text>
+
+    <!-- Arrow 3 to 4 -->
+    <line x1="860" y1="290" x2="910" y2="290" stroke="#10B981" stroke-width="2"/>
+
+    <!-- Step 4: User Notification & Detour -->
+    <rect x="910" y="210" width="200" height="160" rx="8" fill="#162E25" stroke="#F43F5E" stroke-width="1.5"/>
+    <circle cx="935" cy="235" r="12" fill="#F43F5E"/>
+    <text x="935" y="239" fill="#000" font-family="sans-serif" font-size="10" font-weight="bold" text-anchor="middle">4</text>
+    <text x="955" y="239" fill="#FFF" font-family="sans-serif" font-size="13" font-weight="bold">Live User Detour</text>
+    
+    <text x="925" y="270" fill="#E2E8F0" font-family="sans-serif" font-size="11">• In-app banner alerts user</text>
+    <text x="925" y="290" fill="#E2E8F0" font-family="sans-serif" font-size="11">• 3D digital twin flashes red</text>
+    <text x="925" y="310" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Alternative corridor selected</text>
+    <text x="925" y="330" fill="#10B981" font-family="sans-serif" font-size="11">• Zero user disruption</text>
+    <text x="925" y="350" fill="#94A3B8" font-family="sans-serif" font-size="10">Turn-by-turn recalculated</text>
+
+    <!-- Resolution & Clearance Cycle -->
+    <rect x="250" y="420" width="700" height="180" rx="10" fill="#0C1A15" stroke="#255243" stroke-width="1.5"/>
+    <text x="280" y="455" fill="#38BDF8" font-family="sans-serif" font-size="15" font-weight="bold">Obstacle Clearance &amp; System Restoration Cycle</text>
+    
+    <text x="280" y="490" fill="#E2E8F0" font-family="sans-serif" font-size="12">1. Maintenance crew clears the hazard → Admin marks status as 'resolved'.</text>
+    <text x="280" y="515" fill="#E2E8F0" font-family="sans-serif" font-size="12">2. Routing engine removes edge penalty on next polling cycle (&lt; 2 seconds).</text>
+    <text x="280" y="540" fill="#E2E8F0" font-family="sans-serif" font-size="12">3. Primary shortest path restored automatically in campus navigation graph.</text>
+    <text x="280" y="565" fill="#10B981" font-family="sans-serif" font-size="12">4. Complete audit trail stored with timestamps, reporter user, and verifying admin.</text>
+    
+  
+  <!-- Footer -->
+  <line x1="0" y1="720" x2="1200" y2="720" stroke="#1E3B32" stroke-width="1"/>
+  <text x="24" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Student: Rudra Pratap | USN: 25BTRCL214 | B.Tech AIML Section D</text>
+  <text x="1176" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11" text-anchor="end">Academic Architecture Documentation</text>
+</svg>

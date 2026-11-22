@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080F0D"/>
+      <stop offset="100%" stop-color="#11221C"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142620"/>
+      <stop offset="100%" stop-color="#1A332B"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="1200" height="60" fill="#0C1A15"/>
+  <line x1="0" y1="60" x2="1200" y2="60" stroke="#1E3B32" stroke-width="2"/>
+  <rect x="24" y="16" width="6" height="28" rx="3" fill="#10B981"/>
+  <text x="40" y="37" fill="#F1F5F9" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold">10 — Production Docker &amp; Reverse Proxy Deployment</text>
+  <text x="1176" y="37" fill="#64748B" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">Accessible Campus Navigator • JAIN (Deemed-to-be University)</text>
+
+  <!-- Main Content -->
+  
+    <rect x="80" y="100" width="1040" height="570" rx="12" fill="url(#cardGrad)" stroke="#1E3B32" stroke-width="2" filter="url(#shadow)"/>
+    <text x="110" y="140" fill="#10B981" font-family="sans-serif" font-size="18" font-weight="bold">DOCKER CONTAINER TOPOLOGY &amp; DEPLOYMENT ARCHITECTURE</text>
+    <text x="110" y="165" fill="#94A3B8" font-family="sans-serif" font-size="13">Nginx Reverse Proxy, SSL Termination, Streamlit App Container &amp; Persistent Volumes</text>
+
+    <!-- Client / Browser -->
+    <rect x="110" y="240" width="190" height="260" rx="8" fill="#162E25" stroke="#38BDF8" stroke-width="1.5"/>
+    <text x="205" y="275" fill="#38BDF8" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">Client Browsers</text>
+    <text x="205" y="300" fill="#94A3B8" font-family="sans-serif" font-size="11" text-anchor="middle">• Desktop Workstations</text>
+    <text x="205" y="325" fill="#94A3B8" font-family="sans-serif" font-size="11" text-anchor="middle">• Mobile Handheld Devices</text>
+    <text x="205" y="350" fill="#94A3B8" font-family="sans-serif" font-size="11" text-anchor="middle">• Assistive Screen Readers</text>
+    <text x="205" y="375" fill="#94A3B8" font-family="sans-serif" font-size="11" text-anchor="middle">• Campus Kiosks</text>
+
+    <rect x="130" y="410" width="150" height="60" rx="6" fill="#0C1A15" stroke="#255243" stroke-width="1"/>
+    <text x="205" y="435" fill="#FFF" font-family="sans-serif" font-size="11" text-anchor="middle">HTTPS / WebSocket</text>
+    <text x="205" y="455" fill="#10B981" font-family="sans-serif" font-size="11" text-anchor="middle">Port 80 / 443</text>
+
+    <!-- Connector -->
+    <line x1="300" y1="370" x2="360" y2="370" stroke="#38BDF8" stroke-width="3"/>
+
+    <!-- Docker Compose Boundary -->
+    <rect x="360" y="200" width="730" height="430" rx="10" fill="#0C1A15" stroke="#10B981" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="390" y="230" fill="#10B981" font-family="sans-serif" font-size="13" font-weight="bold">DOCKER COMPOSE ORCHESTRATION NETWORK (campus_net)</text>
+
+    <!-- Nginx Container -->
+    <rect x="390" y="250" width="290" height="200" rx="8" fill="#162E25" stroke="#06B6D4" stroke-width="1.5"/>
+    <text x="410" y="280" fill="#06B6D4" font-family="sans-serif" font-size="14" font-weight="bold">nginx_reverse_proxy</text>
+    <text x="410" y="305" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Inbound SSL / TLS Termination</text>
+    <text x="410" y="325" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Gzip &amp; Brotli Compression</text>
+    <text x="410" y="345" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Static Asset Caching</text>
+    <text x="410" y="365" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Rate Limiting (10 req/sec)</text>
+    <text x="410" y="385" fill="#E2E8F0" font-family="sans-serif" font-size="11">• WebSocket Upgrade Proxying</text>
+    <text x="410" y="405" fill="#94A3B8" font-family="sans-serif" font-size="10">Proxy target: app:8501</text>
+
+    <!-- App Container -->
+    <rect x="740" y="250" width="320" height="200" rx="8" fill="#162E25" stroke="#10B981" stroke-width="1.5"/>
+    <text x="760" y="280" fill="#10B981" font-family="sans-serif" font-size="14" font-weight="bold">campus_navigator_app</text>
+    <text x="760" y="305" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Streamlit Headless Server (:8501)</text>
+    <text x="760" y="325" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Python 3.11/3.14 Runtime</text>
+    <text x="760" y="345" fill="#E2E8F0" font-family="sans-serif" font-size="11">• NetworkX Routing Engine</text>
+    <text x="760" y="365" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Three.js 3D Campus Assets</text>
+    <text x="760" y="385" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Session State Telemetry Engine</text>
+    <text x="760" y="405" fill="#94A3B8" font-family="sans-serif" font-size="10">Healthcheck: curl http://localhost:8501/_stcore/health</text>
+
+    <!-- Connector between Nginx and App -->
+    <line x1="680" y1="350" x2="740" y2="350" stroke="#10B981" stroke-width="2"/>
+    <text x="710" y="340" fill="#10B981" font-family="sans-serif" font-size="9" text-anchor="middle">HTTP :8501</text>
+
+    <!-- Persistent Volume Container -->
+    <rect x="520" y="480" width="410" height="120" rx="8" fill="#162E25" stroke="#F59E0B" stroke-width="1.5"/>
+    <text x="540" y="510" fill="#F59E0B" font-family="sans-serif" font-size="13" font-weight="bold">Persistent Docker Volume: campus_data_vol</text>
+    <text x="540" y="535" fill="#E2E8F0" font-family="sans-serif" font-size="11">• campus_navigation.db (SQLite WAL Mode)</text>
+    <text x="540" y="555" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Daily automated backup archives (.db.bak)</text>
+    <text x="540" y="575" fill="#E2E8F0" font-family="sans-serif" font-size="11">• Audit logs &amp; user credentials</text>
+
+    <!-- Connector to Volume -->
+    <line x1="880" y1="450" x2="880" y2="480" stroke="#F59E0B" stroke-width="2"/>
+    
+  
+  <!-- Footer -->
+  <line x1="0" y1="720" x2="1200" y2="720" stroke="#1E3B32" stroke-width="1"/>
+  <text x="24" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Student: Rudra Pratap | USN: 25BTRCL214 | B.Tech AIML Section D</text>
+  <text x="1176" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11" text-anchor="end">Academic Architecture Documentation</text>
+</svg>

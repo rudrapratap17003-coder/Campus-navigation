@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080F0D"/>
+      <stop offset="100%" stop-color="#11221C"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#142620"/>
+      <stop offset="100%" stop-color="#1A332B"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  
+  <!-- Header Bar -->
+  <rect x="0" y="0" width="1200" height="60" fill="#0C1A15"/>
+  <line x1="0" y1="60" x2="1200" y2="60" stroke="#1E3B32" stroke-width="2"/>
+  <rect x="24" y="16" width="6" height="28" rx="3" fill="#10B981"/>
+  <text x="40" y="37" fill="#F1F5F9" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold">02 — Campus Graph Topology & Connectors</text>
+  <text x="1176" y="37" fill="#64748B" font-family="system-ui, sans-serif" font-size="12" text-anchor="end">Accessible Campus Navigator • JAIN (Deemed-to-be University)</text>
+
+  <!-- Main Content -->
+  
+    <!-- Outdoor Cluster -->
+    <rect x="60" y="100" width="480" height="570" rx="12" fill="url(#cardGrad)" stroke="#10B981" stroke-width="2" filter="url(#shadow)"/>
+    <text x="80" y="135" fill="#10B981" font-family="sans-serif" font-size="16" font-weight="bold">OUTDOOR CAMPUS CLUSTER (Nodes: 1 to 24)</text>
+    <text x="80" y="155" fill="#94A3B8" font-family="sans-serif" font-size="12">Campus Perimeter, Entrances, Gates &amp; Amenities</text>
+
+    <!-- Outdoor Nodes -->
+    <circle cx="140" cy="220" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="140" y="225" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">GATE_MAIN</text>
+
+    <circle cx="300" cy="220" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="300" y="225" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">SECURITY_1</text>
+
+    <circle cx="450" cy="220" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="450" y="225" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">FOUNTAIN</text>
+
+    <circle cx="140" cy="360" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="140" y="365" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">FOOD_COURT</text>
+
+    <circle cx="300" cy="360" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="300" y="365" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">PARKING_A</text>
+
+    <circle cx="450" cy="360" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="450" y="365" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">FET_ENTRANCE</text>
+
+    <circle cx="140" cy="500" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="140" y="505" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">HOSTEL_M</text>
+
+    <circle cx="300" cy="500" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="300" y="505" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">SPORTS_COMPLEX</text>
+
+    <circle cx="450" cy="500" r="28" fill="#162E25" stroke="#10B981" stroke-width="2"/>
+    <text x="450" y="505" fill="#FFF" font-family="sans-serif" font-size="10" text-anchor="middle" font-weight="bold">RAMP_WEST</text>
+
+    <!-- Connectors -->
+    <line x1="168" y1="220" x2="272" y2="220" stroke="#255243" stroke-width="2"/>
+    <line x1="328" y1="220" x2="422" y2="220" stroke="#255243" stroke-width="2"/>
+    <line x1="300" y1="248" x2="300" y2="332" stroke="#255243" stroke-width="2"/>
+    <line x1="168" y1="360" x2="272" y2="360" stroke="#255243" stroke-width="2"/>
+    <line x1="328" y1="360" x2="422" y2="360" stroke="#255243" stroke-width="2"/>
+    <line x1="450" y1="388" x2="450" y2="472" stroke="#10B981" stroke-width="3"/>
+    <line x1="300" y1="388" x2="300" y2="472" stroke="#255243" stroke-width="2"/>
+    <line x1="168" y1="500" x2="272" y2="500" stroke="#255243" stroke-width="2"/>
+    <line x1="328" y1="500" x2="422" y2="500" stroke="#255243" stroke-width="2"/>
+
+    <!-- Bridge Between Outdoor & Indoor -->
+    <line x1="478" y1="360" x2="650" y2="360" stroke="#06B6D4" stroke-width="4" stroke-dasharray="6,4"/>
+    <rect x="520" y="340" width="90" height="40" rx="6" fill="#0C1A15" stroke="#06B6D4" stroke-width="1"/>
+    <text x="565" y="364" fill="#06B6D4" font-family="sans-serif" font-size="11" text-anchor="middle" font-weight="bold">PORTAL</text>
+
+    <!-- Indoor 5-Floor FET Cluster -->
+    <rect x="660" y="100" width="480" height="570" rx="12" fill="url(#cardGrad)" stroke="#38BDF8" stroke-width="2" filter="url(#shadow)"/>
+    <text x="680" y="135" fill="#38BDF8" font-family="sans-serif" font-size="16" font-weight="bold">INDOOR FET BUILDING CLUSTER (55 Nodes across 5 Floors)</text>
+    <text x="680" y="155" fill="#94A3B8" font-family="sans-serif" font-size="12">Multi-floor Vertical Connectors, Corridors, Labs &amp; Classrooms</text>
+
+    <!-- Vertical Connectors -->
+    <rect x="685" y="180" width="130" height="460" rx="8" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="750" y="205" fill="#F59E0B" font-family="sans-serif" font-size="12" text-anchor="middle" font-weight="bold">VERTICAL CORES</text>
+    
+    <circle cx="750" cy="260" r="22" fill="#2A1B0A" stroke="#F59E0B" stroke-width="2"/>
+    <text x="750" y="264" fill="#FFF" font-family="sans-serif" font-size="9" text-anchor="middle" font-weight="bold">ELEVATOR_1</text>
+    
+    <circle cx="750" cy="350" r="22" fill="#2A1B0A" stroke="#F59E0B" stroke-width="2"/>
+    <text x="750" y="354" fill="#FFF" font-family="sans-serif" font-size="9" text-anchor="middle" font-weight="bold">ELEVATOR_2</text>
+
+    <circle cx="750" cy="440" r="22" fill="#2A0B0B" stroke="#F43F5E" stroke-width="2"/>
+    <text x="750" y="444" fill="#FFF" font-family="sans-serif" font-size="9" text-anchor="middle" font-weight="bold">STAIR_A</text>
+
+    <circle cx="750" cy="530" r="22" fill="#2A0B0B" stroke="#F43F5E" stroke-width="2"/>
+    <text x="750" y="534" fill="#FFF" font-family="sans-serif" font-size="9" text-anchor="middle" font-weight="bold">STAIR_B</text>
+
+    <!-- Floor Nodes Grid -->
+    <rect x="835" y="180" width="285" height="90" rx="6" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="850" y="205" fill="#38BDF8" font-family="sans-serif" font-size="12" font-weight="bold">Floor 4: Research &amp; HPC</text>
+    <text x="850" y="225" fill="#94A3B8" font-family="sans-serif" font-size="11">FET_4F_HPC_CLUSTER, AI Research Lab</text>
+    <text x="850" y="245" fill="#10B981" font-family="sans-serif" font-size="11">Connected via Elevators 1 &amp; 2</text>
+
+    <rect x="835" y="280" width="285" height="90" rx="6" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="850" y="305" fill="#38BDF8" font-family="sans-serif" font-size="12" font-weight="bold">Floor 3: Advanced Computing Labs</text>
+    <text x="850" y="325" fill="#94A3B8" font-family="sans-serif" font-size="11">FET_3F_LAB_301, Data Science Center</text>
+    <text x="850" y="345" fill="#10B981" font-family="sans-serif" font-size="11">Accessible Corridors, Restrooms</text>
+
+    <rect x="835" y="380" width="285" height="90" rx="6" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="850" y="405" fill="#38BDF8" font-family="sans-serif" font-size="12" font-weight="bold">Floor 2: Faculty Cabins &amp; Meeting Rooms</text>
+    <text x="850" y="425" fill="#94A3B8" font-family="sans-serif" font-size="11">FET_2F_CSE_DEPT, Conference Hall 2</text>
+    <text x="850" y="445" fill="#10B981" font-family="sans-serif" font-size="11">Central Rotunda Transition</text>
+
+    <rect x="835" y="480" width="285" height="80" rx="6" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="850" y="505" fill="#38BDF8" font-family="sans-serif" font-size="12" font-weight="bold">Floor 1: Lecture Halls &amp; Dean's Office</text>
+    <text x="850" y="525" fill="#94A3B8" font-family="sans-serif" font-size="11">FET_1F_AUDITORIUM, Dean Office, LH 101-105</text>
+
+    <rect x="835" y="570" width="285" height="70" rx="6" fill="#162E25" stroke="#255243" stroke-width="1"/>
+    <text x="850" y="595" fill="#10B981" font-family="sans-serif" font-size="12" font-weight="bold">Ground Floor: Reception, Admin &amp; Entry</text>
+    <text x="850" y="615" fill="#94A3B8" font-family="sans-serif" font-size="11">FET_GF_MAIN_FOYER, Ramp West Portal</text>
+    
+  
+  <!-- Footer -->
+  <line x1="0" y1="720" x2="1200" y2="720" stroke="#1E3B32" stroke-width="1"/>
+  <text x="24" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11">Student: Rudra Pratap | USN: 25BTRCL214 | B.Tech AIML Section D</text>
+  <text x="1176" y="738" fill="#64748B" font-family="system-ui, sans-serif" font-size="11" text-anchor="end">Academic Architecture Documentation</text>
+</svg>
