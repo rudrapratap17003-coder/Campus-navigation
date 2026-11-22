@@ -12,10 +12,11 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 
-# Databases
+# Databases & Backups
 *.db
 *.sqlite
 *.sqlite3
+backups/
 
 # Environment Variables & Secrets
 .env
@@ -34,5 +35,6 @@ desktop.ini
 
 # Temporary Files & Logs
 *.log
+logs/
 tmp/
 temp/
