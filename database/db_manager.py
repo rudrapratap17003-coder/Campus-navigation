@@ -54,7 +54,7 @@ class DatabaseManager:
     """Manages persistent SQLite storage for campus navigation, user authentication, and obstacle reports."""
 
     DEFAULT_DB_FILE = "campus_navigation.db"
-    SCHEMA_VERSION = 2
+    SCHEMA_VERSION = 3
     PBKDF2_RECOMMENDED_ITERATIONS = 600_000
     PBKDF2_LEGACY_ITERATIONS = 100_000
     PBKDF2_ITERATIONS = PBKDF2_RECOMMENDED_ITERATIONS
@@ -138,12 +138,56 @@ class DatabaseManager:
     );
     """
 
+    CREATE_SAVED_PLACES_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS user_saved_places (
+        saved_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        location_id TEXT NOT NULL,
+        custom_name TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        UNIQUE(user_id, location_id)
+    );
+    """
+
+    CREATE_FAVOURITE_ROUTES_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS user_favourite_routes (
+        route_id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        origin_id TEXT NOT NULL,
+        destination_id TEXT NOT NULL,
+        route_mode TEXT NOT NULL,
+        custom_label TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+    """
+
+    CREATE_FEEDBACK_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS campus_user_feedback (
+        feedback_id TEXT PRIMARY KEY,
+        user_id TEXT,
+        feedback_type TEXT NOT NULL CHECK(feedback_type IN ('incorrect_location', 'blocked_path', 'missing_accessible_route', 'instruction_error', 'general')),
+        target_id TEXT,
+        details TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('Pending', 'Reviewed', 'Dismissed')) DEFAULT 'Pending',
+        submitted_at TEXT NOT NULL,
+        reviewed_at TEXT,
+        reviewer_user_id TEXT,
+        admin_notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+    );
+    """
+
     CREATE_TABLES_SQL = [
         CREATE_TABLE_SQL,
         CREATE_USERS_TABLE_SQL,
         CREATE_AUDIT_LOG_TABLE_SQL,
         CREATE_RATE_LIMIT_TABLE_SQL,
         CREATE_NAVIGATION_HISTORY_TABLE_SQL,
+        CREATE_SAVED_PLACES_TABLE_SQL,
+        CREATE_FAVOURITE_ROUTES_TABLE_SQL,
+        CREATE_FEEDBACK_TABLE_SQL,
     ]
 
     CREATE_INDEXES_SQL = [
@@ -161,6 +205,10 @@ class DatabaseManager:
         "CREATE INDEX IF NOT EXISTS idx_nav_history_user ON navigation_history (user_id);",
         "CREATE INDEX IF NOT EXISTS idx_nav_history_status ON navigation_history (completion_status);",
         "CREATE INDEX IF NOT EXISTS idx_nav_history_created ON navigation_history (created_at);",
+        "CREATE INDEX IF NOT EXISTS idx_saved_places_user ON user_saved_places (user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_favourite_routes_user ON user_favourite_routes (user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_feedback_status ON campus_user_feedback (status);",
+        "CREATE INDEX IF NOT EXISTS idx_feedback_type ON campus_user_feedback (feedback_type);",
     ]
 
     def __init__(self, db_path: Optional[Union[str, Path]] = None) -> None:
@@ -1440,6 +1488,206 @@ class DatabaseManager:
             notes=f"Source: {source} | {notes.strip()}",
         )
         return True, f"Verification status for '{eff_target_id}' successfully updated to '{eff_status}'."
+
+    # =========================================================================
+    # Phase 18: Saved Places, Favourite Routes, and Campus Feedback
+    # =========================================================================
+
+    def save_place(
+        self,
+        user_id: Union[str, Dict[str, Any]],
+        location_id: str,
+        custom_name: Optional[str] = None,
+    ) -> str:
+        """Save a campus location to an authenticated user's private saved places.
+
+        Args:
+            user_id: Unique identifier or user dict of the authenticated user.
+            location_id: Campus node identifier (e.g. 'FET_2F_LIBRARY').
+            custom_name: Optional user-chosen bookmark label.
+
+        Returns:
+            Unique saved place ID.
+        """
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        saved_id = f"fav_{secrets.token_hex(8)}"
+        now = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO user_saved_places (saved_id, user_id, location_id, custom_name, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, location_id) DO UPDATE SET
+                    custom_name = COALESCE(excluded.custom_name, user_saved_places.custom_name);
+                """,
+                (saved_id, eff_user_id, location_id, custom_name, now),
+            )
+        return saved_id
+
+    def remove_saved_place(self, user_id: Union[str, Dict[str, Any]], location_id: str) -> bool:
+        """Remove a saved place from the user's saved list."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM user_saved_places WHERE user_id = ? AND location_id = ?;",
+                (eff_user_id, location_id),
+            )
+            return cursor.rowcount > 0
+
+    def get_saved_places(self, user_id: Union[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Retrieve all saved places belonging to the authenticated user."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT saved_id, user_id, location_id, custom_name, created_at
+                FROM user_saved_places
+                WHERE user_id = ?
+                ORDER BY created_at DESC;
+                """,
+                (eff_user_id,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def is_place_saved(self, user_id: Union[str, Dict[str, Any]], location_id: str) -> bool:
+        """Check if a location is saved by the specified user."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT 1 FROM user_saved_places WHERE user_id = ? AND location_id = ? LIMIT 1;",
+                (eff_user_id, location_id),
+            )
+            return cursor.fetchone() is not None
+
+    def save_favourite_route(
+        self,
+        user_id: Union[str, Dict[str, Any]],
+        origin_id: str,
+        destination_id: str,
+        route_mode: str = "Standard",
+        custom_label: Optional[str] = None,
+    ) -> str:
+        """Save a frequent route to an authenticated user's profile."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        route_id = f"route_{secrets.token_hex(8)}"
+        now = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO user_favourite_routes (
+                    route_id, user_id, origin_id, destination_id, route_mode, custom_label, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?);
+                """,
+                (route_id, eff_user_id, origin_id, destination_id, route_mode, custom_label, now),
+            )
+        return route_id
+
+    def remove_favourite_route(self, user_id: Union[str, Dict[str, Any]], route_id: str) -> bool:
+        """Remove a favourite route belonging to the user."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM user_favourite_routes WHERE user_id = ? AND route_id = ?;",
+                (eff_user_id, route_id),
+            )
+            return cursor.rowcount > 0
+
+    def get_favourite_routes(self, user_id: Union[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Retrieve all saved routes belonging to the authenticated user."""
+        eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT route_id, user_id, origin_id, destination_id, route_mode, custom_label, created_at
+                FROM user_favourite_routes
+                WHERE user_id = ?
+                ORDER BY created_at DESC;
+                """,
+                (eff_user_id,),
+            )
+            return [dict(row) for row in cursor.fetchall()]
+
+    def submit_feedback(
+        self,
+        user_id: Optional[Union[str, Dict[str, Any]]],
+        feedback_type: str,
+        details: str,
+        target_id: Optional[str] = None,
+    ) -> str:
+        """Submit campus user feedback regarding navigation, placement, or accessibility."""
+        eff_user_id = None
+        if user_id:
+            eff_user_id = user_id.get("user_id", "") if isinstance(user_id, dict) else str(user_id)
+
+        valid_types = {
+            "incorrect_location",
+            "blocked_path",
+            "missing_accessible_route",
+            "instruction_error",
+            "general",
+        }
+        if feedback_type not in valid_types:
+            raise ValueError(f"Invalid feedback_type '{feedback_type}'. Must be one of: {valid_types}")
+        if not details or not details.strip():
+            raise ValueError("Feedback details cannot be empty.")
+
+        feedback_id = f"fb_{secrets.token_hex(8)}"
+        now = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO campus_user_feedback (
+                    feedback_id, user_id, feedback_type, target_id, details, status, submitted_at
+                ) VALUES (?, ?, ?, ?, ?, 'Pending', ?);
+                """,
+                (feedback_id, eff_user_id, feedback_type, target_id, details.strip(), now),
+            )
+        return feedback_id
+
+    def get_feedback_list(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Retrieve feedback reports, optionally filtered by review status."""
+        query = "SELECT * FROM campus_user_feedback"
+        params: List[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY submitted_at DESC;"
+
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            return [dict(row) for row in cursor.fetchall()]
+
+    def review_feedback(
+        self,
+        feedback_id: str,
+        reviewer_user_id: Union[str, Dict[str, Any]],
+        status: str,
+        admin_notes: Optional[str] = None,
+    ) -> bool:
+        """Review and update the status of user feedback (Administrator / Field Staff only)."""
+        eff_reviewer = reviewer_user_id.get("user_id", "") if isinstance(reviewer_user_id, dict) else str(reviewer_user_id)
+        valid_statuses = {"Reviewed", "Dismissed", "Pending"}
+        if status not in valid_statuses:
+            raise ValueError(f"Invalid review status: '{status}'. Must be one of: {valid_statuses}")
+
+        now = datetime.now(timezone.utc).isoformat()
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE campus_user_feedback
+                SET status = ?, reviewed_at = ?, reviewer_user_id = ?, admin_notes = ?
+                WHERE feedback_id = ?;
+                """,
+                (status, now, eff_reviewer, admin_notes, feedback_id),
+            )
+            return cursor.rowcount > 0
 
     def close(self) -> None:
         """Close any open persistent connection (such as in-memory database)."""

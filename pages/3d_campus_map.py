@@ -26,6 +26,7 @@ from modules.destination_search import (
     group_destinations_by_building_and_floor,
     search_destinations,
 )
+from modules.i18n import SUPPORTED_LANGUAGES, t, translate_instruction
 from modules.jain_digital_twin import (
     FLOOR_NAMES,
     build_jain_digital_twin_payload,
@@ -102,6 +103,69 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Language & Accessibility Preferences (Phase 18)
+col_pref1, col_pref2, col_pref3 = st.columns([1.5, 1.0, 1.0])
+with col_pref1:
+    selected_lang = st.selectbox(
+        "🌐 Language / ಭಾಷೆ / भाषा:",
+        options=["en", "kn", "hi"],
+        format_func=lambda c: SUPPORTED_LANGUAGES.get(c, c),
+        index=0,
+        key="campus_active_lang",
+    )
+with col_pref2:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    pref_high_contrast = st.checkbox(
+        "👁️ High Contrast",
+        value=False,
+        key="pref_high_contrast",
+        help="Enhances UI contrast with pure black backgrounds and high-visibility borders.",
+    )
+with col_pref3:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    pref_reduced_motion = st.checkbox(
+        "⚡ Reduced Motion",
+        value=False,
+        key="pref_reduced_motion",
+        help="Disables smooth transitions and motion animations for cognitive accessibility.",
+    )
+
+if pref_high_contrast:
+    st.markdown(
+        """
+        <style>
+        .ui-card, .hero-banner, div[data-testid="stExpander"] {
+            background-color: #000000 !important;
+            border: 2px solid #FFFF00 !important;
+            color: #FFFFFF !important;
+        }
+        span, p, div, label {
+            color: #FFFFFF !important;
+            font-weight: 600 !important;
+        }
+        .stButton>button {
+            border: 2px solid #00FFFF !important;
+            color: #00FFFF !important;
+            background: #000000 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+if pref_reduced_motion:
+    st.markdown(
+        """
+        <style>
+        * {
+            animation-duration: 0.001ms !important;
+            transition-duration: 0.001ms !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # 3D Environment Model Switcher
 st.markdown('<div class="ui-card" style="padding: 12px 18px; margin-bottom: 16px;">', unsafe_allow_html=True)
@@ -311,6 +375,58 @@ with col_controls:
         )
 
     calculate_btn = st.button("🚀 Calculate 3D Route", type="primary", use_container_width=True)
+
+    # Phase 18: Bookmark Destination & Saved Places
+    if current_user and db_manager and hasattr(db_manager, "save_place"):
+        c_bk1, c_bk2 = st.columns(2)
+        with c_bk1:
+            if st.button("⭐ Bookmark Place", use_container_width=True, help="Bookmark destination to your saved places profile"):
+                db_manager.save_place(current_user, dest_id, dest_label)
+                st.success("Destination saved to your profile!")
+        with c_bk2:
+            if st.button("❤️ Save Route", use_container_width=True, help="Save this route to your favourite routes"):
+                db_manager.save_favourite_route(current_user, start_id, dest_id, "wheelchair" if wheelchair_only else "standard", f"{start_id} ➔ {dest_id}")
+                st.success("Route saved to favourite routes!")
+
+        saved_places = db_manager.get_saved_places(current_user) if hasattr(db_manager, "get_saved_places") else []
+        if saved_places:
+            with st.expander(f"⭐ Saved Places ({len(saved_places)})", expanded=False):
+                for p in saved_places:
+                    p_loc = p.get("location_id")
+                    p_name = p.get("custom_name") or p_loc
+                    st.markdown(f"<b>{p_name}</b> (`{p_loc}`)", unsafe_allow_html=True)
+                    sp_col1, sp_col2 = st.columns(2)
+                    with sp_col1:
+                        if st.button("🎯 Destination", key=f"btn_set_dest_{p.get('saved_id')}", use_container_width=True):
+                            st.session_state["3d_matched_dest_select"] = p_loc
+                            st.rerun()
+                    with sp_col2:
+                        if st.button("🗑️ Remove", key=f"btn_del_saved_{p.get('saved_id')}", use_container_width=True):
+                            db_manager.remove_saved_place(current_user, p_loc)
+                            st.rerun()
+
+        fav_routes = db_manager.get_favourite_routes(current_user) if hasattr(db_manager, "get_favourite_routes") else []
+        if fav_routes:
+            with st.expander(f"❤️ Favourite Routes ({len(fav_routes)})", expanded=False):
+                for r in fav_routes:
+                    r_lbl = r.get("custom_label") or f"{r.get('origin_id')} ➔ {r.get('destination_id')}"
+                    st.markdown(f"<b>{r_lbl}</b> ({r.get('route_mode', 'standard').title()})", unsafe_allow_html=True)
+                    rf_col1, rf_col2 = st.columns(2)
+                    with rf_col1:
+                        if st.button("🚀 Load Route", key=f"btn_load_route_{r.get('route_id')}", use_container_width=True):
+                            nav_session.start_preview(
+                                origin_id=r.get("origin_id"),
+                                destination_id=r.get("destination_id"),
+                                campus_map=active_cmap,
+                                route_finder=active_rf,
+                                algorithm=algo_choice.lower(),
+                                wheelchair_mode=(r.get("route_mode") == "wheelchair"),
+                            )
+                            st.rerun()
+                    with rf_col2:
+                        if st.button("🗑️ Remove", key=f"btn_del_route_{r.get('route_id')}", use_container_width=True):
+                            db_manager.remove_favourite_route(current_user, r.get("route_id"))
+                            st.rerun()
 
     # Initialize or retrieve persistent Navigation Session in session_state
     if "nav_session" not in st.session_state or st.session_state["nav_session"] is None:
@@ -930,3 +1046,78 @@ if is_jain_twin and db_manager:
                 st.success(f"✅ {msg}")
             else:
                 st.error(f"❌ {msg}")
+
+        st.markdown("---")
+        st.markdown("##### 📬 Review Campus User Feedback Submissions")
+        pending_feedbacks = db_manager.get_feedback_list("Pending") if hasattr(db_manager, "get_feedback_list") else []
+        if not pending_feedbacks:
+            st.caption("No pending user feedback submissions awaiting administrative review.")
+        else:
+            st.info(f"📋 {len(pending_feedbacks)} pending user feedback submission(s) require review.")
+            for fb in pending_feedbacks:
+                st.markdown(
+                    f"""
+                    <div style="background: rgba(0,0,0,0.3); border-left: 4px solid #38BDF8; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;">
+                        <b>ID:</b> {fb.get('feedback_id')} &nbsp;|&nbsp; <b>Category:</b> {fb.get('feedback_type')} &nbsp;|&nbsp; <b>Target:</b> {fb.get('target_id') or 'General'}<br>
+                        <b>Submitted At:</b> {fb.get('submitted_at')}<br>
+                        <div style="margin-top: 4px; color: #E2E8F0;"><i>"{fb.get('details')}"</i></div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if is_admin or user_role == "Field Staff":
+                    fb_act_col1, fb_act_col2 = st.columns([1, 1])
+                    with fb_act_col1:
+                        if st.button("✅ Mark Reviewed", key=f"btn_rev_{fb.get('feedback_id')}"):
+                            db_manager.review_feedback(fb.get('feedback_id'), current_user_id, "Reviewed", "Verified by administrator.")
+                            st.rerun()
+                    with fb_act_col2:
+                        if st.button("❌ Dismiss", key=f"btn_dis_{fb.get('feedback_id')}"):
+                            db_manager.review_feedback(fb.get('feedback_id'), current_user_id, "Dismissed", "Deemed not applicable.")
+                            st.rerun()
+
+    # Phase 18: Campus User Feedback & Corrections Submission Form
+    with st.expander("💬 Submit Campus Feedback & Correction Notice", expanded=False):
+        st.markdown("##### 📝 Report Campus Inaccuracies or Suggest Corrections")
+        st.caption("Submit reports regarding room placement, inaccessible pathways, or routing improvements for administrative review.")
+        
+        fb_c1, fb_c2 = st.columns(2)
+        with fb_c1:
+            fb_type_map = {
+                "incorrect_location": "📍 Incorrect Room / Facility Information",
+                "blocked_path": "🚫 Blocked / Obstructed Pathway",
+                "missing_accessible_route": "♿ Missing Wheelchair / Accessible Route",
+                "instruction_error": "🧭 Navigation Instruction Error",
+                "general": "💡 General Suggestion / Feedback",
+            }
+            fb_type = st.selectbox(
+                "Feedback Category:",
+                options=list(fb_type_map.keys()),
+                format_func=lambda k: fb_type_map[k],
+                key="fb_user_type",
+            )
+        with fb_c2:
+            fb_target = st.selectbox(
+                "Target Facility (Optional):",
+                options=["None / General Campus"] + [loc['id'] for loc in all_locs],
+                key="fb_user_target",
+            )
+        
+        fb_details = st.text_area(
+            "Feedback Details:",
+            placeholder="Describe the discrepancy, missing ramp, blocked door, or recommended correction...",
+            key="fb_user_details",
+        )
+        
+        if st.button("📤 Submit Feedback", type="primary", key="btn_submit_user_feedback"):
+            if not fb_details.strip():
+                st.warning("Please provide descriptive feedback details before submitting.")
+            else:
+                target_val = None if fb_target == "None / General Campus" else fb_target
+                f_id = db_manager.submit_feedback(
+                    user_id=current_user_id if current_user else None,
+                    feedback_type=fb_type,
+                    details=fb_details.strip(),
+                    target_id=target_val,
+                )
+                st.success(f"✅ Thank you! Feedback report '{f_id}' successfully submitted for administrative review.")
