@@ -73,6 +73,12 @@ class SecurityConfig:
     lockout_duration_seconds: int = field(
         default_factory=lambda: int(os.getenv("CAMPUS_LOCKOUT_SECONDS", "300"))
     )
+    secret_key: str = field(
+        default_factory=lambda: os.getenv("CAMPUS_SECRET_KEY", "")
+    )
+    cookie_secure: bool = field(
+        default_factory=lambda: os.getenv("CAMPUS_COOKIE_SECURE", "false").lower() == "true"
+    )
 
 
 @dataclass
@@ -129,6 +135,9 @@ class AppConfig:
     server_port: int = field(
         default_factory=lambda: int(os.getenv("CAMPUS_PORT", "8501"))
     )
+    allowed_hosts: str = field(
+        default_factory=lambda: os.getenv("CAMPUS_ALLOWED_HOSTS", "*")
+    )
 
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     security: SecurityConfig = field(default_factory=SecurityConfig)
@@ -142,6 +151,45 @@ class AppConfig:
     def is_testing(self) -> bool:
         """Check if running in testing mode."""
         return self.environment == "testing"
+
+    def validate_for_production(self, raise_exception: bool = False) -> List[str]:
+        """Validate configuration settings for production deployment readiness.
+
+        Args:
+            raise_exception: If True, raises ConfigurationError on any critical violation.
+
+        Returns:
+            List of validation issue messages (empty if completely valid).
+
+        Raises:
+            ConfigurationError: If raise_exception is True and validation issues exist.
+        """
+        issues: List[str] = []
+
+        if self.debug:
+            issues.append("CAMPUS_DEBUG is enabled; debug mode must be false in production.")
+
+        if not self.security.secret_key or len(self.security.secret_key) < 16:
+            issues.append(
+                "CAMPUS_SECRET_KEY is missing or too short; must be at least 16 cryptographically random characters."
+            )
+
+        if self.security.pbkdf2_iterations < 600_000:
+            issues.append(
+                f"CAMPUS_HASH_ITERATIONS is {self.security.pbkdf2_iterations}; must be at least 600,000 for production."
+            )
+
+        db_path = Path(self.database.db_path)
+        if not db_path.parent.exists():
+            issues.append(f"Database parent directory does not exist: {db_path.parent}")
+
+        if issues and raise_exception:
+            from modules.exceptions import ConfigurationError
+            raise ConfigurationError(
+                "Production configuration validation failed: " + "; ".join(issues)
+            )
+
+        return issues
 
 
 # Singleton configuration instance

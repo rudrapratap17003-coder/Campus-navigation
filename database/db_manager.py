@@ -362,6 +362,52 @@ class DatabaseManager:
         logger.info("Successfully created database backup: %s", target_path)
         return str(target_path.resolve())
 
+    def restore_database(self, backup_path: Union[str, Path]) -> bool:
+        """Restore the active database from a verified SQLite backup file.
+
+        Args:
+            backup_path: Path to existing SQLite backup file.
+
+        Returns:
+            True if restore completed successfully.
+
+        Raises:
+            DatabaseError: If backup file does not exist, is invalid, or restore fails.
+        """
+        src_path = Path(backup_path)
+        if not src_path.is_file():
+            raise DatabaseError(f"Backup file not found: {src_path}")
+
+        # Verify the backup file is a valid SQLite database
+        test_conn: Optional[sqlite3.Connection] = None
+        try:
+            test_conn = sqlite3.connect(str(src_path))
+            cursor = test_conn.cursor()
+            cursor.execute("PRAGMA quick_check;")
+            check_res = cursor.fetchone()
+            if not check_res or check_res[0] != "ok":
+                raise DatabaseError(f"Backup file integrity check failed: {check_res}")
+        except sqlite3.Error as exc:
+            raise DatabaseError(f"Backup file is corrupt or not a valid SQLite database: {exc}") from exc
+        finally:
+            if test_conn is not None:
+                test_conn.close()
+
+        # Perform atomic restore using native SQLite backup API
+        backup_conn: Optional[sqlite3.Connection] = None
+        try:
+            backup_conn = sqlite3.connect(str(src_path))
+            with self.get_connection() as target_conn:
+                backup_conn.backup(target_conn)
+            logger.info("Successfully restored database from backup: %s", src_path)
+            return True
+        except sqlite3.Error as exc:
+            logger.error("Failed to restore database from %s: %s", src_path, exc)
+            raise DatabaseError(f"Database restore failed: {exc}") from exc
+        finally:
+            if backup_conn is not None:
+                backup_conn.close()
+
     def insert_report(self, report_data: Dict[str, Any]) -> str:
         """Insert a new obstacle report into the database using parameterized queries.
 
