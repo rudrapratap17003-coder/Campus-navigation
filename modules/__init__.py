@@ -39,7 +39,9 @@ from modules.jain_digital_twin import (
     render_jain_digital_twin_html,
 )
 from modules.navigation_instructions import (
+    CARDINAL_DIRECTIONS,
     NavigationInstruction,
+    compute_bearing_and_cardinal,
     compute_turn_angle,
     format_floor_name,
     generate_turn_by_turn_instructions,
@@ -47,6 +49,12 @@ from modules.navigation_instructions import (
 from modules.navigation_session import (
     NavigationSession,
     NavigationState,
+)
+from modules.destination_search import (
+    DestinationSearchResult,
+    get_search_suggestions,
+    group_destinations_by_building_and_floor,
+    search_destinations,
 )
 from modules.ui_theme import (
     apply_custom_theme,
@@ -117,5 +125,10 @@ __all__ = [
     "NavigationInstruction",
     "generate_turn_by_turn_instructions",
     "compute_turn_angle",
+    "compute_bearing_and_cardinal",
     "format_floor_name",
+    "DestinationSearchResult",
+    "search_destinations",
+    "group_destinations_by_building_and_floor",
+    "get_search_suggestions",
 ]

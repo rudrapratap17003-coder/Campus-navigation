@@ -1,19 +1,28 @@
 """Turn-by-turn navigation instruction generator with geometric turn approximation.
 
 This module converts sequences of campus graph nodes into clear, human-readable
-pedestrian wayfinding instructions. Turn directions (left, right, straight) are
-approximated using horizontal 2D vector angles derived from graph coordinates.
+pedestrian wayfinding instructions. Turn directions (left, right, straight) and
+compass bearings (North, East, South, West) are calculated using 2D horizontal
+vector coordinates based on the campus layout coordinate system.
 
 DISCLOSURE:
-Turn directions are geometric vector approximations based on campus topological
-coordinates, not live compass heading or real-time GPS positioning.
+Direction and orientation are geometric approximations based on available campus
+map coordinates, not live GPS positioning or physical compass hardware.
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
+import math
 from typing import Any, Dict, List, Optional, Tuple
+
+
+ORIENTATION_DISCLOSURE: str = (
+    "Compass bearings (0°-360° clockwise from campus grid North) and cardinal orientations "
+    "are calculated from schematic 3D coordinates relative to campus grid North (-Z axis) "
+    "for spatial reference and assistive wayfinding. Direction is approximate based on the "
+    "available campus map coordinates."
+)
 
 
 @dataclass
@@ -37,6 +46,12 @@ class NavigationInstruction:
     has_elevator: bool = False
     has_stairs: bool = False
     has_ramp: bool = False
+    heading_deg: float = 0.0
+    cardinal_direction: str = ""
+    orientation_reference: str = "NH-948 Kanakapura Road Axis"
+    building_orientation: str = "FET Façade Facing South-East"
+    directional_confidence: str = "APPROXIMATE"
+    orientation_disclosure: str = ORIENTATION_DISCLOSURE
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert instruction to JSON-serializable dictionary."""
@@ -58,7 +73,87 @@ class NavigationInstruction:
             "has_elevator": self.has_elevator,
             "has_stairs": self.has_stairs,
             "has_ramp": self.has_ramp,
+            "heading_deg": round(self.heading_deg, 1),
+            "cardinal_direction": self.cardinal_direction,
+            "orientation_reference": self.orientation_reference,
+            "building_orientation": self.building_orientation,
+            "directional_confidence": self.directional_confidence,
+            "orientation_disclosure": self.orientation_disclosure,
         }
+
+
+CARDINAL_DIRECTIONS: List[str] = [
+    "North (N)",
+    "North-East (NE)",
+    "East (E)",
+    "South-East (SE)",
+    "South (S)",
+    "South-West (SW)",
+    "West (W)",
+    "North-West (NW)",
+]
+
+
+def compute_bearing_and_cardinal(
+    p1: Any,
+    p2: Any,
+) -> Tuple[float, str]:
+    """Calculate the compass bearing (0-360 deg) and cardinal direction.
+
+    Three.js Cartesian Coordinate Conventions:
+    - +X axis points East (90 deg).
+    - -X axis points West (270 deg).
+    - +Z axis points South (180 deg).
+    - -Z axis points North (0 / 360 deg).
+
+    Args:
+        p1: Source coordinate tuple (x1, z1) or dict with 'x', 'y'/'z'.
+        p2: Target coordinate tuple (x2, z2) or dict with 'x', 'y'/'z'.
+
+    Returns:
+        Tuple of (bearing_degrees, cardinal_direction_string).
+    """
+    if isinstance(p1, dict):
+        x1 = float(p1.get("x", 0.0))
+        z1 = float(p1.get("z", p1.get("y", 0.0)))
+    else:
+        x1, z1 = float(p1[0]), float(p1[1])
+
+    if isinstance(p2, dict):
+        x2 = float(p2.get("x", 0.0))
+        z2 = float(p2.get("z", p2.get("y", 0.0)))
+    else:
+        x2, z2 = float(p2[0]), float(p2[1])
+
+    dx = x2 - x1
+    dz = z2 - z1
+
+    if abs(dx) < 1e-4 and abs(dz) < 1e-4:
+        return 0.0, "Stationary"
+
+    # atan2(dx, -dz) computes angle clockwise from North (-Z)
+    heading_rad = math.atan2(dx, -dz)
+    heading_deg = math.degrees(heading_rad) % 360.0
+
+    # Classify into 8 cardinal/intercardinal quadrants
+    if heading_deg >= 337.5 or heading_deg < 22.5:
+        cardinal = "North (N)"
+    elif 22.5 <= heading_deg < 67.5:
+        cardinal = "North-East (NE)"
+    elif 67.5 <= heading_deg < 112.5:
+        cardinal = "East (E)"
+    elif 112.5 <= heading_deg < 157.5:
+        cardinal = "South-East (SE)"
+    elif 157.5 <= heading_deg < 202.5:
+        cardinal = "South (S)"
+    elif 202.5 <= heading_deg < 247.5:
+        cardinal = "South-West (SW)"
+    elif 247.5 <= heading_deg < 292.5:
+        cardinal = "West (W)"
+    else:
+        cardinal = "North-West (NW)"
+
+    return heading_deg, cardinal
 
 
 def compute_turn_angle(
@@ -166,7 +261,10 @@ def generate_turn_by_turn_instructions(
         u_floor = int(u_loc.get("floor", 0))
         v_floor = int(v_loc.get("floor", 0))
 
-        # Edge attributes
+        p_u = get_coords(u)
+        p_v = get_coords(v)
+        heading_deg, cardinal_dir = compute_bearing_and_cardinal(p_u, p_v)
+
         edge_attrs: Dict[str, Any] = {}
         if graph_edges:
             edge_attrs = graph_edges.get((u, v)) or graph_edges.get((v, u)) or {}
@@ -225,7 +323,8 @@ def generate_turn_by_turn_instructions(
             if i == 0:
                 action_type = "start"
                 icon = "🚩"
-                text = f"Start at {u_name}. Head toward {v_name} ({dist:.1f} m)."
+                cardinal_cue = f" (heading {cardinal_dir})" if cardinal_dir and cardinal_dir != "Stationary" else ""
+                text = f"Start at {u_name}. Head toward {v_name}{cardinal_cue} ({dist:.1f} m)."
                 turn_angle = 0.0
             else:
                 prev_node = path_nodes[i - 1]
@@ -278,6 +377,8 @@ def generate_turn_by_turn_instructions(
                 has_elevator=has_elev,
                 has_stairs=has_stairs,
                 has_ramp=has_ramp,
+                heading_deg=heading_deg,
+                cardinal_direction=cardinal_dir,
             )
         )
 
@@ -307,6 +408,8 @@ def generate_turn_by_turn_instructions(
             has_elevator=False,
             has_stairs=False,
             has_ramp=False,
+            heading_deg=0.0,
+            cardinal_direction="Arrived",
         )
     )
 

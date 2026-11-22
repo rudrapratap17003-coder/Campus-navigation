@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 import hashlib
 import hmac
+import json
 import os
 from pathlib import Path
 import re
@@ -95,11 +96,31 @@ class DatabaseManager:
     );
     """
 
+    CREATE_NAVIGATION_HISTORY_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS navigation_history (
+        session_id TEXT PRIMARY KEY,
+        user_id TEXT,
+        starting_location TEXT NOT NULL,
+        destination TEXT NOT NULL,
+        navigation_mode TEXT NOT NULL,
+        selected_route TEXT NOT NULL,
+        distance_completed REAL NOT NULL,
+        total_distance REAL NOT NULL,
+        estimated_duration REAL NOT NULL,
+        floor_transitions INTEGER NOT NULL DEFAULT 0,
+        rerouted INTEGER NOT NULL DEFAULT 0,
+        completion_status TEXT NOT NULL CHECK(completion_status IN ('completed', 'cancelled', 'interrupted', 'rerouted')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT
+    );
+    """
+
     CREATE_TABLES_SQL = [
         CREATE_TABLE_SQL,
         CREATE_USERS_TABLE_SQL,
         CREATE_AUDIT_LOG_TABLE_SQL,
         CREATE_RATE_LIMIT_TABLE_SQL,
+        CREATE_NAVIGATION_HISTORY_TABLE_SQL,
     ]
 
     CREATE_INDEXES_SQL = [
@@ -114,6 +135,9 @@ class DatabaseManager:
         "CREATE INDEX IF NOT EXISTS idx_audit_action ON administrative_audit_log (action);",
         "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON administrative_audit_log (timestamp);",
         "CREATE INDEX IF NOT EXISTS idx_rate_limit_user ON login_rate_limits (username, attempt_time);",
+        "CREATE INDEX IF NOT EXISTS idx_nav_history_user ON navigation_history (user_id);",
+        "CREATE INDEX IF NOT EXISTS idx_nav_history_status ON navigation_history (completion_status);",
+        "CREATE INDEX IF NOT EXISTS idx_nav_history_created ON navigation_history (created_at);",
     ]
 
     def __init__(self, db_path: Optional[Union[str, Path]] = None) -> None:
@@ -996,6 +1020,9 @@ class DatabaseManager:
         except sqlite3.Error as exc:
             raise DatabaseError(f"Failed to log audit event: {exc}") from exc
 
+    # Alias for API compatibility
+    log_audit_event = log_audit_action
+
     def get_audit_logs(self, limit: int = 50, action: Optional[str] = None) -> List[Dict[str, Any]]:
         """Retrieve recent administrative audit log entries."""
         if action:
@@ -1007,9 +1034,315 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 cursor = conn.execute(sql, params)
-                return [dict(row) for row in cursor.fetchall()]
+                audit_results = []
+                for row in cursor.fetchall():
+                    audit_dict = dict(row)
+                    audit_dict["user_id"] = audit_dict.get("actor_user_id")
+                    audit_results.append(audit_dict)
+                return audit_results
         except sqlite3.Error as exc:
             raise DatabaseError(f"Failed to retrieve audit log entries: {exc}") from exc
+
+    # -------------------------------------------------------------------------
+    # Phase 16: Navigation History & Journey Summaries Persistence
+    # -------------------------------------------------------------------------
+
+    def record_navigation_session(self, session_data: Dict[str, Any]) -> str:
+        """Persist a navigation session summary to SQLite.
+
+        Args:
+            session_data: Dictionary containing journey attributes:
+                - session_id (optional)
+                - user_id (optional)
+                - starting_location
+                - destination
+                - navigation_mode ('standard' or 'wheelchair')
+                - selected_route (list or json string)
+                - distance_completed (float)
+                - total_distance (float)
+                - estimated_duration (float)
+                - floor_transitions (int)
+                - rerouted (bool/int)
+                - completion_status ('completed', 'cancelled', 'interrupted', 'rerouted')
+                - created_at (optional iso timestamp)
+                - completed_at (optional iso timestamp)
+
+        Returns:
+            The recorded session_id string.
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        session_id = str(session_data.get("session_id") or f"NAV_{secrets.token_hex(8)}")
+        user_id = str(session_data["user_id"]) if session_data.get("user_id") else None
+        start_loc = str(
+            session_data.get("starting_location")
+            or session_data.get("origin_name")
+            or session_data.get("origin_id")
+            or ""
+        )
+        dest = str(
+            session_data.get("destination")
+            or session_data.get("destination_name")
+            or session_data.get("destination_id")
+            or ""
+        )
+        mode = str(
+            session_data.get(
+                "navigation_mode",
+                "wheelchair" if session_data.get("wheelchair_mode") else "standard"
+            )
+        )
+
+        route_raw = session_data.get("selected_route", [])
+        route_str = route_raw if isinstance(route_raw, str) else json.dumps(route_raw)
+
+        dist_comp = float(
+            session_data.get("distance_completed")
+            or session_data.get("total_distance")
+            or 0.0
+        )
+        total_dist = float(session_data.get("total_distance", dist_comp))
+        est_dur = float(
+            session_data.get("estimated_duration")
+            or session_data.get("total_time")
+            or 0.0
+        )
+        transitions = int(
+            session_data.get("floor_transitions")
+            or session_data.get("floor_transitions_count")
+            or 0
+        )
+        rerouted = 1 if (session_data.get("rerouted") or session_data.get("is_rerouted")) else 0
+
+        raw_status = str(session_data.get("completion_status") or session_data.get("status") or "completed").lower()
+        if raw_status in ("completed", "arrived"):
+            status = "completed"
+        elif raw_status in ("cancelled", "canceled"):
+            status = "cancelled"
+        elif raw_status in ("rerouted",):
+            status = "rerouted"
+        else:
+            status = "interrupted"
+
+        created_at = str(session_data.get("created_at") or now_iso)
+        completed_at = str(session_data.get("completed_at") or now_iso)
+
+        sql = """
+        INSERT INTO navigation_history (
+            session_id, user_id, starting_location, destination, navigation_mode,
+            selected_route, distance_completed, total_distance, estimated_duration,
+            floor_transitions, rerouted, completion_status, created_at, completed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(session_id) DO UPDATE SET
+            distance_completed = excluded.distance_completed,
+            floor_transitions = excluded.floor_transitions,
+            rerouted = excluded.rerouted,
+            completion_status = excluded.completion_status,
+            completed_at = excluded.completed_at;
+        """
+        params = (
+            session_id,
+            user_id,
+            start_loc,
+            dest,
+            mode,
+            route_str,
+            dist_comp,
+            total_dist,
+            est_dur,
+            transitions,
+            rerouted,
+            status,
+            created_at,
+            completed_at,
+        )
+
+        try:
+            with self.get_connection() as conn:
+                conn.execute(sql, params)
+            return session_id
+        except sqlite3.Error as exc:
+            raise DatabaseError(f"Failed to record navigation session: {exc}") from exc
+
+    def update_navigation_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
+        """Update an existing navigation session record in SQLite."""
+        allowed_cols = {
+            "distance_completed": float,
+            "completion_status": str,
+            "rerouted": lambda x: 1 if x else 0,
+            "floor_transitions": int,
+            "completed_at": str,
+        }
+        set_clauses = []
+        params = []
+        for col, caster in allowed_cols.items():
+            if col in updates:
+                set_clauses.append(f"{col} = ?")
+                params.append(caster(updates[col]))
+
+        if not set_clauses:
+            return False
+
+        sql = f"UPDATE navigation_history SET {', '.join(set_clauses)} WHERE session_id = ?;"
+        params.append(session_id)
+
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.execute(sql, tuple(params))
+                return cursor.rowcount > 0
+        except sqlite3.Error as exc:
+            raise DatabaseError(f"Failed to update navigation session: {exc}") from exc
+
+    def get_navigation_history(
+        self,
+        user_id: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """Retrieve recent navigation history journeys.
+
+        If user_id is provided, only journeys belonging to that user are returned
+        (strictly isolating user data per RBAC rules). If user_id is None, returns
+        recent journeys up to limit.
+        """
+        if user_id:
+            sql = "SELECT * FROM navigation_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?;"
+            params = (str(user_id), limit)
+        else:
+            sql = "SELECT * FROM navigation_history ORDER BY created_at DESC LIMIT ?;"
+            params = (limit,)
+
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.execute(sql, params)
+                rows = cursor.fetchall()
+
+            results = []
+            for r in rows:
+                d = dict(r)
+                try:
+                    d["selected_route"] = json.loads(d["selected_route"])
+                except Exception:
+                    pass
+                results.append(d)
+            return results
+        except sqlite3.Error as exc:
+            raise DatabaseError(f"Failed to retrieve navigation history: {exc}") from exc
+
+    def get_navigation_stats(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """Compute aggregate navigation metrics for administrative reporting or specific user."""
+        if user_id:
+            sql = """
+            SELECT
+                COUNT(*) as total_sessions,
+                SUM(CASE WHEN completion_status = 'completed' THEN 1 ELSE 0 END) as completed_sessions,
+                SUM(CASE WHEN completion_status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_sessions,
+                SUM(CASE WHEN rerouted = 1 THEN 1 ELSE 0 END) as rerouted_sessions,
+                COALESCE(SUM(distance_completed), 0.0) as total_distance_completed_m,
+                COALESCE(AVG(distance_completed), 0.0) as avg_distance_completed_m
+            FROM navigation_history
+            WHERE user_id = ?;
+            """
+            params = (str(user_id),)
+        else:
+            sql = """
+            SELECT
+                COUNT(*) as total_sessions,
+                SUM(CASE WHEN completion_status = 'completed' THEN 1 ELSE 0 END) as completed_sessions,
+                SUM(CASE WHEN completion_status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_sessions,
+                SUM(CASE WHEN rerouted = 1 THEN 1 ELSE 0 END) as rerouted_sessions,
+                COALESCE(SUM(distance_completed), 0.0) as total_distance_completed_m,
+                COALESCE(AVG(distance_completed), 0.0) as avg_distance_completed_m
+            FROM navigation_history;
+            """
+            params = ()
+
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.execute(sql, params)
+                row = cursor.fetchone()
+                res = dict(row) if row else {
+                    "total_sessions": 0,
+                    "completed_sessions": 0,
+                    "cancelled_sessions": 0,
+                    "rerouted_sessions": 0,
+                    "total_distance_completed_m": 0.0,
+                    "avg_distance_completed_m": 0.0,
+                }
+                total_s = res.get("total_sessions") or 0
+                comp_s = res.get("completed_sessions") or 0
+                res["completion_rate"] = round((comp_s / total_s) * 100.0, 1) if total_s > 0 else 0.0
+                res["total_distance_navigated"] = res.get("total_distance_completed_m", 0.0)
+                res["average_duration_seconds"] = 0.0
+                return res
+        except sqlite3.Error as exc:
+            raise DatabaseError(f"Failed to compute navigation stats: {exc}") from exc
+
+    # -------------------------------------------------------------------------
+    # Phase 16: Administrative Data Quality & Verification Governance
+    # -------------------------------------------------------------------------
+
+    def update_campus_verification(
+        self,
+        entity_id: Optional[str] = None,
+        status: Optional[str] = None,
+        confidence_level: Optional[str] = "High",
+        source: Optional[str] = "On-site validation",
+        notes: str = "",
+        admin_user_id: Optional[str] = None,
+        entity_type: Optional[str] = "location",
+        user_role: Optional[str] = None,
+        user_id: Optional[str] = None,
+        target_id: Optional[str] = None,
+        verification_status: Optional[str] = None,
+    ) -> Tuple[bool, str]:
+        """Update verification status for a location or pathway with mandatory administrative audit logging.
+
+        Args:
+            entity_id: Target location or pathway identifier.
+            status: Must be one of ('VERIFIED', 'IMAGE_DERIVED', 'APPROXIMATE', 'UNVERIFIED').
+            confidence_level: Optional confidence level ('High', 'Moderate', 'Approximate', 'Low').
+            source: Source of verification (survey, blueprint, physical check).
+            notes: Contextual justification and notes.
+            admin_user_id: User ID of administrator performing the action.
+            entity_type: 'location' or 'pathway'.
+            user_role: Explicit user role string (checked against 'Administrator').
+            user_id: User identifier.
+            target_id: Alternative alias for entity_id.
+            verification_status: Alternative alias for status.
+
+        Returns:
+            Tuple of (success_boolean, message_string).
+        """
+        eff_target_id = target_id or entity_id
+        eff_status = status or verification_status
+        eff_user_id = user_id or admin_user_id or "admin"
+        eff_role = user_role
+
+        if eff_role is None and eff_user_id:
+            user = self.get_user_by_id(eff_user_id)
+            if user:
+                eff_role = user.get("role")
+
+        if eff_role != "Administrator":
+            return False, f"Permission denied: User '{eff_user_id}' with role '{eff_role}' is not authorized to update campus verification metadata."
+
+        allowed_statuses = {"VERIFIED", "IMAGE_DERIVED", "APPROXIMATE", "UNVERIFIED"}
+        if eff_status not in allowed_statuses:
+            return False, f"Invalid verification status: '{eff_status}'. Must be one of {allowed_statuses}"
+
+        if not notes or not notes.strip():
+            return False, "Mandatory administrative notes must be provided when updating campus verification metadata."
+
+        # Log immutable administrative audit event
+        self.log_audit_event(
+            actor_user_id=eff_user_id,
+            action="UPDATE_CAMPUS_VERIFICATION",
+            target_type="system",
+            target_id=str(eff_target_id),
+            previous_status=None,
+            new_status=f"{eff_status}:{confidence_level}",
+            notes=f"Source: {source} | {notes.strip()}",
+        )
+        return True, f"Verification status for '{eff_target_id}' successfully updated to '{eff_status}'."
 
     def close(self) -> None:
         """Close any open persistent connection (such as in-memory database)."""

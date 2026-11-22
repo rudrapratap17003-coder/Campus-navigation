@@ -40,8 +40,10 @@ class NavigationSession:
         destination_id: Optional[str] = None,
         algorithm: str = "dijkstra",
         wheelchair_mode: bool = True,
+        user_id: Optional[str] = None,
     ) -> None:
         self.session_id: str = session_id or str(uuid.uuid4())[:8]
+        self.user_id: Optional[str] = user_id
         self.state: NavigationState = NavigationState.IDLE
         self.origin_id: Optional[str] = origin_id
         self.destination_id: Optional[str] = destination_id
@@ -151,7 +153,7 @@ class NavigationSession:
         self.state = NavigationState.ROUTE_PREVIEW
         return True
 
-    def start_navigation(self) -> bool:
+    def start_navigation(self, db_manager: Optional[Any] = None) -> bool:
         """Start active navigation along the calculated route."""
         if self.state not in (NavigationState.ROUTE_PREVIEW, NavigationState.PAUSED):
             return False
@@ -161,6 +163,8 @@ class NavigationSession:
         self.state = NavigationState.NAVIGATING
         if not self.started_at:
             self.started_at = time.time()
+        if db_manager:
+            self.persist_session_state(db_manager)
         return True
 
     def pause_navigation(self) -> bool:
@@ -177,7 +181,7 @@ class NavigationSession:
         self.state = NavigationState.NAVIGATING
         return True
 
-    def restart_navigation(self) -> bool:
+    def restart_navigation(self, db_manager: Optional[Any] = None) -> bool:
         """Reset navigation progress back to the starting node."""
         if not self.path or len(self.path) < 2:
             return False
@@ -192,10 +196,14 @@ class NavigationSession:
         self.started_at = time.time()
         self.completed_at = None
         self.state = NavigationState.NAVIGATING
+        if db_manager:
+            self.persist_session_state(db_manager)
         return True
 
-    def cancel_navigation(self) -> bool:
+    def cancel_navigation(self, db_manager: Optional[Any] = None) -> bool:
         """Cancel the active navigation session and return to IDLE."""
+        if db_manager and self.path:
+            self.persist_session_state(db_manager, status_override="cancelled")
         self.state = NavigationState.IDLE
         self.current_step_index = 0
         self.progress_percentage = 0.0
@@ -203,13 +211,13 @@ class NavigationSession:
         self.completed_steps = 0
         return True
 
-    def step_forward(self, campus_map: CampusMap) -> bool:
+    def step_forward(self, campus_map: CampusMap, db_manager: Optional[Any] = None) -> bool:
         """Advance navigation progress by one step/segment."""
         if self.state not in (NavigationState.NAVIGATING, NavigationState.FLOOR_TRANSITION):
             return False
 
         if self.current_step_index >= len(self.path) - 1:
-            self._trigger_arrival()
+            self._trigger_arrival(db_manager=db_manager)
             return True
 
         # Complete current step
@@ -246,11 +254,11 @@ class NavigationSession:
 
         # Check if arrived at destination
         if self.current_step_index >= len(self.path) - 1:
-            self._trigger_arrival()
+            self._trigger_arrival(db_manager=db_manager)
 
         return True
 
-    def _trigger_arrival(self) -> None:
+    def _trigger_arrival(self, db_manager: Optional[Any] = None) -> None:
         """Handle arrival at destination."""
         self.state = NavigationState.ARRIVED
         self.progress_percentage = 100.0
@@ -258,6 +266,57 @@ class NavigationSession:
         self.remaining_time = 0.0
         self.completed_steps = self.total_steps
         self.completed_at = time.time()
+        if db_manager:
+            self.persist_session_state(db_manager, status_override="completed")
+
+    def persist_session_state(
+        self,
+        db_manager: Any,
+        status_override: Optional[str] = None,
+    ) -> Optional[str]:
+        """Save or update navigation history record in SQLite database.
+
+        Args:
+            db_manager: DatabaseManager instance.
+            status_override: Explicit completion status ('completed', 'cancelled', 'interrupted', 'rerouted').
+
+        Returns:
+            The recorded session_id string or None on failure.
+        """
+        if not db_manager:
+            return None
+
+        status = status_override
+        if not status:
+            if self.state == NavigationState.ARRIVED:
+                status = "completed"
+            elif self.state == NavigationState.NO_ACCESSIBLE_ROUTE:
+                status = "interrupted"
+            elif self.is_rerouted:
+                status = "rerouted"
+            elif self.state == NavigationState.IDLE:
+                status = "cancelled"
+            else:
+                status = "interrupted"
+
+        session_record = {
+            "session_id": self.session_id,
+            "user_id": self.user_id,
+            "starting_location": self.origin_id or "UNKNOWN",
+            "destination": self.destination_id or "UNKNOWN",
+            "navigation_mode": "wheelchair" if self.wheelchair_mode else "standard",
+            "selected_route": self.path,
+            "distance_completed": self.completed_distance,
+            "total_distance": self.total_distance,
+            "estimated_duration": self.total_time,
+            "floor_transitions": self.floor_transitions_count,
+            "rerouted": self.is_rerouted,
+            "completion_status": status,
+        }
+        try:
+            return db_manager.record_navigation_session(session_record)
+        except Exception:
+            return None
 
     def detect_and_handle_obstacles(
         self,
@@ -383,6 +442,7 @@ class NavigationSession:
         next_instr = self.get_next_instruction()
         return {
             "session_id": self.session_id,
+            "user_id": self.user_id,
             "state": self.state.value,
             "origin_id": self.origin_id,
             "destination_id": self.destination_id,

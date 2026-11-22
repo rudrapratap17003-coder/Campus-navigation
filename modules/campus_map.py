@@ -263,17 +263,18 @@ class CampusMap:
 
         # Add nodes with metadata attributes
         for loc_id, loc in self._locations_by_id.items():
-            graph.add_node(
-                loc_id,
-                id=loc_id,
-                name=loc["name"],
-                floor=loc["floor"],
-                building=loc["building"],
-                category=loc["category"],
-                x=float(loc["x"]),
-                y=float(loc["y"]),
-                coordinates=(float(loc["x"]), float(loc["y"])),
-            )
+            node_attrs = loc.copy()
+            node_attrs.update({
+                "id": loc_id,
+                "name": loc["name"],
+                "floor": loc["floor"],
+                "building": loc["building"],
+                "category": loc["category"],
+                "x": float(loc["x"]),
+                "y": float(loc["y"]),
+                "coordinates": (float(loc["x"]), float(loc["y"])),
+            })
+            graph.add_node(loc_id, **node_attrs)
 
         # Add edges with attributes
         for conn in self._connections:
@@ -282,18 +283,18 @@ class CampusMap:
             distance = float(conn["distance"])
             est_time = float(conn.get("estimated_time", distance * 0.8))
 
-            graph.add_edge(
-                src,
-                dst,
-                weight=distance,
-                distance=distance,
-                estimated_time=est_time,
-                wheelchair_accessible=bool(conn.get("wheelchair_accessible", True)),
-                has_stairs=bool(conn.get("has_stairs", False)),
-                has_ramp=bool(conn.get("has_ramp", False)),
-                has_elevator=bool(conn.get("has_elevator", False)),
-                status=str(conn.get("status", "open")),
-            )
+            edge_attrs = conn.copy()
+            edge_attrs.update({
+                "weight": distance,
+                "distance": distance,
+                "estimated_time": est_time,
+                "wheelchair_accessible": bool(conn.get("wheelchair_accessible", True)),
+                "has_stairs": bool(conn.get("has_stairs", False)),
+                "has_ramp": bool(conn.get("has_ramp", False)),
+                "has_elevator": bool(conn.get("has_elevator", False)),
+                "status": str(conn.get("status", "open")),
+            })
+            graph.add_edge(src, dst, **edge_attrs)
 
         self._graph = graph
         return graph

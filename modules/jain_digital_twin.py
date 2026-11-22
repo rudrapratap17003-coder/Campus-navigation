@@ -44,6 +44,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from modules.campus_map import CampusMap
+from modules.navigation_instructions import compute_bearing_and_cardinal
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder, RouteResult
 
@@ -143,6 +144,11 @@ def get_jain_3d_locations_data(campus_map: CampusMap) -> List[Dict[str, Any]]:
             "wheelchair_accessible": bool(loc.get("wheelchair_accessible", True)),
             "amenities": loc.get("amenities", ["Standard Campus Facility"]),
             "connected_locations": neighbors,
+            "verification_status": str(loc.get("verification_status", "IMAGE_DERIVED")),
+            "verification_source": str(loc.get("verification_source", "Official FET Evacuation Plan (2026)")),
+            "confidence_level": str(loc.get("confidence_level", "High" if cat in ("lab", "elevator", "stairs") else "Moderate")),
+            "department": str(loc.get("department", "")),
+            "search_keywords": loc.get("search_keywords", []),
         }
         locations_data.append(entry)
 
@@ -237,6 +243,9 @@ def get_jain_3d_pathways_data(
             "pathway_type": ptype,
             "distance": float(data.get("distance", 0.0)),
             "estimated_time": float(data.get("estimated_time", 0.0)),
+            "verification_status": str(data.get("verification_status", "IMAGE_DERIVED" if is_cross_floor or u_floor >= 0 else "APPROXIMATE")),
+            "confidence_level": str(data.get("confidence_level", "High" if is_cross_floor else "Moderate")),
+            "measurement_source": str(data.get("measurement_source", "Evacuation Route Plan Scale")),
         }
         pathways.append(pathway_entry)
 
@@ -298,6 +307,10 @@ def get_jain_3d_route_data(
 
     steps_data: List[Dict[str, Any]] = []
     for step in route_res.steps:
+        u_loc = campus_map.get_location(step.from_id) or {}
+        v_loc = campus_map.get_location(step.to_id) or {}
+        bearing_deg, cardinal = compute_bearing_and_cardinal(u_loc, v_loc)
+        orient_ref = f"Head {cardinal} ({bearing_deg:.0f}°)" if bearing_deg is not None else ""
         steps_data.append({
             "step_number": step.step_number,
             "from_id": step.from_id,
@@ -313,6 +326,9 @@ def get_jain_3d_route_data(
             "has_ramp": step.has_ramp,
             "has_elevator": step.has_elevator,
             "instruction": step.instruction,
+            "heading_deg": bearing_deg,
+            "cardinal_direction": cardinal,
+            "orientation_reference": orient_ref,
         })
 
     transitions: List[Dict[str, Any]] = []

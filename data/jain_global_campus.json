@@ -9,7 +9,23 @@
       "longitude": 77.4418
     },
     "floors_count": 5,
-    "disclaimer": "Digital twin dataset combining verified OpenStreetMap campus boundary coordinates, satellite imagery layout geometry, and official JAIN University FET 5-Floor Fire Escape Route Plans. Indoor layouts accurately reflect the physical annular building and room sequences.",
+    "verification_framework": {
+      "statuses": [
+        "VERIFIED",
+        "IMAGE_DERIVED",
+        "APPROXIMATE",
+        "UNVERIFIED"
+      ],
+      "confidence_levels": [
+        "High",
+        "Moderate",
+        "Approximate",
+        "Low"
+      ],
+      "version": "Phase 16.2 Data Integrity Release",
+      "last_audited": "2026-11-22"
+    },
+    "disclaimer": "Digital twin dataset combining verified OpenStreetMap campus boundary coordinates, satellite imagery layout geometry, and official JAIN University FET 5-Floor Fire Escape Route Plans. Indoor layouts accurately reflect the physical annular building and room sequences. Cartesian coordinates are schematic layout coordinates, not land-surveyed GPS coordinates.",
     "unit_distance": "meters",
     "unit_time": "seconds"
   },
@@ -25,7 +41,9 @@
       "depth": 80.0,
       "height": 22.0,
       "shape": "octagonal_annular",
-      "description": "Primary engineering complex with 5 levels, central amphitheater courtyard, and 4 radial wings."
+      "description": "Primary engineering complex with 5 levels, central amphitheater courtyard, and 4 radial wings.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "High"
     },
     {
       "id": "BLD_COLOSSEUM",
@@ -38,7 +56,9 @@
       "depth": 35.0,
       "height": 14.0,
       "shape": "rectangular",
-      "description": "Grand multi-purpose sports pavilion, convocation hall, and indoor badminton/basketball courts."
+      "description": "Grand multi-purpose sports pavilion, convocation hall, and indoor badminton/basketball courts.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
     },
     {
       "id": "BLD_CRICKET",
@@ -51,72 +71,84 @@
       "depth": 65.0,
       "height": 6.0,
       "shape": "oval",
-      "description": "Standard oval cricket pitch with seating pavilions and athletic tracks."
+      "description": "Standard oval cricket pitch with seating pavilions and athletic tracks.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
     },
     {
-      "id": "BLD_DINING",
-      "name": "SBMJCE Dining Complex & Cafeteria",
-      "category": "cafeteria",
-      "floors": 2,
-      "center_x": 65.0,
-      "center_z": 20.0,
-      "width": 42.0,
-      "depth": 32.0,
-      "height": 9.0,
-      "shape": "courtyard",
-      "description": "Central student dining hall, cafeteria kitchens, and outdoor dining courtyard."
-    },
-    {
-      "id": "BLD_ADMIN",
-      "name": "University Administration & Student Services",
-      "category": "administrative",
-      "floors": 3,
-      "center_x": 45.0,
-      "center_z": 60.0,
-      "width": 38.0,
-      "depth": 28.0,
-      "height": 12.0,
-      "shape": "rectangular",
-      "description": "Central admissions, registrar, chancellor's office, and student services bureau."
-    },
-    {
-      "id": "BLD_HOSTELS",
-      "name": "Student Residential Hostels Complex",
-      "category": "residential",
-      "floors": 4,
-      "center_x": 105.0,
-      "center_z": -15.0,
-      "width": 55.0,
-      "depth": 45.0,
-      "height": 16.0,
-      "shape": "multi_block",
-      "description": "Multi-block student dormitories with ground-floor barrier-free accessible rooms."
-    },
-    {
-      "id": "BLD_POOL",
-      "name": "JIRS Aquatic Complex & Swimming Pool",
+      "id": "BLD_AQUATICS",
+      "name": "JIRS Swimming Pool & Aquatic Complex",
       "category": "sports",
       "floors": 1,
       "center_x": -20.0,
       "center_z": -110.0,
-      "width": 35.0,
-      "depth": 25.0,
+      "width": 55.0,
+      "depth": 35.0,
       "height": 5.0,
-      "shape": "pool",
-      "description": "Competition-standard swimming pool and aquatic training center."
+      "shape": "rectangular",
+      "description": "50m Olympic competition pool, diving platforms, and changing rooms.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
+    },
+    {
+      "id": "BLD_DINING",
+      "name": "SBMJCE Dining Complex & Cafeteria",
+      "category": "dining",
+      "floors": 2,
+      "center_x": 65.0,
+      "center_z": 20.0,
+      "width": 40.0,
+      "depth": 30.0,
+      "height": 9.0,
+      "shape": "rectangular",
+      "description": "Central student & staff food court with indoor dining hall and terrace seating.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
+    },
+    {
+      "id": "BLD_HOSTELS",
+      "name": "Student Residential Hostels & Quarters",
+      "category": "residential",
+      "floors": 4,
+      "center_x": 105.0,
+      "center_z": -15.0,
+      "width": 60.0,
+      "depth": 35.0,
+      "height": 16.0,
+      "shape": "rectangular",
+      "description": "Multi-storey student accommodation blocks with courtyards and amenities.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
+    },
+    {
+      "id": "BLD_ADMIN",
+      "name": "Administration & Student Affairs Block",
+      "category": "admin",
+      "floors": 2,
+      "center_x": 45.0,
+      "center_z": 60.0,
+      "width": 30.0,
+      "depth": 25.0,
+      "height": 9.0,
+      "shape": "rectangular",
+      "description": "Administrative headquarters, admissions office, and university council chambers.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
     },
     {
       "id": "BLD_AEROSPACE",
-      "name": "Aerospace Propulsion & Wind Tunnel Labs",
-      "category": "research",
-      "floors": 2,
+      "name": "Aerospace Research & Propulsion Center",
+      "category": "academic",
+      "floors": 1,
       "center_x": -60.0,
       "center_z": -40.0,
-      "width": 40.0,
+      "width": 35.0,
       "depth": 30.0,
-      "height": 10.0,
-      "shape": "hangar",
-      "description": "Aeronautical research hangar, supersonic wind tunnel, and propulsion testing bays."
+      "height": 8.0,
+      "shape": "rectangular",
+      "description": "Aeronautical engineering testing hangars, wind tunnels, and UAV flight labs.",
+      "verification_status": "IMAGE_DERIVED",
+      "confidence_level": "Moderate"
     }
   ],
   "locations": [
@@ -134,7 +166,21 @@
         "Automated Boom Barrier",
         "Smooth Curb Cut Ramp",
         "Tactile Pavement"
-      ]
+      ],
+      "verification_status": "VERIFIED",
+      "verification_source": "OpenStreetMap Geographic Landmark & Survey Data",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Physical entrance confirmed at Kanakapura Road (NH-948). Coordinates anchored to OpenStreetMap node.",
+      "search_keywords": [
+        "Main Gate",
+        "Entrance",
+        "Gate",
+        "Security",
+        "Kanakapura Road",
+        "NH-948"
+      ],
+      "department": "Campus Security & Administration"
     },
     {
       "id": "OUT_PARKING_ACC",
@@ -150,7 +196,20 @@
         "Van Access Space",
         "Direct Ramp to Promenade",
         "EV Charging"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "JAIN Campus Aerial Reference (Screenshot 2026-11-21 132358)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Dedicated accessible parking apron identified immediately adjacent to entrance boulevard.",
+      "search_keywords": [
+        "Parking",
+        "Accessible Parking",
+        "EV Charging",
+        "Vehicles",
+        "Zone A"
+      ],
+      "department": "Estate & Logistics"
     },
     {
       "id": "OUT_QUAD_CENTRAL",
@@ -166,7 +225,19 @@
         "Shaded Seating",
         "Campus Directory Map",
         "Braille Signage"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "JAIN Campus Aerial Reference (Screenshot 2026-11-21 132358)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Central pedestrian walkway axis connecting Main Gate to Academic Core and Dining.",
+      "search_keywords": [
+        "Quadrangle",
+        "Promenade",
+        "Central Walkway",
+        "Plaza"
+      ],
+      "department": "Campus Grounds"
     },
     {
       "id": "OUT_ADMIN_BLOCK",
@@ -182,7 +253,20 @@
         "Automated Entrance Doors",
         "Admissions Office",
         "Accessible Restrooms"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "JAIN Campus Aerial Reference & University Directory",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Administrative headquarters building identified on east flank of the central quadrangle.",
+      "search_keywords": [
+        "Admin",
+        "Administration",
+        "Admissions",
+        "Student Affairs",
+        "Registrar"
+      ],
+      "department": "Central Administration"
     },
     {
       "id": "OUT_FET_FRONT_PORTICO",
@@ -197,7 +281,19 @@
         "Monumental Granite Staircase",
         "Main Front Façade Entry",
         "Covered Drop-off Canopy"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "FET Aerial Close-Up (Screenshot 2026-11-21 132059)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Main stepped monumental portico on south-east facade of the octagonal complex.",
+      "search_keywords": [
+        "Portico",
+        "Grand Steps",
+        "Front Entrance",
+        "FET Steps"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "OUT_FET_WEST_RAMP",
@@ -213,7 +309,19 @@
         "Dual Stainless Handrails",
         "Slip-Resistant Surface",
         "Automated Sliding Door"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "FET Ground Evacuation Plan (WhatsApp Image 2026-10-15 at 1.53.06 PM)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary step-free ADA compliant entrance ramp leading directly to ground concourse and elevator.",
+      "search_keywords": [
+        "West Ramp",
+        "Accessible Ramp",
+        "Wheelchair Entrance",
+        "FET Ramp"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "OUT_DINING_COMPLEX",
@@ -229,7 +337,21 @@
         "Wide Aisle Seating",
         "Food Court Counter",
         "Covered Veranda"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "JAIN Campus Aerial Reference (Screenshot 2026-11-21 132358)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Two-level central student dining hall identified east of the academic complex.",
+      "search_keywords": [
+        "Dining",
+        "Cafeteria",
+        "Food Court",
+        "Canteen",
+        "SBMJCE Dining",
+        "Mess"
+      ],
+      "department": "Student Welfare & Hospitality"
     },
     {
       "id": "OUT_COLOSSEUM",
@@ -245,7 +367,21 @@
         "Spectator Seating",
         "Badminton & Basketball Courts",
         "Gymnasium"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Sports Aerial Reference (Screenshot 2026-11-21 132418)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Distinctive classical colonnaded indoor sports stadium and convocation pavilion.",
+      "search_keywords": [
+        "Colosseum",
+        "Indoor Stadium",
+        "Arena",
+        "Badminton",
+        "Basketball",
+        "Gym"
+      ],
+      "department": "Department of Physical Education"
     },
     {
       "id": "OUT_CRICKET_STADIUM",
@@ -261,7 +397,21 @@
         "Athletic Running Track",
         "Turf Pitch",
         "Spectator Stands"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Sports Aerial Reference (Screenshot 2026-11-21 132418)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Standard regulation cricket oval with 4-lane athletic red running track and turf pitch.",
+      "search_keywords": [
+        "Cricket",
+        "Stadium",
+        "Running Track",
+        "Grounds",
+        "Athletics",
+        "Pitch"
+      ],
+      "department": "Department of Physical Education"
     },
     {
       "id": "OUT_AQUATICS_POOL",
@@ -277,7 +427,19 @@
         "Changing Facilities",
         "Heated Pool",
         "Lifeguard Station"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Sports Aerial Reference (Screenshot 2026-11-21 132418)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Olympic 50-meter swimming facility situated west of the cricket stadium.",
+      "search_keywords": [
+        "Pool",
+        "Swimming",
+        "Aquatics",
+        "JIRS Pool"
+      ],
+      "department": "Department of Physical Education"
     },
     {
       "id": "OUT_AEROSPACE_LABS",
@@ -293,7 +455,20 @@
         "Avionics Cleanroom",
         "Propulsion Testing Deck",
         "Roll-in Equipment Access"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Aerospace Aerial Reference (Screenshot 2026-11-21 132429)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Dedicated research hangars for aircraft propulsion and wind-tunnel research.",
+      "search_keywords": [
+        "Aerospace Center",
+        "Hangars",
+        "Propulsion",
+        "Flight Research",
+        "Wind Tunnel"
+      ],
+      "department": "Department of Aerospace Engineering"
     },
     {
       "id": "OUT_HOSTEL_BLOCKS",
@@ -309,7 +484,19 @@
         "Accessible Common Room",
         "Laundry Services",
         "Emergency Call Point"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "JAIN Campus Aerial Reference (Screenshot 2026-11-21 132358)",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Student residential quadrangle blocks located east of the dining complex.",
+      "search_keywords": [
+        "Hostels",
+        "Dorms",
+        "Student Housing",
+        "Residential Quarters"
+      ],
+      "department": "Student Housing & Residence Life"
     },
     {
       "id": "FET_0F_ELEVATOR",
@@ -325,7 +512,19 @@
         "Voice Floor Announcement",
         "Wide Doorway (110cm)",
         "Emergency Telephone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary wheelchair-accessible elevator core serving Floor 0. Coords (-6.0, 18.0) verified invariant across all 5 tiers.",
+      "search_keywords": [
+        "Elevator",
+        "Lift",
+        "Elevator Bank",
+        "Floor 0 Elevator"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_0F_STAIRS_SOUTH",
@@ -340,7 +539,18 @@
         "Continuous Handrails",
         "High-Contrast Step Edging",
         "Fire-Rated Enclosure"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "South central fire escape stairwell serving Floor 0. Coords (6.0, 20.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "South Stairs",
+        "Stairwell"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_0F_STAIRS_NORTH",
@@ -354,7 +564,18 @@
       "amenities": [
         "Direct Fire Escape Access",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire escape stairwell serving Floor 0. Coords (0.0, -22.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "North Stairs",
+        "Fire Exit Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_0F_STAIRS_EAST",
@@ -368,7 +589,18 @@
       "amenities": [
         "Emergency Exit Access",
         "Non-Slip Treads"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial stairwell serving Floor 0. Coords (22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "East Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_0F_STAIRS_WEST",
@@ -382,7 +614,18 @@
       "amenities": [
         "West Fire Exit Route",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial stairwell serving Floor 0. Coords (-22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "West Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_G_ENTRANCE_FOYER",
@@ -397,7 +640,20 @@
         "Information Desk",
         "Directory Screen",
         "Step-Free Atrium"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Foyer",
+        "Reception",
+        "Atrium",
+        "Ground Floor Lobby",
+        "Info Desk"
+      ],
+      "department": "FET Administration"
     },
     {
       "id": "FET_G_AMPHI_STAGE",
@@ -412,7 +668,19 @@
         "Ground Seating",
         "Acoustic Shell",
         "Stage Access Ramp"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Amphitheater",
+        "Stage",
+        "Courtyard",
+        "Open Air Theater"
+      ],
+      "department": "Student Cultural Affairs"
     },
     {
       "id": "FET_G_MECH_LAB",
@@ -427,7 +695,19 @@
         "CNC Machining Bay",
         "Heavy Tooling",
         "Roll-in Safety Doors"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Mechanical Lab",
+        "Workshop",
+        "CNC Bay",
+        "Manufacturing Lab"
+      ],
+      "department": "Department of Mechanical Engineering"
     },
     {
       "id": "FET_G_CIVIL_LAB",
@@ -442,7 +722,19 @@
         "Concrete Testing Machine",
         "Soil Mechanics Rig",
         "Safety Shower"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Civil Lab",
+        "Structural Lab",
+        "Materials Testing",
+        "Concrete Lab"
+      ],
+      "department": "Department of Civil Engineering"
     },
     {
       "id": "FET_G_PHYSICS_LAB",
@@ -457,7 +749,18 @@
         "Laser Optical Benches",
         "Darkroom",
         "Braille Instrument Tags"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Physics Lab",
+        "Optics Lab",
+        "Engineering Physics"
+      ],
+      "department": "Department of Basic Sciences"
     },
     {
       "id": "FET_G_CHEM_LAB",
@@ -472,7 +775,18 @@
         "Fume Hoods",
         "Eye Wash Station",
         "Chemical Safety Cabinet"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Chemistry Lab",
+        "Nanotech Lab",
+        "Chemistry"
+      ],
+      "department": "Department of Basic Sciences"
     },
     {
       "id": "FET_G_SEMINAR_01",
@@ -487,7 +801,19 @@
         "Hearing Loop System",
         "Tiered Ramped Seating",
         "Dual Projectors"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Seminar Hall",
+        "Visvesvaraya Hall",
+        "Seminar 01",
+        "Auditorium 1"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_G_RESTROOM_ACC",
@@ -503,7 +829,20 @@
         "Grab Bars",
         "Support Rails",
         "Low Basin"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Restroom",
+        "Toilet",
+        "Washroom",
+        "Accessible Toilet",
+        "WC"
+      ],
+      "department": "Campus Facilities"
     },
     {
       "id": "FET_G_FIRE_EXIT_EAST",
@@ -518,7 +857,18 @@
         "Crash Bar Door",
         "Emergency Evacuation Ramp",
         "Alarm Strobe"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 0 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 0.",
+      "search_keywords": [
+        "Fire Exit",
+        "East Exit",
+        "Emergency Ramp"
+      ],
+      "department": "Safety & Security"
     },
     {
       "id": "FET_1F_ELEVATOR",
@@ -534,7 +884,19 @@
         "Voice Floor Announcement",
         "Wide Doorway (110cm)",
         "Emergency Telephone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary wheelchair-accessible elevator core serving Floor 1. Coords (-6.0, 18.0) verified invariant across all 5 tiers.",
+      "search_keywords": [
+        "Elevator",
+        "Lift",
+        "Elevator Bank",
+        "Floor 1 Elevator"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_1F_STAIRS_SOUTH",
@@ -549,7 +911,18 @@
         "Continuous Handrails",
         "High-Contrast Step Edging",
         "Fire-Rated Enclosure"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "South central fire escape stairwell serving Floor 1. Coords (6.0, 20.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "South Stairs",
+        "Stairwell"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_1F_STAIRS_NORTH",
@@ -563,7 +936,18 @@
       "amenities": [
         "Direct Fire Escape Access",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire escape stairwell serving Floor 1. Coords (0.0, -22.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "North Stairs",
+        "Fire Exit Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_1F_STAIRS_EAST",
@@ -577,7 +961,18 @@
       "amenities": [
         "Emergency Exit Access",
         "Non-Slip Treads"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial stairwell serving Floor 1. Coords (22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "East Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_1F_STAIRS_WEST",
@@ -591,7 +986,18 @@
       "amenities": [
         "West Fire Exit Route",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial stairwell serving Floor 1. Coords (-22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "West Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_1F_CONCOURSE",
@@ -606,7 +1012,19 @@
         "Student Lounge",
         "Digital Notice Boards",
         "Wide Hallway"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "First Floor Concourse",
+        "1F Concourse",
+        "Concourse",
+        "1F Lobby"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_1F_AMPHI_TIER",
@@ -620,7 +1038,17 @@
       "amenities": [
         "Overlook Seating",
         "Safety Glass Railing"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Amphitheater Balcony",
+        "1F Overlook"
+      ],
+      "department": "Student Cultural Affairs"
     },
     {
       "id": "FET_1F_CS_LAB_101",
@@ -635,7 +1063,20 @@
         "High-Spec GPU Workstations",
         "Screen Readers",
         "Height-Adjustable Desks"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "AI Lab",
+        "CS Lab 101",
+        "Room 101",
+        "Computer Science Lab",
+        "Artificial Intelligence Lab"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_1F_DATA_LAB_102",
@@ -650,7 +1091,19 @@
         "Dual Monitor Stations",
         "Server Racks",
         "Ergonomic Chairs"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Data Lab",
+        "Cloud Lab",
+        "Room 102",
+        "Data Engineering"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_1F_ECE_LAB",
@@ -665,7 +1118,18 @@
         "Oscilloscopes",
         "Soldering Stations",
         "ESD Protected Flooring"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "ECE Lab",
+        "Electronics Lab",
+        "Signal Processing"
+      ],
+      "department": "Department of Electronics & Communication"
     },
     {
       "id": "FET_1F_SMART_103",
@@ -680,7 +1144,18 @@
         "Interactive Smartboards",
         "Lecture Capture Mic",
         "Wheelchair Row"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Smart Hall 103",
+        "Room 103",
+        "Lecture Hall 103"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_1F_LIBRARY",
@@ -695,7 +1170,19 @@
         "Digital Catalog Terminal",
         "Braille Book Section",
         "Study Carrels"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Library",
+        "Reading Room",
+        "Departmental Library",
+        "Book Section"
+      ],
+      "department": "University Libraries"
     },
     {
       "id": "FET_1F_RESTROOM_ACC",
@@ -710,7 +1197,20 @@
         "Grab Bars",
         "Wheelchair Turning Space",
         "Emergency Chime"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Restroom",
+        "Toilet",
+        "Washroom",
+        "Accessible Toilet",
+        "WC"
+      ],
+      "department": "Campus Facilities"
     },
     {
       "id": "FET_1F_FACULTY_SUITE",
@@ -725,7 +1225,19 @@
         "Staff Consultation Desk",
         "Wide Doorways",
         "Quiet Workspaces"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 1 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 1.",
+      "search_keywords": [
+        "Faculty Suite",
+        "Faculty Cabins",
+        "Professors Cabins",
+        "Staff Room"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_2F_ELEVATOR",
@@ -741,7 +1253,19 @@
         "Voice Floor Announcement",
         "Wide Doorway (110cm)",
         "Emergency Telephone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary wheelchair-accessible elevator core serving Floor 2. Coords (-6.0, 18.0) verified invariant across all 5 tiers.",
+      "search_keywords": [
+        "Elevator",
+        "Lift",
+        "Elevator Bank",
+        "Floor 2 Elevator"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_2F_STAIRS_SOUTH",
@@ -756,7 +1280,18 @@
         "Continuous Handrails",
         "High-Contrast Step Edging",
         "Fire-Rated Enclosure"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "South central fire escape stairwell serving Floor 2. Coords (6.0, 20.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "South Stairs",
+        "Stairwell"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_2F_STAIRS_NORTH",
@@ -770,7 +1305,18 @@
       "amenities": [
         "Direct Fire Escape Access",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire escape stairwell serving Floor 2. Coords (0.0, -22.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "North Stairs",
+        "Fire Exit Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_2F_STAIRS_EAST",
@@ -784,7 +1330,18 @@
       "amenities": [
         "Emergency Exit Access",
         "Non-Slip Treads"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial stairwell serving Floor 2. Coords (22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "East Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_2F_STAIRS_WEST",
@@ -798,7 +1355,18 @@
       "amenities": [
         "West Fire Exit Route",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial stairwell serving Floor 2. Coords (-22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "West Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_2F_CONCOURSE",
@@ -812,7 +1380,18 @@
       "amenities": [
         "Project Display Gallery",
         "Collaborative Seating"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "Second Floor Concourse",
+        "2F Concourse",
+        "2F Lobby"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_2F_AI_RESEARCH",
@@ -826,7 +1405,19 @@
       "amenities": [
         "Deep Learning Server Pods",
         "Computer Vision Benches"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "AI Research",
+        "Machine Intelligence",
+        "Room 201",
+        "CMI"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_2F_CYBER_LAB",
@@ -840,7 +1431,19 @@
       "amenities": [
         "Air-Gapped Network",
         "Security Workstations"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "Cyber Lab",
+        "Security Lab",
+        "Forensics Lab",
+        "Room 202"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_2F_VLSI_LAB",
@@ -855,7 +1458,18 @@
         "FPGA Kits",
         "Logic Analyzers",
         "Clean Room Protocol"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "VLSI Lab",
+        "Microelectronics Lab",
+        "FPGA Lab"
+      ],
+      "department": "Department of Electronics & Communication"
     },
     {
       "id": "FET_2F_SMART_203",
@@ -869,7 +1483,18 @@
       "amenities": [
         "Assistive Sound Loop",
         "Ramped Front Access"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "Smart Hall 203",
+        "Room 203",
+        "Lecture Hall 203"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_2F_DEPT_MECH",
@@ -883,7 +1508,18 @@
       "amenities": [
         "Department Offices",
         "HOD Conference Room"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "Mechanical Faculty",
+        "Aerospace Faculty",
+        "Faculty Suite 2F"
+      ],
+      "department": "Department of Mechanical Engineering"
     },
     {
       "id": "FET_2F_RESTROOM_ACC",
@@ -898,7 +1534,20 @@
         "Grab Bars",
         "Support Rails",
         "Wide Door"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "Restroom",
+        "Toilet",
+        "Washroom",
+        "Accessible Toilet",
+        "WC"
+      ],
+      "department": "Campus Facilities"
     },
     {
       "id": "FET_2F_HOD_CSE",
@@ -912,7 +1561,18 @@
       "amenities": [
         "Head of Department Suite",
         "Executive Desk"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 2 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 2.",
+      "search_keywords": [
+        "HOD CSE",
+        "HOD Office",
+        "Head of Department Computer Science"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_3F_ELEVATOR",
@@ -928,7 +1588,19 @@
         "Voice Floor Announcement",
         "Wide Doorway (110cm)",
         "Emergency Telephone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary wheelchair-accessible elevator core serving Floor 3. Coords (-6.0, 18.0) verified invariant across all 5 tiers.",
+      "search_keywords": [
+        "Elevator",
+        "Lift",
+        "Elevator Bank",
+        "Floor 3 Elevator"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_3F_STAIRS_SOUTH",
@@ -943,7 +1615,18 @@
         "Continuous Handrails",
         "High-Contrast Step Edging",
         "Fire-Rated Enclosure"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "South central fire escape stairwell serving Floor 3. Coords (6.0, 20.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "South Stairs",
+        "Stairwell"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_3F_STAIRS_NORTH",
@@ -957,7 +1640,18 @@
       "amenities": [
         "Direct Fire Escape Access",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire escape stairwell serving Floor 3. Coords (0.0, -22.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "North Stairs",
+        "Fire Exit Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_3F_STAIRS_EAST",
@@ -971,7 +1665,18 @@
       "amenities": [
         "Emergency Exit Access",
         "Non-Slip Treads"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial stairwell serving Floor 3. Coords (22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "East Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_3F_STAIRS_WEST",
@@ -985,7 +1690,18 @@
       "amenities": [
         "West Fire Exit Route",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial stairwell serving Floor 3. Coords (-22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "West Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_3F_CONCOURSE",
@@ -999,7 +1715,19 @@
       "amenities": [
         "Aircraft Model Exhibition",
         "Wide Skylit Hallway"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Third Floor Concourse",
+        "3F Concourse",
+        "3F Lobby",
+        "Aerospace Concourse"
+      ],
+      "department": "Department of Aerospace Engineering"
     },
     {
       "id": "FET_3F_AVIONICS_LAB",
@@ -1013,7 +1741,18 @@
       "amenities": [
         "Full Flight Simulator",
         "Cockpit Instrument Trainer"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Avionics Lab",
+        "Flight Simulator",
+        "Flight Sim"
+      ],
+      "department": "Department of Aerospace Engineering"
     },
     {
       "id": "FET_3F_PROPULSION_LAB",
@@ -1027,7 +1766,18 @@
       "amenities": [
         "Turbine Engine Testbed",
         "CFD Simulation Cluster"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Propulsion Lab",
+        "Turbine Lab",
+        "CFD Lab"
+      ],
+      "department": "Department of Aerospace Engineering"
     },
     {
       "id": "FET_3F_ROBOTICS_LAB",
@@ -1041,7 +1791,19 @@
       "amenities": [
         "Industrial Robot Arms",
         "Mobile Drone Test Arena"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Robotics Lab",
+        "Robotics",
+        "Autonomous Systems",
+        "Drone Lab"
+      ],
+      "department": "Department of Aerospace Engineering"
     },
     {
       "id": "FET_3F_SMART_303",
@@ -1055,7 +1817,19 @@
       "amenities": [
         "CAD Modeling Terminals",
         "Audio Chime"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Smart Hall 303",
+        "Room 303",
+        "Lecture Hall 303",
+        "CAD Lab"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_3F_DEANS_SUITE",
@@ -1069,7 +1843,19 @@
       "amenities": [
         "Dean of Engineering Office",
         "Academic Council Boardroom"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Dean Office",
+        "Dean Suite",
+        "Boardroom",
+        "Executive Suite"
+      ],
+      "department": "Dean's Office"
     },
     {
       "id": "FET_3F_RESTROOM_ACC",
@@ -1084,7 +1870,20 @@
         "Grab Bars",
         "Support Rails",
         "Low Mirror"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Restroom",
+        "Toilet",
+        "Washroom",
+        "Accessible Toilet",
+        "WC"
+      ],
+      "department": "Campus Facilities"
     },
     {
       "id": "FET_3F_MAKER_SPACE",
@@ -1099,7 +1898,19 @@
         "3D Printers",
         "Laser Cutters",
         "Circuit Prototyping"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 3 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 3.",
+      "search_keywords": [
+        "Maker Space",
+        "Innovation Studio",
+        "3D Printing Lab",
+        "Maker Studio"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_4F_ELEVATOR",
@@ -1115,7 +1926,19 @@
         "Voice Floor Announcement",
         "Wide Doorway (110cm)",
         "Emergency Telephone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Primary wheelchair-accessible elevator core serving Floor 4. Coords (-6.0, 18.0) verified invariant across all 5 tiers.",
+      "search_keywords": [
+        "Elevator",
+        "Lift",
+        "Elevator Bank",
+        "Floor 4 Elevator"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_4F_STAIRS_SOUTH",
@@ -1130,7 +1953,18 @@
         "Continuous Handrails",
         "High-Contrast Step Edging",
         "Fire-Rated Enclosure"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "South central fire escape stairwell serving Floor 4. Coords (6.0, 20.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "South Stairs",
+        "Stairwell"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_4F_STAIRS_NORTH",
@@ -1144,7 +1978,18 @@
       "amenities": [
         "Direct Fire Escape Access",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire escape stairwell serving Floor 4. Coords (0.0, -22.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "North Stairs",
+        "Fire Exit Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_4F_STAIRS_EAST",
@@ -1158,7 +2003,18 @@
       "amenities": [
         "Emergency Exit Access",
         "Non-Slip Treads"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial stairwell serving Floor 4. Coords (22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "East Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_4F_STAIRS_WEST",
@@ -1172,7 +2028,18 @@
       "amenities": [
         "West Fire Exit Route",
         "Dual Handrails"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial stairwell serving Floor 4. Coords (-22.0, 0.0) invariant.",
+      "search_keywords": [
+        "Stairs",
+        "West Stairs",
+        "Radial Stairs"
+      ],
+      "department": "Campus Vertical Circulation"
     },
     {
       "id": "FET_4F_CONCOURSE",
@@ -1186,7 +2053,19 @@
       "amenities": [
         "Skybridge Overlook",
         "Quiet Research Zone"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Fourth Floor Concourse",
+        "4F Concourse",
+        "4F Lobby",
+        "Research Concourse"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_4F_HPC_CLUSTER",
@@ -1200,7 +2079,21 @@
       "amenities": [
         "Liquid-Cooled Server Cabinets",
         "Precision Climate Control"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "HPC",
+        "HPC Cluster",
+        "Supercomputer",
+        "Supercomputing Facility",
+        "Server Room",
+        "Cloud Pod"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_4F_QUANTUM_LAB",
@@ -1214,7 +2107,18 @@
       "amenities": [
         "Optical Isolation Tables",
         "Cryogenic Chambers"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Quantum Lab",
+        "Photonics Lab",
+        "Quantum Computing"
+      ],
+      "department": "Department of Computer Science & Engineering"
     },
     {
       "id": "FET_4F_CONF_HALL",
@@ -1228,7 +2132,19 @@
       "amenities": [
         "Video Conferencing Walls",
         "Simultaneous Translation"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Conference Hall",
+        "Ramanujan Hall",
+        "Executive Conference",
+        "Auditorium 4F"
+      ],
+      "department": "Faculty of Engineering & Technology"
     },
     {
       "id": "FET_4F_PG_LIBRARY",
@@ -1242,7 +2158,19 @@
       "amenities": [
         "Rare Technical Archives",
         "Silent Research Cubicles"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "High",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "PG Library",
+        "Archives",
+        "Digital Repository",
+        "Research Library"
+      ],
+      "department": "University Libraries"
     },
     {
       "id": "FET_4F_INCUBATION",
@@ -1256,7 +2184,19 @@
       "amenities": [
         "Startup Mentoring Pods",
         "Pitch Presentation Deck"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Incubation Cell",
+        "Startups",
+        "Incubator",
+        "Technology Incubation"
+      ],
+      "department": "Innovation & Entrepreneurship Cell"
     },
     {
       "id": "FET_4F_RESTROOM_ACC",
@@ -1271,7 +2211,20 @@
         "Grab Bars",
         "Support Rails",
         "Emergency Alarm"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Restroom",
+        "Toilet",
+        "Washroom",
+        "Accessible Toilet",
+        "WC"
+      ],
+      "department": "Campus Facilities"
     },
     {
       "id": "FET_4F_TERRACE_SKY",
@@ -1285,11 +2238,24 @@
       "amenities": [
         "Weather Station Sensors",
         "Solar Array Overlook"
-      ]
+      ],
+      "verification_status": "IMAGE_DERIVED",
+      "verification_source": "Official FET Floor 4 Evacuation Route Plan",
+      "last_verified": "2026-11-21",
+      "confidence_level": "Moderate",
+      "verification_notes": "Room location and purpose extracted from official evacuation route diagram for Floor 4.",
+      "search_keywords": [
+        "Terrace",
+        "Observatory",
+        "Green Terrace",
+        "Rooftop"
+      ],
+      "department": "Campus Facilities"
     }
   ],
   "connections": [
     {
+      "id": "CONN_OUT_01",
       "source": "OUT_GATE_MAIN",
       "destination": "OUT_PARKING_ACC",
       "distance": 45.0,
@@ -1298,9 +2264,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 45.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Main gate to accessible parking apron"
     },
     {
+      "id": "CONN_OUT_02",
       "source": "OUT_PARKING_ACC",
       "destination": "OUT_QUAD_CENTRAL",
       "distance": 55.0,
@@ -1309,9 +2281,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 55.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Parking apron to central quadrangle promenade"
     },
     {
+      "id": "CONN_OUT_03",
       "source": "OUT_GATE_MAIN",
       "destination": "OUT_QUAD_CENTRAL",
       "distance": 90.0,
@@ -1320,9 +2298,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 90.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Direct boulevard pathway from main gate to promenade"
     },
     {
+      "id": "CONN_OUT_04",
       "source": "OUT_QUAD_CENTRAL",
       "destination": "OUT_ADMIN_BLOCK",
       "distance": 18.0,
@@ -1331,9 +2315,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 18.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Promenade branch to administration building entrance"
     },
     {
+      "id": "CONN_OUT_05",
       "source": "OUT_QUAD_CENTRAL",
       "destination": "OUT_FET_FRONT_PORTICO",
       "distance": 38.0,
@@ -1342,9 +2332,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 38.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Promenade to FET monumental stepped front portico"
     },
     {
+      "id": "CONN_OUT_06",
       "source": "OUT_QUAD_CENTRAL",
       "destination": "OUT_FET_WEST_RAMP",
       "distance": 48.0,
@@ -1353,9 +2349,15 @@
       "has_stairs": false,
       "has_ramp": true,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 48.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Step-free pathway from promenade to FET west accessible ramp"
     },
     {
+      "id": "CONN_OUT_07",
       "source": "OUT_FET_WEST_RAMP",
       "destination": "OUT_FET_FRONT_PORTICO",
       "distance": 22.0,
@@ -1364,9 +2366,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 22.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Perimeter pathway along FET front facade"
     },
     {
+      "id": "CONN_OUT_08",
       "source": "OUT_QUAD_CENTRAL",
       "destination": "OUT_DINING_COMPLEX",
       "distance": 45.0,
@@ -1375,9 +2383,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 45.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Promenade pathway to central dining complex"
     },
     {
+      "id": "CONN_OUT_09",
       "source": "OUT_DINING_COMPLEX",
       "destination": "OUT_HOSTEL_BLOCKS",
       "distance": 55.0,
@@ -1386,9 +2400,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 55.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Covered walkway connecting dining hall to student hostels"
     },
     {
+      "id": "CONN_OUT_10",
       "source": "OUT_HOSTEL_BLOCKS",
       "destination": "OUT_COLOSSEUM",
       "distance": 52.0,
@@ -1397,9 +2417,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 52.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Hostel pathway to The Colosseum sports arena"
     },
     {
+      "id": "CONN_OUT_11",
       "source": "OUT_DINING_COMPLEX",
       "destination": "OUT_COLOSSEUM",
       "distance": 88.0,
@@ -1408,9 +2434,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 88.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Arterial road connecting dining to sports arena"
     },
     {
+      "id": "CONN_OUT_12",
       "source": "OUT_COLOSSEUM",
       "destination": "OUT_CRICKET_STADIUM",
       "distance": 72.0,
@@ -1419,9 +2451,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 72.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Athletic corridor from Colosseum to cricket stadium"
     },
     {
+      "id": "CONN_OUT_13",
       "source": "OUT_CRICKET_STADIUM",
       "destination": "OUT_AQUATICS_POOL",
       "distance": 54.0,
@@ -1430,9 +2468,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 54.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Walkway connecting cricket pavilion to Olympic pool"
     },
     {
+      "id": "CONN_OUT_14",
       "source": "OUT_FET_WEST_RAMP",
       "destination": "OUT_AEROSPACE_LABS",
       "distance": 68.0,
@@ -1441,9 +2485,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 68.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Service road connecting FET engineering to aerospace hangars"
     },
     {
+      "id": "CONN_OUT_15",
       "source": "OUT_AEROSPACE_LABS",
       "destination": "OUT_AQUATICS_POOL",
       "distance": 75.0,
@@ -1452,9 +2502,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 75.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Perimeter path connecting aerospace to aquatics"
     },
     {
+      "id": "CONN_OUT_16",
       "source": "OUT_CRICKET_STADIUM",
       "destination": "OUT_QUAD_CENTRAL",
       "distance": 125.0,
@@ -1463,9 +2519,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "APPROXIMATE",
+      "measurement_source": "Satellite Imagery Scaled Distance",
+      "estimated_distance": 125.0,
+      "confidence_level": "Moderate",
+      "verification_notes": "Main transverse road connecting sports oval to quadrangle"
     },
     {
+      "id": "CONN_INTRA_0F_01",
       "source": "FET_G_ENTRANCE_FOYER",
       "destination": "FET_0F_ELEVATOR",
       "distance": 6.0,
@@ -1474,9 +2536,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to Elevator lobby on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_02",
       "source": "FET_G_ENTRANCE_FOYER",
       "destination": "FET_0F_STAIRS_SOUTH",
       "distance": 6.0,
@@ -1485,9 +2553,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to South Stairwell on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_03",
       "source": "FET_0F_STAIRS_SOUTH",
       "destination": "FET_0F_STAIRS_EAST",
       "distance": 28.0,
@@ -1496,9 +2570,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "South-to-East annular ring corridor segment on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_04",
       "source": "FET_0F_STAIRS_EAST",
       "destination": "FET_0F_STAIRS_NORTH",
       "distance": 28.0,
@@ -1507,9 +2587,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "East-to-North annular ring corridor segment on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_05",
       "source": "FET_0F_STAIRS_NORTH",
       "destination": "FET_0F_STAIRS_WEST",
       "distance": 28.0,
@@ -1518,9 +2604,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "North-to-West annular ring corridor segment on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_06",
       "source": "FET_0F_STAIRS_WEST",
       "destination": "FET_0F_ELEVATOR",
       "distance": 24.0,
@@ -1529,9 +2621,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 24.0,
+      "confidence_level": "High",
+      "verification_notes": "West-to-Elevator annular ring corridor segment on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_07",
       "source": "FET_G_AMPHI_STAGE",
       "destination": "FET_0F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1540,9 +2638,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_AMPHI_STAGE to nearest corridor circulation node FET_0F_STAIRS_NORTH on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_08",
       "source": "FET_G_MECH_LAB",
       "destination": "FET_0F_STAIRS_WEST",
       "distance": 14.0,
@@ -1551,9 +2655,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_MECH_LAB to nearest corridor circulation node FET_0F_STAIRS_WEST on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_09",
       "source": "FET_G_CIVIL_LAB",
       "destination": "FET_0F_STAIRS_WEST",
       "distance": 14.0,
@@ -1562,9 +2672,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_CIVIL_LAB to nearest corridor circulation node FET_0F_STAIRS_WEST on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_10",
       "source": "FET_G_PHYSICS_LAB",
       "destination": "FET_0F_STAIRS_EAST",
       "distance": 14.0,
@@ -1573,9 +2689,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_PHYSICS_LAB to nearest corridor circulation node FET_0F_STAIRS_EAST on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_11",
       "source": "FET_G_CHEM_LAB",
       "destination": "FET_0F_STAIRS_EAST",
       "distance": 14.0,
@@ -1584,9 +2706,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_CHEM_LAB to nearest corridor circulation node FET_0F_STAIRS_EAST on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_12",
       "source": "FET_G_SEMINAR_01",
       "destination": "FET_0F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1595,9 +2723,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_SEMINAR_01 to nearest corridor circulation node FET_0F_STAIRS_NORTH on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_13",
       "source": "FET_G_RESTROOM_ACC",
       "destination": "FET_G_ENTRANCE_FOYER",
       "distance": 14.0,
@@ -1606,9 +2740,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_RESTROOM_ACC to nearest corridor circulation node FET_G_ENTRANCE_FOYER on Floor 0."
     },
     {
+      "id": "CONN_INTRA_0F_14",
       "source": "FET_G_FIRE_EXIT_EAST",
       "destination": "FET_0F_STAIRS_EAST",
       "distance": 14.0,
@@ -1617,9 +2757,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_G_FIRE_EXIT_EAST to nearest corridor circulation node FET_0F_STAIRS_EAST on Floor 0."
     },
     {
+      "id": "CONN_INTRA_1F_01",
       "source": "FET_1F_CONCOURSE",
       "destination": "FET_1F_ELEVATOR",
       "distance": 6.0,
@@ -1628,9 +2774,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to Elevator lobby on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_02",
       "source": "FET_1F_CONCOURSE",
       "destination": "FET_1F_STAIRS_SOUTH",
       "distance": 6.0,
@@ -1639,9 +2791,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to South Stairwell on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_03",
       "source": "FET_1F_STAIRS_SOUTH",
       "destination": "FET_1F_STAIRS_EAST",
       "distance": 28.0,
@@ -1650,9 +2808,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "South-to-East annular ring corridor segment on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_04",
       "source": "FET_1F_STAIRS_EAST",
       "destination": "FET_1F_STAIRS_NORTH",
       "distance": 28.0,
@@ -1661,9 +2825,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "East-to-North annular ring corridor segment on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_05",
       "source": "FET_1F_STAIRS_NORTH",
       "destination": "FET_1F_STAIRS_WEST",
       "distance": 28.0,
@@ -1672,9 +2842,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "North-to-West annular ring corridor segment on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_06",
       "source": "FET_1F_STAIRS_WEST",
       "destination": "FET_1F_ELEVATOR",
       "distance": 24.0,
@@ -1683,9 +2859,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 24.0,
+      "confidence_level": "High",
+      "verification_notes": "West-to-Elevator annular ring corridor segment on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_07",
       "source": "FET_1F_AMPHI_TIER",
       "destination": "FET_1F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1694,9 +2876,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_AMPHI_TIER to nearest corridor circulation node FET_1F_STAIRS_NORTH on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_08",
       "source": "FET_1F_CS_LAB_101",
       "destination": "FET_1F_STAIRS_WEST",
       "distance": 14.0,
@@ -1705,9 +2893,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_CS_LAB_101 to nearest corridor circulation node FET_1F_STAIRS_WEST on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_09",
       "source": "FET_1F_DATA_LAB_102",
       "destination": "FET_1F_STAIRS_WEST",
       "distance": 14.0,
@@ -1716,9 +2910,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_DATA_LAB_102 to nearest corridor circulation node FET_1F_STAIRS_WEST on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_10",
       "source": "FET_1F_ECE_LAB",
       "destination": "FET_1F_STAIRS_EAST",
       "distance": 14.0,
@@ -1727,9 +2927,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_ECE_LAB to nearest corridor circulation node FET_1F_STAIRS_EAST on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_11",
       "source": "FET_1F_SMART_103",
       "destination": "FET_1F_STAIRS_EAST",
       "distance": 14.0,
@@ -1738,9 +2944,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_SMART_103 to nearest corridor circulation node FET_1F_STAIRS_EAST on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_12",
       "source": "FET_1F_LIBRARY",
       "destination": "FET_1F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1749,9 +2961,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_LIBRARY to nearest corridor circulation node FET_1F_STAIRS_NORTH on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_13",
       "source": "FET_1F_RESTROOM_ACC",
       "destination": "FET_1F_CONCOURSE",
       "distance": 14.0,
@@ -1760,9 +2978,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_RESTROOM_ACC to nearest corridor circulation node FET_1F_CONCOURSE on Floor 1."
     },
     {
+      "id": "CONN_INTRA_1F_14",
       "source": "FET_1F_FACULTY_SUITE",
       "destination": "FET_1F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1771,9 +2995,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_1F_FACULTY_SUITE to nearest corridor circulation node FET_1F_STAIRS_NORTH on Floor 1."
     },
     {
+      "id": "CONN_INTRA_2F_01",
       "source": "FET_2F_CONCOURSE",
       "destination": "FET_2F_ELEVATOR",
       "distance": 6.0,
@@ -1782,9 +3012,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to Elevator lobby on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_02",
       "source": "FET_2F_CONCOURSE",
       "destination": "FET_2F_STAIRS_SOUTH",
       "distance": 6.0,
@@ -1793,9 +3029,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to South Stairwell on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_03",
       "source": "FET_2F_STAIRS_SOUTH",
       "destination": "FET_2F_STAIRS_EAST",
       "distance": 28.0,
@@ -1804,9 +3046,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "South-to-East annular ring corridor segment on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_04",
       "source": "FET_2F_STAIRS_EAST",
       "destination": "FET_2F_STAIRS_NORTH",
       "distance": 28.0,
@@ -1815,9 +3063,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "East-to-North annular ring corridor segment on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_05",
       "source": "FET_2F_STAIRS_NORTH",
       "destination": "FET_2F_STAIRS_WEST",
       "distance": 28.0,
@@ -1826,9 +3080,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "North-to-West annular ring corridor segment on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_06",
       "source": "FET_2F_STAIRS_WEST",
       "destination": "FET_2F_ELEVATOR",
       "distance": 24.0,
@@ -1837,9 +3097,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 24.0,
+      "confidence_level": "High",
+      "verification_notes": "West-to-Elevator annular ring corridor segment on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_07",
       "source": "FET_2F_AI_RESEARCH",
       "destination": "FET_2F_STAIRS_WEST",
       "distance": 14.0,
@@ -1848,9 +3114,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_AI_RESEARCH to nearest corridor circulation node FET_2F_STAIRS_WEST on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_08",
       "source": "FET_2F_CYBER_LAB",
       "destination": "FET_2F_STAIRS_WEST",
       "distance": 14.0,
@@ -1859,9 +3131,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_CYBER_LAB to nearest corridor circulation node FET_2F_STAIRS_WEST on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_09",
       "source": "FET_2F_VLSI_LAB",
       "destination": "FET_2F_STAIRS_EAST",
       "distance": 14.0,
@@ -1870,9 +3148,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_VLSI_LAB to nearest corridor circulation node FET_2F_STAIRS_EAST on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_10",
       "source": "FET_2F_SMART_203",
       "destination": "FET_2F_STAIRS_EAST",
       "distance": 14.0,
@@ -1881,9 +3165,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_SMART_203 to nearest corridor circulation node FET_2F_STAIRS_EAST on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_11",
       "source": "FET_2F_DEPT_MECH",
       "destination": "FET_2F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1892,9 +3182,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_DEPT_MECH to nearest corridor circulation node FET_2F_STAIRS_NORTH on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_12",
       "source": "FET_2F_RESTROOM_ACC",
       "destination": "FET_2F_CONCOURSE",
       "distance": 14.0,
@@ -1903,9 +3199,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_RESTROOM_ACC to nearest corridor circulation node FET_2F_CONCOURSE on Floor 2."
     },
     {
+      "id": "CONN_INTRA_2F_13",
       "source": "FET_2F_HOD_CSE",
       "destination": "FET_2F_STAIRS_NORTH",
       "distance": 14.0,
@@ -1914,9 +3216,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_2F_HOD_CSE to nearest corridor circulation node FET_2F_STAIRS_NORTH on Floor 2."
     },
     {
+      "id": "CONN_INTRA_3F_01",
       "source": "FET_3F_CONCOURSE",
       "destination": "FET_3F_ELEVATOR",
       "distance": 6.0,
@@ -1925,9 +3233,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to Elevator lobby on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_02",
       "source": "FET_3F_CONCOURSE",
       "destination": "FET_3F_STAIRS_SOUTH",
       "distance": 6.0,
@@ -1936,9 +3250,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to South Stairwell on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_03",
       "source": "FET_3F_STAIRS_SOUTH",
       "destination": "FET_3F_STAIRS_EAST",
       "distance": 28.0,
@@ -1947,9 +3267,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "South-to-East annular ring corridor segment on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_04",
       "source": "FET_3F_STAIRS_EAST",
       "destination": "FET_3F_STAIRS_NORTH",
       "distance": 28.0,
@@ -1958,9 +3284,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "East-to-North annular ring corridor segment on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_05",
       "source": "FET_3F_STAIRS_NORTH",
       "destination": "FET_3F_STAIRS_WEST",
       "distance": 28.0,
@@ -1969,9 +3301,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "North-to-West annular ring corridor segment on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_06",
       "source": "FET_3F_STAIRS_WEST",
       "destination": "FET_3F_ELEVATOR",
       "distance": 24.0,
@@ -1980,9 +3318,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 24.0,
+      "confidence_level": "High",
+      "verification_notes": "West-to-Elevator annular ring corridor segment on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_07",
       "source": "FET_3F_AVIONICS_LAB",
       "destination": "FET_3F_STAIRS_WEST",
       "distance": 14.0,
@@ -1991,9 +3335,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_AVIONICS_LAB to nearest corridor circulation node FET_3F_STAIRS_WEST on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_08",
       "source": "FET_3F_PROPULSION_LAB",
       "destination": "FET_3F_STAIRS_WEST",
       "distance": 14.0,
@@ -2002,9 +3352,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_PROPULSION_LAB to nearest corridor circulation node FET_3F_STAIRS_WEST on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_09",
       "source": "FET_3F_ROBOTICS_LAB",
       "destination": "FET_3F_STAIRS_EAST",
       "distance": 14.0,
@@ -2013,9 +3369,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_ROBOTICS_LAB to nearest corridor circulation node FET_3F_STAIRS_EAST on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_10",
       "source": "FET_3F_SMART_303",
       "destination": "FET_3F_STAIRS_EAST",
       "distance": 14.0,
@@ -2024,9 +3386,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_SMART_303 to nearest corridor circulation node FET_3F_STAIRS_EAST on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_11",
       "source": "FET_3F_DEANS_SUITE",
       "destination": "FET_3F_STAIRS_NORTH",
       "distance": 14.0,
@@ -2035,9 +3403,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_DEANS_SUITE to nearest corridor circulation node FET_3F_STAIRS_NORTH on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_12",
       "source": "FET_3F_RESTROOM_ACC",
       "destination": "FET_3F_CONCOURSE",
       "distance": 14.0,
@@ -2046,9 +3420,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_RESTROOM_ACC to nearest corridor circulation node FET_3F_CONCOURSE on Floor 3."
     },
     {
+      "id": "CONN_INTRA_3F_13",
       "source": "FET_3F_MAKER_SPACE",
       "destination": "FET_3F_STAIRS_NORTH",
       "distance": 14.0,
@@ -2057,9 +3437,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_3F_MAKER_SPACE to nearest corridor circulation node FET_3F_STAIRS_NORTH on Floor 3."
     },
     {
+      "id": "CONN_INTRA_4F_01",
       "source": "FET_4F_CONCOURSE",
       "destination": "FET_4F_ELEVATOR",
       "distance": 6.0,
@@ -2068,9 +3454,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to Elevator lobby on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_02",
       "source": "FET_4F_CONCOURSE",
       "destination": "FET_4F_STAIRS_SOUTH",
       "distance": 6.0,
@@ -2079,9 +3471,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Concourse Corridor Scale",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Direct level corridor from Concourse to South Stairwell on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_03",
       "source": "FET_4F_STAIRS_SOUTH",
       "destination": "FET_4F_STAIRS_EAST",
       "distance": 28.0,
@@ -2090,9 +3488,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "South-to-East annular ring corridor segment on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_04",
       "source": "FET_4F_STAIRS_EAST",
       "destination": "FET_4F_STAIRS_NORTH",
       "distance": 28.0,
@@ -2101,9 +3505,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "East-to-North annular ring corridor segment on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_05",
       "source": "FET_4F_STAIRS_NORTH",
       "destination": "FET_4F_STAIRS_WEST",
       "distance": 28.0,
@@ -2112,9 +3522,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 28.0,
+      "confidence_level": "High",
+      "verification_notes": "North-to-West annular ring corridor segment on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_06",
       "source": "FET_4F_STAIRS_WEST",
       "destination": "FET_4F_ELEVATOR",
       "distance": 24.0,
@@ -2123,9 +3539,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Ring Corridor Arc",
+      "estimated_distance": 24.0,
+      "confidence_level": "High",
+      "verification_notes": "West-to-Elevator annular ring corridor segment on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_07",
       "source": "FET_4F_HPC_CLUSTER",
       "destination": "FET_4F_STAIRS_WEST",
       "distance": 14.0,
@@ -2134,9 +3556,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_HPC_CLUSTER to nearest corridor circulation node FET_4F_STAIRS_WEST on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_08",
       "source": "FET_4F_QUANTUM_LAB",
       "destination": "FET_4F_STAIRS_WEST",
       "distance": 14.0,
@@ -2145,9 +3573,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_QUANTUM_LAB to nearest corridor circulation node FET_4F_STAIRS_WEST on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_09",
       "source": "FET_4F_CONF_HALL",
       "destination": "FET_4F_STAIRS_EAST",
       "distance": 14.0,
@@ -2156,9 +3590,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_CONF_HALL to nearest corridor circulation node FET_4F_STAIRS_EAST on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_10",
       "source": "FET_4F_PG_LIBRARY",
       "destination": "FET_4F_STAIRS_EAST",
       "distance": 14.0,
@@ -2167,9 +3607,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_PG_LIBRARY to nearest corridor circulation node FET_4F_STAIRS_EAST on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_11",
       "source": "FET_4F_INCUBATION",
       "destination": "FET_4F_STAIRS_NORTH",
       "distance": 14.0,
@@ -2178,9 +3624,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_INCUBATION to nearest corridor circulation node FET_4F_STAIRS_NORTH on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_12",
       "source": "FET_4F_RESTROOM_ACC",
       "destination": "FET_4F_CONCOURSE",
       "distance": 14.0,
@@ -2189,9 +3641,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_RESTROOM_ACC to nearest corridor circulation node FET_4F_CONCOURSE on Floor 4."
     },
     {
+      "id": "CONN_INTRA_4F_13",
       "source": "FET_4F_TERRACE_SKY",
       "destination": "FET_4F_STAIRS_NORTH",
       "distance": 14.0,
@@ -2200,9 +3658,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Evacuation Plan Room Access Branch",
+      "estimated_distance": 14.0,
+      "confidence_level": "High",
+      "verification_notes": "Room branch from FET_4F_TERRACE_SKY to nearest corridor circulation node FET_4F_STAIRS_NORTH on Floor 4."
     },
     {
+      "id": "CONN_VERT_ELEV_0_1",
       "source": "FET_0F_ELEVATOR",
       "destination": "FET_1F_ELEVATOR",
       "distance": 4.5,
@@ -2211,9 +3675,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": true,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Standard Institutional Floor-to-Floor Height (4.5m)",
+      "estimated_distance": 4.5,
+      "confidence_level": "High",
+      "verification_notes": "Continuous vertical elevator cab shaft between Floor 0 and Floor 1."
     },
     {
+      "id": "CONN_VERT_STAIRS_S_0_1",
       "source": "FET_0F_STAIRS_SOUTH",
       "destination": "FET_1F_STAIRS_SOUTH",
       "distance": 7.5,
@@ -2222,9 +3692,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "South central enclosed fire staircase flight between Floor 0 and Floor 1."
     },
     {
+      "id": "CONN_VERT_STAIRS_N_0_1",
       "source": "FET_0F_STAIRS_NORTH",
       "destination": "FET_1F_STAIRS_NORTH",
       "distance": 7.5,
@@ -2233,9 +3709,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire staircase flight between Floor 0 and Floor 1."
     },
     {
+      "id": "CONN_VERT_STAIRS_E_0_1",
       "source": "FET_0F_STAIRS_EAST",
       "destination": "FET_1F_STAIRS_EAST",
       "distance": 7.5,
@@ -2244,9 +3726,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial staircase flight between Floor 0 and Floor 1."
     },
     {
+      "id": "CONN_VERT_STAIRS_W_0_1",
       "source": "FET_0F_STAIRS_WEST",
       "destination": "FET_1F_STAIRS_WEST",
       "distance": 7.5,
@@ -2255,9 +3743,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial staircase flight between Floor 0 and Floor 1."
     },
     {
+      "id": "CONN_VERT_ELEV_1_2",
       "source": "FET_1F_ELEVATOR",
       "destination": "FET_2F_ELEVATOR",
       "distance": 4.5,
@@ -2266,9 +3760,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": true,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Standard Institutional Floor-to-Floor Height (4.5m)",
+      "estimated_distance": 4.5,
+      "confidence_level": "High",
+      "verification_notes": "Continuous vertical elevator cab shaft between Floor 1 and Floor 2."
     },
     {
+      "id": "CONN_VERT_STAIRS_S_1_2",
       "source": "FET_1F_STAIRS_SOUTH",
       "destination": "FET_2F_STAIRS_SOUTH",
       "distance": 7.5,
@@ -2277,9 +3777,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "South central enclosed fire staircase flight between Floor 1 and Floor 2."
     },
     {
+      "id": "CONN_VERT_STAIRS_N_1_2",
       "source": "FET_1F_STAIRS_NORTH",
       "destination": "FET_2F_STAIRS_NORTH",
       "distance": 7.5,
@@ -2288,9 +3794,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire staircase flight between Floor 1 and Floor 2."
     },
     {
+      "id": "CONN_VERT_STAIRS_E_1_2",
       "source": "FET_1F_STAIRS_EAST",
       "destination": "FET_2F_STAIRS_EAST",
       "distance": 7.5,
@@ -2299,9 +3811,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial staircase flight between Floor 1 and Floor 2."
     },
     {
+      "id": "CONN_VERT_STAIRS_W_1_2",
       "source": "FET_1F_STAIRS_WEST",
       "destination": "FET_2F_STAIRS_WEST",
       "distance": 7.5,
@@ -2310,9 +3828,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial staircase flight between Floor 1 and Floor 2."
     },
     {
+      "id": "CONN_VERT_ELEV_2_3",
       "source": "FET_2F_ELEVATOR",
       "destination": "FET_3F_ELEVATOR",
       "distance": 4.5,
@@ -2321,9 +3845,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": true,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Standard Institutional Floor-to-Floor Height (4.5m)",
+      "estimated_distance": 4.5,
+      "confidence_level": "High",
+      "verification_notes": "Continuous vertical elevator cab shaft between Floor 2 and Floor 3."
     },
     {
+      "id": "CONN_VERT_STAIRS_S_2_3",
       "source": "FET_2F_STAIRS_SOUTH",
       "destination": "FET_3F_STAIRS_SOUTH",
       "distance": 7.5,
@@ -2332,9 +3862,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "South central enclosed fire staircase flight between Floor 2 and Floor 3."
     },
     {
+      "id": "CONN_VERT_STAIRS_N_2_3",
       "source": "FET_2F_STAIRS_NORTH",
       "destination": "FET_3F_STAIRS_NORTH",
       "distance": 7.5,
@@ -2343,9 +3879,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire staircase flight between Floor 2 and Floor 3."
     },
     {
+      "id": "CONN_VERT_STAIRS_E_2_3",
       "source": "FET_2F_STAIRS_EAST",
       "destination": "FET_3F_STAIRS_EAST",
       "distance": 7.5,
@@ -2354,9 +3896,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial staircase flight between Floor 2 and Floor 3."
     },
     {
+      "id": "CONN_VERT_STAIRS_W_2_3",
       "source": "FET_2F_STAIRS_WEST",
       "destination": "FET_3F_STAIRS_WEST",
       "distance": 7.5,
@@ -2365,9 +3913,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial staircase flight between Floor 2 and Floor 3."
     },
     {
+      "id": "CONN_VERT_ELEV_3_4",
       "source": "FET_3F_ELEVATOR",
       "destination": "FET_4F_ELEVATOR",
       "distance": 4.5,
@@ -2376,9 +3930,15 @@
       "has_stairs": false,
       "has_ramp": false,
       "has_elevator": true,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Standard Institutional Floor-to-Floor Height (4.5m)",
+      "estimated_distance": 4.5,
+      "confidence_level": "High",
+      "verification_notes": "Continuous vertical elevator cab shaft between Floor 3 and Floor 4."
     },
     {
+      "id": "CONN_VERT_STAIRS_S_3_4",
       "source": "FET_3F_STAIRS_SOUTH",
       "destination": "FET_4F_STAIRS_SOUTH",
       "distance": 7.5,
@@ -2387,9 +3947,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "South central enclosed fire staircase flight between Floor 3 and Floor 4."
     },
     {
+      "id": "CONN_VERT_STAIRS_N_3_4",
       "source": "FET_3F_STAIRS_NORTH",
       "destination": "FET_4F_STAIRS_NORTH",
       "distance": 7.5,
@@ -2398,9 +3964,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "North cardinal fire staircase flight between Floor 3 and Floor 4."
     },
     {
+      "id": "CONN_VERT_STAIRS_E_3_4",
       "source": "FET_3F_STAIRS_EAST",
       "destination": "FET_4F_STAIRS_EAST",
       "distance": 7.5,
@@ -2409,9 +3981,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "East cardinal radial staircase flight between Floor 3 and Floor 4."
     },
     {
+      "id": "CONN_VERT_STAIRS_W_3_4",
       "source": "FET_3F_STAIRS_WEST",
       "destination": "FET_4F_STAIRS_WEST",
       "distance": 7.5,
@@ -2420,9 +3998,15 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Stair Flight Rise and Run Metric (7.5m walk distance)",
+      "estimated_distance": 7.5,
+      "confidence_level": "High",
+      "verification_notes": "West cardinal radial staircase flight between Floor 3 and Floor 4."
     },
     {
+      "id": "CONN_EXT_RAMP_ELEV",
       "source": "OUT_FET_WEST_RAMP",
       "destination": "FET_0F_ELEVATOR",
       "distance": 8.0,
@@ -2431,9 +4015,15 @@
       "has_stairs": false,
       "has_ramp": true,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Ground Floor Evacuation Plan Entrance Link",
+      "estimated_distance": 8.0,
+      "confidence_level": "High",
+      "verification_notes": "Step-free ramp entry direct to Ground Floor elevator core."
     },
     {
+      "id": "CONN_EXT_RAMP_FOYER",
       "source": "OUT_FET_WEST_RAMP",
       "destination": "FET_G_ENTRANCE_FOYER",
       "distance": 12.0,
@@ -2442,9 +4032,15 @@
       "has_stairs": false,
       "has_ramp": true,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Ground Floor Evacuation Plan Entrance Link",
+      "estimated_distance": 12.0,
+      "confidence_level": "High",
+      "verification_notes": "Step-free ramp entry to main entrance foyer."
     },
     {
+      "id": "CONN_EXT_PORTICO_FOYER",
       "source": "OUT_FET_FRONT_PORTICO",
       "destination": "FET_G_ENTRANCE_FOYER",
       "distance": 6.0,
@@ -2453,7 +4049,12 @@
       "has_stairs": true,
       "has_ramp": false,
       "has_elevator": false,
-      "status": "open"
+      "status": "open",
+      "verification_status": "IMAGE_DERIVED",
+      "measurement_source": "Ground Floor Evacuation Plan Entrance Link",
+      "estimated_distance": 6.0,
+      "confidence_level": "High",
+      "verification_notes": "Monumental front portico staircase entering main reception."
     }
   ]
 }

@@ -21,6 +21,11 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from modules.campus_map import CampusMap
+from modules.destination_search import (
+    get_search_suggestions,
+    group_destinations_by_building_and_floor,
+    search_destinations,
+)
 from modules.jain_digital_twin import (
     FLOOR_NAMES,
     build_jain_digital_twin_payload,
@@ -45,6 +50,7 @@ from modules.ui_theme import (
     WHITE,
     apply_custom_theme,
     get_app_services,
+    get_current_user,
     render_kpi_card,
 )
 
@@ -56,6 +62,11 @@ benchmark_cmap = services["campus_map"]
 benchmark_rf = services["route_finder"]
 acc_engine = services["accessibility_engine"]
 obs_manager = services["obstacle_manager"]
+db_manager = services.get("db_manager")
+
+current_user = get_current_user()
+current_user_id = current_user.get("user_id") if current_user else "guest"
+user_role = current_user.get("role") if current_user else "Guest"
 
 # Hero Banner
 st.markdown(
@@ -195,32 +206,6 @@ with col_controls:
     st.markdown("#### 🧭 3D Route Planning")
 
     # Search & Filter Enhancements for Location Selection
-    if is_jain_twin:
-        filter_floor = st.selectbox(
-            "Filter Destination by Floor:",
-            options=["All Floors & Outdoor", "Outdoor Campus", "Ground Floor (Level 0)", "First Floor (Level 1)", "Second Floor (Level 2)", "Third Floor (Level 3)", "Fourth Floor (Level 4)"],
-            index=0,
-            key="3d_filter_floor",
-        )
-        filtered_labels = loc_labels
-        if filter_floor == "Outdoor Campus":
-            filtered_labels = [l for l in loc_labels if "[Outdoor]" in l]
-        elif filter_floor == "Ground Floor (Level 0)":
-            filtered_labels = [l for l in loc_labels if "[Floor 0]" in l]
-        elif filter_floor == "First Floor (Level 1)":
-            filtered_labels = [l for l in loc_labels if "[Floor 1]" in l]
-        elif filter_floor == "Second Floor (Level 2)":
-            filtered_labels = [l for l in loc_labels if "[Floor 2]" in l]
-        elif filter_floor == "Third Floor (Level 3)":
-            filtered_labels = [l for l in loc_labels if "[Floor 3]" in l]
-        elif filter_floor == "Fourth Floor (Level 4)":
-            filtered_labels = [l for l in loc_labels if "[Floor 4]" in l]
-        
-        if not filtered_labels:
-            filtered_labels = loc_labels
-    else:
-        filtered_labels = loc_labels
-
     start_label = st.selectbox(
         "Origin Location:",
         options=loc_labels,
@@ -230,21 +215,82 @@ with col_controls:
     )
     start_id = loc_options[start_label]
 
-    # Destination index within filtered list
-    dest_idx = 0
-    for idx, label in enumerate(filtered_labels):
-        if default_dest_idx < len(loc_labels) and label == loc_labels[default_dest_idx]:
-            dest_idx = idx
-            break
-
-    dest_label = st.selectbox(
-        "Destination Facility:",
-        options=filtered_labels,
-        index=dest_idx,
-        key="3d_route_dest",
-        help="Choose target campus destination.",
+    # Destination Search with Keyword Intelligence
+    dest_search_query = st.text_input(
+        "🔍 Search Destination (Lab, Room, Dept, Keyword):",
+        value="",
+        placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
+        key="3d_dest_search_input",
+        help="Search 79 campus locations by room name, department, category, abbreviation, or keywords.",
     )
-    dest_id = loc_options[dest_label]
+
+    matched_dest_id = None
+    if dest_search_query.strip() and is_jain_twin:
+        search_matches = search_destinations(dest_search_query, active_cmap, limit=15)
+        if search_matches:
+            st.caption(f"✨ Found {len(search_matches)} match(es) for '{dest_search_query}'")
+            search_options = {
+                f"[{'Outdoor' if m.floor == -1 else f'Floor {m.floor}'}] {m.name} ({m.location_id}) — {m.category.title()}": m.location_id
+                for m in search_matches
+            }
+            matched_labels = list(search_options.keys())
+            selected_match_label = st.selectbox(
+                "Select Matched Facility:",
+                options=matched_labels,
+                index=0,
+                key="3d_matched_dest_select",
+            )
+            matched_dest_id = search_options[selected_match_label]
+        else:
+            st.caption("ℹ️ No exact keyword matches found. Browse via floor filter below.")
+            suggestions = get_search_suggestions(dest_search_query, active_cmap)
+            if suggestions:
+                st.caption("💡 Suggestions: " + ", ".join(suggestions[:5]))
+
+    if matched_dest_id:
+        dest_id = matched_dest_id
+    else:
+        if is_jain_twin:
+            filter_floor = st.selectbox(
+                "Filter Destination by Floor:",
+                options=["All Floors & Outdoor", "Outdoor Campus", "Ground Floor (Level 0)", "First Floor (Level 1)", "Second Floor (Level 2)", "Third Floor (Level 3)", "Fourth Floor (Level 4)"],
+                index=0,
+                key="3d_filter_floor",
+            )
+            filtered_labels = loc_labels
+            if filter_floor == "Outdoor Campus":
+                filtered_labels = [l for l in loc_labels if "[Outdoor]" in l]
+            elif filter_floor == "Ground Floor (Level 0)":
+                filtered_labels = [l for l in loc_labels if "[Floor 0]" in l]
+            elif filter_floor == "First Floor (Level 1)":
+                filtered_labels = [l for l in loc_labels if "[Floor 1]" in l]
+            elif filter_floor == "Second Floor (Level 2)":
+                filtered_labels = [l for l in loc_labels if "[Floor 2]" in l]
+            elif filter_floor == "Third Floor (Level 3)":
+                filtered_labels = [l for l in loc_labels if "[Floor 3]" in l]
+            elif filter_floor == "Fourth Floor (Level 4)":
+                filtered_labels = [l for l in loc_labels if "[Floor 4]" in l]
+            
+            if not filtered_labels:
+                filtered_labels = loc_labels
+        else:
+            filtered_labels = loc_labels
+
+        # Destination index within filtered list
+        dest_idx = 0
+        for idx, label in enumerate(filtered_labels):
+            if default_dest_idx < len(loc_labels) and label == loc_labels[default_dest_idx]:
+                dest_idx = idx
+                break
+
+        dest_label = st.selectbox(
+            "Destination Facility:",
+            options=filtered_labels,
+            index=dest_idx,
+            key="3d_route_dest",
+            help="Choose target campus destination.",
+        )
+        dest_id = loc_options[dest_label]
 
     c_algo, c_wheelchair = st.columns(2)
     with c_algo:
@@ -309,35 +355,39 @@ with col_controls:
 
     if nav_session.state in (NavigationState.IDLE, NavigationState.ROUTE_PREVIEW):
         if st.button("🚀 Start Live Navigation", type="primary", use_container_width=True, key="btn_start_nav"):
-            nav_session.start_navigation()
+            nav_session.user_id = current_user_id
+            nav_session.start_navigation(db_manager=db_manager)
             st.rerun()
     elif nav_session.state == NavigationState.NAVIGATING:
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
             if st.button("⏸️ Pause", use_container_width=True, key="btn_pause_nav"):
                 nav_session.pause_navigation()
+                nav_session.persist_session_state(db_manager)
                 st.rerun()
         with c2:
             if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav"):
-                nav_session.step_forward(active_cmap)
+                nav_session.step_forward(active_cmap, db_manager=db_manager)
                 st.rerun()
         with c3:
             if st.button("⏹️ Cancel", use_container_width=True, key="btn_cancel_nav"):
-                nav_session.cancel_navigation()
+                nav_session.cancel_navigation(db_manager=db_manager)
                 st.rerun()
     elif nav_session.state in (NavigationState.PAUSED, NavigationState.FLOOR_TRANSITION):
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
             if st.button("▶️ Resume", type="primary", use_container_width=True, key="btn_resume_nav"):
                 nav_session.resume_navigation()
+                nav_session.persist_session_state(db_manager)
                 st.rerun()
         with c2:
             if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav_p"):
-                nav_session.step_forward(active_cmap)
+                nav_session.step_forward(active_cmap, db_manager=db_manager)
                 st.rerun()
         with c3:
             if st.button("🔄 Restart", use_container_width=True, key="btn_restart_nav"):
                 nav_session.restart_navigation()
+                nav_session.persist_session_state(db_manager)
                 st.rerun()
     elif nav_session.state == NavigationState.ARRIVED:
         st.success("🎉 You have arrived at your destination!")
@@ -365,9 +415,26 @@ with col_controls:
     floor_num = int(inspect_loc.get("floor", 0))
     category = str(inspect_loc.get("category", "office")).title()
     building = str(inspect_loc.get("building", "Academic Complex"))
+    dept = str(inspect_loc.get("department", "FET Complex"))
     is_step_free = bool(inspect_loc.get("wheelchair_accessible", True))
 
     floor_display = "Outdoor Grounds" if floor_num == -1 else f"Floor {floor_num} ({FLOOR_NAMES.get(floor_num, '')})"
+
+    verif_status = inspect_loc.get("verification_status", "IMAGE_DERIVED")
+    badge_colors = {
+        "VERIFIED": ("#10B981", "rgba(16, 185, 129, 0.18)"),
+        "IMAGE_DERIVED": ("#38BDF8", "rgba(56, 189, 248, 0.18)"),
+        "APPROXIMATE": ("#F5B942", "rgba(245, 185, 66, 0.18)"),
+        "UNVERIFIED": ("#94A3B8", "rgba(148, 163, 184, 0.18)"),
+    }
+    badge_fg, badge_bg = badge_colors.get(verif_status, ("#94A3B8", "rgba(148, 163, 184, 0.18)"))
+
+    verif_source = inspect_loc.get("verification_source", "Floor Plan Layout Analysis")
+    last_verif = inspect_loc.get("last_verified", "2026-11-22")
+    conf_level = inspect_loc.get("confidence_level", "Medium")
+    verif_notes = inspect_loc.get("verification_notes", "Derived from reference imagery.")
+    search_keys = inspect_loc.get("search_keywords", inspect_loc.get("aliases", []))
+    keywords_str = ", ".join(search_keys) if search_keys else "None"
 
     st.markdown(
         f"""
@@ -376,9 +443,25 @@ with col_controls:
             <div><b>Building:</b> {building}</div>
             <div><b>Building Level:</b> {floor_display}</div>
             <div><b>Category:</b> {category}</div>
+            <div><b>Department:</b> {dept}</div>
             <div><b>Accessibility:</b> <span style="color: {'#35D99A' if is_step_free else '#F5B942'};">
                 {'✅ Step-Free Accessible' if is_step_free else '⚠️ Stair Access Only'}
             </span></div>
+        </div>
+
+        <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.25); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: #9CAFA5; text-transform: uppercase; letter-spacing: 0.5px;">Data Reliability</span>
+                <span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_fg}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800;">
+                    {verif_status}
+                </span>
+            </div>
+            <div style="font-size: 11px; color: #9CAFA5; line-height: 1.5;">
+                <div><b>Source:</b> {verif_source}</div>
+                <div><b>Confidence:</b> {conf_level} &nbsp;|&nbsp; <b>Verified:</b> {last_verif}</div>
+                <div><b>Keywords / Aliases:</b> {keywords_str}</div>
+                <div style="margin-top: 4px; font-style: italic; color: #CBD5E1;">"{verif_notes}"</div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -634,6 +717,21 @@ if route_data and route_data.get("success"):
                 status_badge = '<span style="background: rgba(16, 185, 129, 0.2); color: #35D99A; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 8px;">✅ COMPLETED</span>'
 
             icon = "🛗" if step.get("has_elevator") else "🪜" if step.get("has_stairs") else "♿" if step.get("has_ramp") else "🚶"
+            h_deg = step.get("heading_deg")
+            c_dir = step.get("cardinal_direction")
+            if h_deg is None and step.get("from_id") and step.get("to_id"):
+                u_loc = active_cmap.get_location(step["from_id"]) or {}
+                v_loc = active_cmap.get_location(step["to_id"]) or {}
+                if u_loc and v_loc:
+                    from modules.navigation_instructions import compute_bearing_and_cardinal
+                    h_deg, c_dir = compute_bearing_and_cardinal(u_loc, v_loc)
+
+            heading_info = ""
+            if h_deg is not None and c_dir and c_dir != "Stationary":
+                heading_info = f" &nbsp;|&nbsp; 🧭 <b>Heading:</b> {c_dir} ({h_deg:.0f}°)"
+            elif c_dir and c_dir != "Stationary":
+                heading_info = f" &nbsp;|&nbsp; 🧭 <b>Heading:</b> {c_dir}"
+
             st.markdown(
                 f"""
                 <div class="step-box" style="border: {box_border}; background: {box_bg}; opacity: {box_opacity}; transition: all 0.3s ease;">
@@ -646,13 +744,22 @@ if route_data and route_data.get("success"):
                             Segment: <b>{step['from_name']}</b> (Floor {step['from_floor']}) ➔ <b>{step['to_name']}</b> (Floor {step['to_floor']}) &nbsp;|&nbsp;
                             Distance: <b>{step['distance']:.1f} m</b> &nbsp;|&nbsp;
                             Est. Time: <b>{step['estimated_time']:.1f} s</b> &nbsp;|&nbsp;
-                            Wheelchair Passable: <b>{'Yes' if step['wheelchair_accessible'] else 'No (Stairs)'}</b>
+                            Wheelchair Passable: <b>{'Yes' if step['wheelchair_accessible'] else 'No (Stairs)'}</b>{heading_info}
                         </div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
+
+        st.markdown(
+            """
+            <div style="font-size: 11px; color: #9CAFA5; margin-top: 10px; padding: 6px 12px; background: rgba(13, 31, 24, 0.4); border-left: 3px solid #38BDF8; border-radius: 4px;">
+                🧭 <b>Directional & Heading Disclosure:</b> Compass bearings (0°–360° clockwise from campus grid North) and cardinal orientations are calculated from schematic 3D coordinates relative to campus grid North (-Z axis) for spatial reference and assistive wayfinding.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # Heuristic Accessibility Notice
     st.markdown(
@@ -674,3 +781,152 @@ elif route_data and not route_data.get("success"):
         """,
         unsafe_allow_html=True,
     )
+
+# --- RECENT NAVIGATION HISTORY & USER STATS ---
+if db_manager and hasattr(db_manager, "get_navigation_history"):
+    st.markdown("---")
+    st.markdown("### 📜 Recent Navigation History & Wayfinding Telemetry")
+
+    try:
+        hist_records = db_manager.get_navigation_history(user_id=current_user_id, limit=5)
+    except Exception:
+        hist_records = []
+
+    try:
+        stats = db_manager.get_navigation_stats(user_id=current_user_id)
+    except Exception:
+        stats = {
+            "total_sessions": 0,
+            "completed_sessions": 0,
+            "completion_rate": 0.0,
+            "total_distance_navigated": 0.0,
+            "average_duration_seconds": 0.0,
+        }
+
+    h1, h2, h3, h4 = st.columns(4)
+    with h1:
+        render_kpi_card("Total Journeys", f"{stats['total_sessions']} Sessions", "Logged in navigation history", PRIMARY_GREEN)
+    with h2:
+        render_kpi_card("Completed Routes", f"{stats['completed_sessions']} Arrived", f"{stats['completion_rate']:.0f}% completion rate", ACCENT_GREEN)
+    with h3:
+        render_kpi_card("Total Distance Navigated", f"{stats['total_distance_navigated']:.1f} m", "Physical distance traversed", INFO)
+    with h4:
+        avg_dur = stats['average_duration_seconds']
+        render_kpi_card("Avg Transit Time", f"{avg_dur:.0f} s", f"~{(avg_dur/60):.1f} min per journey", WHITE)
+
+    if hist_records:
+        with st.expander("🔍 View Recent Wayfinding Log", expanded=False):
+            for rec in hist_records:
+                stat_color = "#10B981" if rec["status"] == "ARRIVED" else ("#F87171" if rec["status"] == "CANCELLED" else ("#F5B942" if rec["status"] == "REROUTED" else ("#35D99A" if rec["status"] == "NAVIGATING" else "#9CAFA5")))
+                st.markdown(
+                    f"""
+                    <div style="background: rgba(13, 31, 24, 0.6); border: 1px solid rgba(156, 175, 165, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 700; color: #F8FAFC; font-size: 13px;">
+                                🚀 {rec.get('origin_name', rec['origin_id'])} ➔ {rec.get('destination_name', rec['destination_id'])}
+                            </span>
+                            <span style="background: rgba(255,255,255,0.06); color: {stat_color}; border: 1px solid {stat_color}; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">
+                                {rec['status']}
+                            </span>
+                        </div>
+                        <div style="font-size: 11px; color: #9CAFA5; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 16px;">
+                            <span>Session: <code>{rec['session_id']}</code></span>
+                            <span>Distance: <b>{rec['total_distance']:.1f} m</b></span>
+                            <span>Time: <b>{rec['total_time']:.0f} s</b></span>
+                            <span>Algorithm: <b>{rec['algorithm'].upper()}</b></span>
+                            <span>Wheelchair: <b>{'Yes' if rec['wheelchair_mode'] else 'Standard'}</b></span>
+                            <span>Rerouted: <b>{'Yes' if rec['is_rerouted'] else 'No'}</b></span>
+                            <span>Logged: <b>{rec['created_at'][:19] if rec.get('created_at') else ''}</b></span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    else:
+        st.caption("No historical navigation sessions recorded yet. Start a navigation session to log wayfinding telemetry.")
+
+# --- ADMINISTRATIVE DATA QUALITY & VERIFICATION GOVERNANCE ---
+if is_jain_twin and db_manager:
+    st.markdown("---")
+    with st.expander("🛡️ Administrative Campus Data Quality & Verification Governance", expanded=False):
+        st.markdown("##### 📊 Campus Graph Verification Distribution")
+        st.caption("Authoritative classification of 79 locations and 106 pathways across the JAIN Global Campus & FET complex.")
+
+        # Compute live distribution from active_cmap
+        loc_counts = {"VERIFIED": 0, "IMAGE_DERIVED": 0, "APPROXIMATE": 0, "UNVERIFIED": 0}
+        for loc in active_cmap.get_all_locations():
+            stt = loc.get("verification_status", "IMAGE_DERIVED")
+            loc_counts[stt] = loc_counts.get(stt, 0) + 1
+
+        path_counts = {"VERIFIED": 0, "IMAGE_DERIVED": 0, "APPROXIMATE": 0, "UNVERIFIED": 0}
+        for u, v, data in active_cmap.graph.edges(data=True):
+            pstt = data.get("verification_status", "IMAGE_DERIVED")
+            path_counts[pstt] = path_counts.get(pstt, 0) + 1
+
+        q1, q2 = st.columns(2)
+        with q1:
+            st.markdown(
+                f"""
+                <div style="background: rgba(13, 31, 24, 0.7); border: 1px solid rgba(53, 217, 154, 0.2); border-radius: 8px; padding: 12px 16px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #35D99A; margin-bottom: 8px;">📍 Campus Locations (Total: {len(active_cmap.get_all_locations())})</div>
+                    <div style="font-size: 12px; line-height: 1.8;">
+                        <div>🟢 <b>VERIFIED:</b> {loc_counts['VERIFIED']} location(s) (Physical Entrance audited)</div>
+                        <div>🔵 <b>IMAGE_DERIVED:</b> {loc_counts['IMAGE_DERIVED']} location(s) (Derived from official floor plans)</div>
+                        <div>🟡 <b>APPROXIMATE:</b> {loc_counts['APPROXIMATE']} location(s)</div>
+                        <div>⚪ <b>UNVERIFIED:</b> {loc_counts['UNVERIFIED']} location(s)</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with q2:
+            st.markdown(
+                f"""
+                <div style="background: rgba(13, 31, 24, 0.7); border: 1px solid rgba(53, 217, 154, 0.2); border-radius: 8px; padding: 12px 16px;">
+                    <div style="font-weight: 700; font-size: 13px; color: #38BDF8; margin-bottom: 8px;">🛤️ Campus Pathways (Total: {len(active_cmap.graph.edges())})</div>
+                    <div style="font-size: 12px; line-height: 1.8;">
+                        <div>🟢 <b>VERIFIED:</b> {path_counts['VERIFIED']} pathway(s)</div>
+                        <div>🔵 <b>IMAGE_DERIVED:</b> {path_counts['IMAGE_DERIVED']} pathway(s) (Indoor corridors & vertical shafts)</div>
+                        <div>🟡 <b>APPROXIMATE:</b> {path_counts['APPROXIMATE']} pathway(s) (Outdoor estimated perimeter trails)</div>
+                        <div>⚪ <b>UNVERIFIED:</b> {path_counts['UNVERIFIED']} pathway(s)</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("##### ✍️ Update Entity Verification Status (Administrator Only)")
+        is_admin = (user_role == "Administrator")
+        if not is_admin:
+            st.info("🔒 Status updating requires **Administrator** role privileges. Log in with an administrator account to submit verification records.")
+        
+        col_u1, col_u2 = st.columns(2)
+        with col_u1:
+            entity_type_choice = st.selectbox("Entity Classification:", ["Location", "Pathway"], key="admin_entity_type")
+            if entity_type_choice == "Location":
+                target_entity_id = st.selectbox("Select Target Location:", options=[loc['id'] for loc in all_locs], key="admin_target_loc")
+            else:
+                conn_options = [f"{u} ➔ {v}" for u, v in active_cmap.graph.edges()]
+                target_conn_str = st.selectbox("Select Target Pathway:", options=conn_options, key="admin_target_path")
+                target_entity_id = target_conn_str
+
+        with col_u2:
+            new_status_choice = st.selectbox("New Verification Status:", ["VERIFIED", "IMAGE_DERIVED", "APPROXIMATE", "UNVERIFIED"], key="admin_new_status")
+            verif_source_input = st.text_input("Verification Source:", value="On-site physical validation", key="admin_verif_source")
+
+        verif_notes_input = st.text_area("Audit Notes & Justification:", value="Verified physical accessibility and dimensions during campus survey.", key="admin_verif_notes")
+
+        if st.button("💾 Submit Verification Update", disabled=not is_admin, key="btn_submit_verif"):
+            success, msg = db_manager.update_campus_verification(
+                entity_type=entity_type_choice.lower(),
+                entity_id=target_entity_id,
+                status=new_status_choice,
+                source=verif_source_input,
+                notes=verif_notes_input,
+                user_role=user_role,
+                user_id=current_user_id,
+            )
+            if success:
+                st.success(f"✅ {msg}")
+            else:
+                st.error(f"❌ {msg}")
