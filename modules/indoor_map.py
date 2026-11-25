@@ -237,11 +237,61 @@ def calculate_display_coordinates(
     return coords
 
 
+def _format_short_map_label(loc: Dict[str, Any]) -> str:
+    """Create a concise, human-readable label for 2D map markers to minimize text overlap."""
+    loc_id = str(loc.get("id", ""))
+    name = str(loc.get("name", loc_id))
+    # Strip verbose floor prefixes from names for concise map rendering
+    for prefix in (
+        "Ground Floor - ",
+        "First Floor - ",
+        "Second Floor - ",
+        "Third Floor - ",
+        "Fourth Floor - ",
+        "Ground Floor ",
+        "First Floor ",
+        "Second Floor ",
+        "Third Floor ",
+        "Fourth Floor ",
+    ):
+        if name.startswith(prefix):
+            name = name[len(prefix):]
+            break
+    if len(name) > 22:
+        name = name[:20].rstrip() + "…"
+    return name
+
+
+def _compute_text_position(x: float, y: float, floor_filter: Optional[int]) -> str:
+    """Distribute marker label anchors radially outward to prevent overlaps around central atrium."""
+    if floor_filter is None:
+        return "top center"
+    if abs(y) < 6 and abs(x) >= 12:
+        return "middle right" if x > 0 else "middle left"
+    if y >= 15:
+        if x < -4:
+            return "top left"
+        if x > 4:
+            return "top right"
+        return "top center"
+    if y <= -15:
+        if x < -4:
+            return "bottom left"
+        if x > 4:
+            return "bottom right"
+        return "bottom center"
+    if x >= 0:
+        return "top right" if y >= 0 else "bottom right"
+    return "top left" if y >= 0 else "bottom left"
+
+
 def create_indoor_map_figure(
     campus_map: CampusMap,
     floor_filter: Optional[int] = None,
     highlight_route: Optional[List[str]] = None,
     selected_location_id: Optional[str] = None,
+    show_all_labels: Optional[bool] = None,
+    accessibility_mode: str = "all",
 ) -> go.Figure:
     """Construct an interactive Plotly figure representing the schematic indoor campus map.
 
@@ -296,7 +346,7 @@ def create_indoor_map_figure(
         x1, y1 = coords[v]
 
         status = str(data.get("status", "open")).lower()
-        is_acc = data.get("wheelchair_accessible", True)
+        is_acc = data.get("wheelchair_accessible")
         has_stairs = bool(data.get("has_stairs", False))
         has_elevator = bool(data.get("has_elevator", False))
         has_ramp = bool(data.get("has_ramp", False))
@@ -312,7 +362,7 @@ def create_indoor_map_figure(
             line_dash = "solid"
             line_width = 4.0
             edge_desc = "🛗 Elevator Connection"
-        elif has_stairs and not is_acc:
+        elif has_stairs and is_acc is not True:
             line_color = "#F5B942"  # Warning Amber/Orange
             line_dash = "dot"
             line_width = 3.0
@@ -322,20 +372,30 @@ def create_indoor_map_figure(
             line_dash = "solid"
             line_width = 3.5
             edge_desc = "♿ Accessible Ramp"
-        elif is_acc:
+        elif is_acc is True:
             line_color = "#16A36A"  # Primary Green
             line_dash = "solid"
             line_width = 3.0
             edge_desc = "🟢 Accessible Corridor"
+        elif is_acc is False:
+            line_color = "#F87171"
+            line_dash = "dot"
+            line_width = 2.8
+            edge_desc = "🔴 Inaccessible Pathway"
         else:
             line_color = "#9CAFA5"  # Secondary Text Grey
             line_dash = "dashdot"
             line_width = 2.5
             edge_desc = "⚪ Unknown Accessibility"
 
-        # Dim base edge if a route is actively highlighted
-        if highlight_route and (u, v) not in route_edges:
-            line_opacity = 0.35
+        # Dim base edge if a route is actively highlighted or accessibility filter active
+        is_route_edge = highlight_route and (u, v) in route_edges
+        if accessibility_mode == "wheelchair_only" and (is_acc is not True or has_stairs or status in ("blocked", "closed", "maintenance", "under_maintenance")):
+            line_opacity = 0.14
+        elif accessibility_mode == "barriers_highlight" and not (has_stairs or status in ("blocked", "closed", "maintenance", "under_maintenance") or has_elevator or has_ramp):
+            line_opacity = 0.22
+        elif highlight_route and not is_route_edge:
+            line_opacity = 0.30
         else:
             line_opacity = 0.95
 
@@ -362,13 +422,38 @@ def create_indoor_map_figure(
 
     # --- 2. RENDER HIGHLIGHTED ROUTE TRACE OVERLAY ---
     if highlight_route and len(highlight_route) > 1:
-        route_xs: List[float] = []
-        route_ys: List[float] = []
-        for nid in highlight_route:
-            if nid in coords and (floor_filter is None or nid in visible_nodes):
-                x_val, y_val = coords[nid]
-                route_xs.append(x_val)
-                route_ys.append(y_val)
+        route_xs: List[Optional[float]] = []
+        route_ys: List[Optional[float]] = []
+        transition_xs: List[float] = []
+        transition_ys: List[float] = []
+        transition_texts: List[str] = []
+
+        for i in range(len(highlight_route) - 1):
+            u, v = highlight_route[i], highlight_route[i + 1]
+            u_vis = u in coords and (floor_filter is None or u in visible_nodes)
+            v_vis = v in coords and (floor_filter is None or v in visible_nodes)
+            if u_vis and v_vis:
+                ux, uy = coords[u]
+                vx, vy = coords[v]
+                if route_xs and route_xs[-1] != ux:
+                    route_xs.append(None)
+                    route_ys.append(None)
+                if not route_xs or route_xs[-1] is None:
+                    route_xs.extend([ux, vx])
+                    route_ys.extend([uy, vy])
+                else:
+                    route_xs.append(vx)
+                    route_ys.append(vy)
+            elif floor_filter is not None and (u_vis ^ v_vis):
+                vis_id = u if u_vis else v
+                other_id = v if u_vis else u
+                tx, ty = coords[vis_id]
+                other_fl = (campus_map.get_location(other_id) or {}).get("floor", 0)
+                fl_lbl = "Outdoor" if other_fl == -1 else f"Floor {other_fl}"
+                direction = "to" if u_vis else "from"
+                transition_xs.append(tx)
+                transition_ys.append(ty)
+                transition_texts.append(f"Route continues {direction} {fl_lbl} ({other_id})")
 
         if len(route_xs) > 1:
             fig.add_trace(
@@ -380,6 +465,18 @@ def create_indoor_map_figure(
                     opacity=0.95,
                     name="Active Navigation Route",
                     hoverinfo="skip",
+                )
+            )
+        if transition_xs:
+            fig.add_trace(
+                go.Scatter(
+                    x=transition_xs,
+                    y=transition_ys,
+                    mode="markers",
+                    marker=dict(size=22, color="rgba(245, 158, 11, 0.28)", symbol="diamond", line=dict(width=2.5, color="#F59E0B")),
+                    name="Floor Transition Point",
+                    hoverinfo="text",
+                    hovertext=transition_texts,
                 )
             )
 
@@ -429,6 +526,11 @@ def create_indoor_map_figure(
             cat = loc.get("category", "other").lower()
             categorized_nodes.setdefault(cat, []).append(loc)
 
+    is_jain_map = len(campus_map.locations) > 20
+    # Default label policy: concise readable labels on single floors; clean landmark-only labels on multi-plate overview
+    effective_show_all = show_all_labels if show_all_labels is not None else (floor_filter is not None or not is_jain_map)
+    route_node_set = set(highlight_route or [])
+
     for cat, loc_list in categorized_nodes.items():
         cat_xs = [coords[loc["id"]][0] for loc in loc_list]
         cat_ys = [coords[loc["id"]][1] for loc in loc_list]
@@ -436,18 +538,38 @@ def create_indoor_map_figure(
         icon = category_icons.get(cat, "📍")
 
         hover_texts = []
+        display_labels = []
+        text_positions = []
         for loc in loc_list:
             fl_val = loc.get("floor", 0)
             fl_text = "Outdoor Grounds" if fl_val == -1 else f"Floor {fl_val}"
-            acc_str = "✅ Step-Free Accessible" if loc.get("wheelchair_accessible", True) else "⚠️ Stair Access"
+            wa_flag = loc.get("wheelchair_accessible")
+            if wa_flag is True:
+                acc_str = "✅ Step-Free Accessible"
+            elif wa_flag is False:
+                acc_str = "⚠️ Stair Access / Restriction"
+            else:
+                acc_str = "⚪ Unknown Accessibility"
+            verif = loc.get("verification_status", "IMAGE_DERIVED")
             ht = (
                 f"<b>[{loc['id']}] {loc['name']}</b><br>"
                 f"Building: {loc.get('building', 'Academic Complex')}<br>"
                 f"Level: {fl_text} · Category: {cat.capitalize()}<br>"
-                f"Accessibility: {acc_str}<br>"
+                f"Accessibility: {acc_str} · Data: {verif}<br>"
                 f"Coordinates: ({loc.get('x')}, {loc.get('y')})"
             )
             hover_texts.append(ht)
+
+            nid = loc["id"]
+            is_key_landmark = cat in ("gate", "elevator", "library", "ramp") or nid in route_node_set or nid == selected_location_id
+            if effective_show_all or is_key_landmark:
+                display_labels.append(f"{icon} {_format_short_map_label(loc)}")
+            else:
+                display_labels.append("")
+
+            raw_x = float(loc.get("x", 0.0) or 0.0)
+            raw_y = float(loc.get("y", 0.0) or 0.0)
+            text_positions.append(_compute_text_position(raw_x, raw_y, floor_filter))
 
         fig.add_trace(
             go.Scatter(
@@ -455,13 +577,13 @@ def create_indoor_map_figure(
                 y=cat_ys,
                 mode="markers+text",
                 marker=dict(
-                    size=16,
+                    size=15 if floor_filter is not None else 12,
                     color=cat_color,
                     line=dict(width=2, color="#07130F"),
                 ),
-                text=[f"{icon} {loc['id']}" for loc in loc_list],
-                textposition="top center",
-                textfont=dict(size=9.5, color="#F8FAFC", family="Arial, sans-serif"),
+                text=display_labels,
+                textposition=text_positions,
+                textfont=dict(size=9.5 if floor_filter is not None else 8.5, color="#F8FAFC", family="Arial, sans-serif"),
                 name=cat.capitalize(),
                 hoverinfo="text",
                 hovertext=hover_texts,
@@ -625,7 +747,7 @@ def create_indoor_map_figure(
             annotations.append(
                 dict(
                     x=0,
-                    y=33,
+                    y=36.5,
                     text=f"<b>🏛️ FET Complex: {floor_names.get(floor_filter, '')}</b>",
                     font=dict(size=13, color="#35D99A"),
                     showarrow=False,
@@ -634,51 +756,51 @@ def create_indoor_map_figure(
             annotations.append(
                 dict(
                     x=0,
-                    y=0,
+                    y=-4,
                     text="<b>Central Atrium & Rotunda</b>",
-                    font=dict(size=10.5, color="rgba(167, 243, 208, 0.7)"),
+                    font=dict(size=10, color="rgba(167, 243, 208, 0.55)"),
                     showarrow=False,
                 )
             )
             annotations.append(
                 dict(
                     x=-27,
-                    y=0,
+                    y=19.5,
                     text="<b>West Wing</b>",
-                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.75)"),
                     showarrow=False,
                 )
             )
             annotations.append(
                 dict(
                     x=27,
-                    y=0,
+                    y=19.5,
                     text="<b>East Wing</b>",
-                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.75)"),
                     showarrow=False,
                 )
             )
             annotations.append(
                 dict(
                     x=0,
-                    y=-25,
+                    y=-36.5,
                     text="<b>North Wing & Seminar</b>",
-                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.75)"),
                     showarrow=False,
                 )
             )
             annotations.append(
                 dict(
                     x=0,
-                    y=20,
+                    y=30.5,
                     text="<b>South Entrance & Elevators</b>",
-                    font=dict(size=10, color="rgba(156, 175, 165, 0.8)"),
+                    font=dict(size=10, color="rgba(156, 175, 165, 0.75)"),
                     showarrow=False,
                 )
             )
 
-            x_range = [-46, 46]
-            y_range = [-40, 38]
+            x_range = [-50, 50]
+            y_range = [-42, 41]
 
         elif floor_filter == -1:
             # JAIN Outdoor Campus Grounds
@@ -865,7 +987,8 @@ def create_indoor_map_figure(
             y_range = [5, 52]
 
     fig.update_layout(
-        height=540,
+        height=560,
+        dragmode="pan",
         margin=dict(l=20, r=20, t=35, b=25),
         xaxis=dict(
             title="Schematic X Coordinate",

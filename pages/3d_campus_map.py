@@ -20,6 +20,7 @@ from __future__ import annotations
 import streamlit as st
 import streamlit.components.v1 as components
 
+from modules.accessibility import AccessibilityEngine
 from modules.campus_map import CampusMap
 from modules.destination_search import (
     get_search_suggestions,
@@ -61,7 +62,6 @@ services = get_app_services()
 
 benchmark_cmap = services["campus_map"]
 benchmark_rf = services["route_finder"]
-acc_engine = services["accessibility_engine"]
 obs_manager = services["obstacle_manager"]
 db_manager = services.get("db_manager")
 
@@ -132,7 +132,7 @@ with col_pref3:
     )
 with col_pref4:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    if st.button("🗺️ 2D Floor Plan", use_container_width=True, help="Switch to 2D Architectural Floor Plan"):
+    if st.button("🗺️ 2D Floor Plan", width="stretch", help="Switch to 2D Architectural Floor Plan"):
         st.switch_page("pages/campus_map.py")
 
 if pref_high_contrast:
@@ -172,54 +172,48 @@ if pref_reduced_motion:
     )
 
 # 3D Environment Model Switcher
-st.markdown('<div class="ui-card" style="padding: 12px 18px; margin-bottom: 16px;">', unsafe_allow_html=True)
-col_m1, col_m2 = st.columns([1.8, 1.2])
-with col_m1:
-    model_choice = st.radio(
-        "🗺️ Select 3D Campus Environment:",
-        options=[
-            "🏛️ JAIN Global Campus & FET 5-Floor Digital Twin",
-            "📐 Schematic Benchmark Model (15-Node Reference)",
-        ],
-        index=0,
-        horizontal=True,
-        key="selected_3d_environment_mode",
-        help="Switch between the 5-floor JAIN Global Campus digital twin and the schematic 15-node benchmark model.",
-    )
-with col_m2:
-    if "JAIN" in model_choice:
-        st.markdown(
-            """
-            <div style="font-size: 12px; color: #35D99A; padding-top: 8px;">
-                <b>Active Campus:</b> JAIN Global Campus, Kanakapura Road<br>
-                <b>Structure:</b> FET 5-Floor Complex (79 Locations, 106 Pathways)
-            </div>
-            """,
-            unsafe_allow_html=True,
+with st.container(border=True):
+    col_m1, col_m2 = st.columns([1.8, 1.2])
+    with col_m1:
+        model_choice = st.radio(
+            "🗺️ Select 3D Campus Environment:",
+            options=[
+                "🏛️ JAIN Global Campus & FET 5-Floor Digital Twin",
+                "📐 Schematic Benchmark Model (15-Node Reference)",
+            ],
+            index=0,
+            horizontal=True,
+            key="selected_3d_environment_mode",
+            help="Switch between the 5-floor JAIN Global Campus digital twin and the schematic 15-node benchmark model.",
         )
-    else:
-        st.markdown(
-            """
-            <div style="font-size: 12px; color: #9CAFA5; padding-top: 8px;">
-                <b>Active Campus:</b> Academic Complex Benchmark<br>
-                <b>Structure:</b> 2-Floor Schematic (15 Locations, 17 Pathways)
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-st.markdown("</div>", unsafe_allow_html=True)
+    with col_m2:
+        if "JAIN" in model_choice:
+            st.markdown(
+                """
+                <div style="font-size: 12px; color: #35D99A; padding-top: 8px;">
+                    <b>Active Campus:</b> JAIN Global Campus, Kanakapura Road<br>
+                    <b>Structure:</b> FET 5-Floor Complex (79 Locations, 106 Pathways)
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """
+                <div style="font-size: 12px; color: #9CAFA5; padding-top: 8px;">
+                    <b>Active Campus:</b> Academic Complex Benchmark<br>
+                    <b>Structure:</b> 2-Floor Schematic (15 Locations, 17 Pathways)
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 is_jain_twin = "JAIN" in model_choice
 
-# Prepare active map and route finder based on model selection
+# Prepare active map, route finder, and accessibility engine from single source of truth
 if is_jain_twin:
     active_cmap = load_jain_campus_map()
-    # Synchronize active verified obstacles to JAIN graph
-    for haz in obs_manager.get_active_obstacles():
-        u = haz.get("source_location_id")
-        v = haz.get("destination_location_id")
-        if u and v and active_cmap.graph.has_edge(u, v):
-            active_cmap.graph[u][v]["status"] = "blocked"
+    obs_manager.sync_obstacles_to_campus_map(active_cmap)
     active_rf = RouteFinder(active_cmap)
 
     raw_locs = active_cmap.get_all_locations()
@@ -266,41 +260,45 @@ else:
         if "[LOC_12]" in label:
             default_dest_idx = idx
 
+acc_engine = AccessibilityEngine(active_cmap)
+
 # --- LAYOUT: 3D VIEWPORT & CONTROL CONSOLE ---
 col_viewport, col_controls = st.columns([2.8, 1.2], gap="medium")
 
 with col_controls:
-    st.markdown('<div class="ui-card">', unsafe_allow_html=True)
-    st.markdown("#### 🧭 3D Route Planning")
+    with st.container(border=True):
+        st.markdown("#### 🧭 3D Route Planning")
 
-    # Search & Filter Enhancements for Location Selection
-    start_label = st.selectbox(
-        "Origin Location:",
-        options=loc_labels,
-        index=default_start_idx if default_start_idx < len(loc_labels) else 0,
-        key="3d_route_start",
-        help="Choose starting campus facility.",
-    )
-    start_id = loc_options[start_label]
+        # Search & Filter Enhancements for Location Selection
+        start_label = st.selectbox(
+            "Origin Location:",
+            options=loc_labels,
+            index=default_start_idx if default_start_idx < len(loc_labels) else 0,
+            key="3d_route_start",
+            help="Choose starting campus facility.",
+        )
+        start_id = loc_options[start_label]
 
-    # Quick Destination Suggestions Pills
-    st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
-    pill_cols = st.columns(4)
-    quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain_twin else ["Classroom", "Lab", "Restroom", "Elevator"]
-    for i, kw in enumerate(quick_keywords):
-        with pill_cols[i]:
-            if st.button(kw, key=f"3d_pill_{kw}", use_container_width=True):
-                st.session_state["3d_dest_search_input"] = kw
-                st.rerun()
+        # Quick Destination Suggestions Pills
+        st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
+        pill_cols = st.columns(4)
+        quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain_twin else ["Classroom", "Lab", "Restroom", "Elevator"]
+        for i, kw in enumerate(quick_keywords):
+            with pill_cols[i]:
+                if st.button(kw, key=f"3d_pill_{kw}", width="stretch"):
+                    st.session_state["3d_dest_search_input"] = kw
+                    st.rerun()
 
-    # Destination Search with Keyword Intelligence
-    dest_search_query = st.text_input(
-        "🔍 Search Destination (Lab, Room, Dept, Keyword):",
-        value=st.session_state.get("3d_dest_search_input", ""),
-        placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
-        key="3d_dest_search_input",
-        help="Search 79 campus locations by room name, department, category, abbreviation, or keywords.",
-    )
+        if "3d_dest_search_input" not in st.session_state:
+            st.session_state["3d_dest_search_input"] = ""
+
+        # Destination Search with Keyword Intelligence
+        dest_search_query = st.text_input(
+            "🔍 Search Destination (Lab, Room, Dept, Keyword):",
+            placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
+            key="3d_dest_search_input",
+            help="Search 79 campus locations by room name, department, category, abbreviation, or keywords.",
+        )
 
     matched_dest_id = None
     if dest_search_query.strip() and is_jain_twin:
@@ -388,17 +386,17 @@ with col_controls:
             help="Strictly avoids stairs and utilizes elevator vertical connections.",
         )
 
-    calculate_btn = st.button("🚀 Calculate 3D Route", type="primary", use_container_width=True)
+    calculate_btn = st.button("🚀 Calculate 3D Route", type="primary", width="stretch")
 
     # Phase 18: Bookmark Destination & Saved Places
     if current_user and db_manager and hasattr(db_manager, "save_place"):
         c_bk1, c_bk2 = st.columns(2)
         with c_bk1:
-            if st.button("⭐ Bookmark Place", use_container_width=True, help="Bookmark destination to your saved places profile"):
+            if st.button("⭐ Bookmark Place", width="stretch", help="Bookmark destination to your saved places profile"):
                 db_manager.save_place(current_user, dest_id, dest_label)
                 st.success("Destination saved to your profile!")
         with c_bk2:
-            if st.button("❤️ Save Route", use_container_width=True, help="Save this route to your favourite routes"):
+            if st.button("❤️ Save Route", width="stretch", help="Save this route to your favourite routes"):
                 db_manager.save_favourite_route(current_user, start_id, dest_id, "wheelchair" if wheelchair_only else "standard", f"{start_id} ➔ {dest_id}")
                 st.success("Route saved to favourite routes!")
 
@@ -411,11 +409,11 @@ with col_controls:
                     st.markdown(f"<b>{p_name}</b> (`{p_loc}`)", unsafe_allow_html=True)
                     sp_col1, sp_col2 = st.columns(2)
                     with sp_col1:
-                        if st.button("🎯 Destination", key=f"btn_set_dest_{p.get('saved_id')}", use_container_width=True):
+                        if st.button("🎯 Destination", key=f"btn_set_dest_{p.get('saved_id')}", width="stretch"):
                             st.session_state["3d_matched_dest_select"] = p_loc
                             st.rerun()
                     with sp_col2:
-                        if st.button("🗑️ Remove", key=f"btn_del_saved_{p.get('saved_id')}", use_container_width=True):
+                        if st.button("🗑️ Remove", key=f"btn_del_saved_{p.get('saved_id')}", width="stretch"):
                             db_manager.remove_saved_place(current_user, p_loc)
                             st.rerun()
 
@@ -427,7 +425,7 @@ with col_controls:
                     st.markdown(f"<b>{r_lbl}</b> ({r.get('route_mode', 'standard').title()})", unsafe_allow_html=True)
                     rf_col1, rf_col2 = st.columns(2)
                     with rf_col1:
-                        if st.button("🚀 Load Route", key=f"btn_load_route_{r.get('route_id')}", use_container_width=True):
+                        if st.button("🚀 Load Route", key=f"btn_load_route_{r.get('route_id')}", width="stretch"):
                             nav_session.start_preview(
                                 origin_id=r.get("origin_id"),
                                 destination_id=r.get("destination_id"),
@@ -438,7 +436,7 @@ with col_controls:
                             )
                             st.rerun()
                     with rf_col2:
-                        if st.button("🗑️ Remove", key=f"btn_del_route_{r.get('route_id')}", use_container_width=True):
+                        if st.button("🗑️ Remove", key=f"btn_del_route_{r.get('route_id')}", width="stretch"):
                             db_manager.remove_favourite_route(current_user, r.get("route_id"))
                             st.rerun()
 
@@ -484,151 +482,146 @@ with col_controls:
     st.markdown("##### 🚶 Real-Time Wayfinding Controller")
 
     if nav_session.state in (NavigationState.IDLE, NavigationState.ROUTE_PREVIEW):
-        if st.button("🚀 Start Live Navigation", type="primary", use_container_width=True, key="btn_start_nav"):
+        if st.button("🚀 Start Live Navigation", type="primary", width="stretch", key="btn_start_nav"):
             nav_session.user_id = current_user_id
             nav_session.start_navigation(db_manager=db_manager)
             st.rerun()
     elif nav_session.state == NavigationState.NAVIGATING:
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
-            if st.button("⏸️ Pause", use_container_width=True, key="btn_pause_nav"):
+            if st.button("⏸️ Pause", width="stretch", key="btn_pause_nav"):
                 nav_session.pause_navigation()
                 nav_session.persist_session_state(db_manager)
                 st.rerun()
         with c2:
-            if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav"):
+            if st.button("⏭️ Next Step", width="stretch", key="btn_step_nav"):
                 nav_session.step_forward(active_cmap, db_manager=db_manager)
                 st.rerun()
         with c3:
-            if st.button("⏹️ Cancel", use_container_width=True, key="btn_cancel_nav"):
+            if st.button("⏹️ Cancel", width="stretch", key="btn_cancel_nav"):
                 nav_session.cancel_navigation(db_manager=db_manager)
                 st.rerun()
     elif nav_session.state in (NavigationState.PAUSED, NavigationState.FLOOR_TRANSITION):
         c1, c2, c3 = st.columns([1, 1, 1])
         with c1:
-            if st.button("▶️ Resume", type="primary", use_container_width=True, key="btn_resume_nav"):
+            if st.button("▶️ Resume", type="primary", width="stretch", key="btn_resume_nav"):
                 nav_session.resume_navigation()
                 nav_session.persist_session_state(db_manager)
                 st.rerun()
         with c2:
-            if st.button("⏭️ Next Step", use_container_width=True, key="btn_step_nav_p"):
+            if st.button("⏭️ Next Step", width="stretch", key="btn_step_nav_p"):
                 nav_session.step_forward(active_cmap, db_manager=db_manager)
                 st.rerun()
         with c3:
-            if st.button("🔄 Restart", use_container_width=True, key="btn_restart_nav"):
+            if st.button("🔄 Restart", width="stretch", key="btn_restart_nav"):
                 nav_session.restart_navigation()
                 nav_session.persist_session_state(db_manager)
                 st.rerun()
     elif nav_session.state == NavigationState.ARRIVED:
         st.success("🎉 You have arrived at your destination!")
-        if st.button("🔄 Start New Navigation", type="primary", use_container_width=True, key="btn_arrived_new"):
+        if st.button("🔄 Start New Navigation", type="primary", width="stretch", key="btn_arrived_new"):
             nav_session.restart_navigation()
             st.rerun()
     elif nav_session.state == NavigationState.NO_ACCESSIBLE_ROUTE:
         st.warning("⚠️ No accessible route currently available.")
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
     # Location Inspector Card in Sidebar
-    st.markdown('<div class="ui-card" style="margin-top: 14px;">', unsafe_allow_html=True)
-    st.markdown("#### 🔍 Facility Inspector")
-    inspect_label = st.selectbox(
-        "Inspect Location:",
-        options=loc_labels,
-        index=default_dest_idx if default_dest_idx < len(loc_labels) else 0,
-        key="3d_inspect_loc",
-        help="Select a campus facility to highlight and view accessibility attributes.",
-    )
-    selected_inspect_id = loc_options[inspect_label]
+    with st.container(border=True):
+        st.markdown("#### 🔍 Facility Inspector")
+        inspect_label = st.selectbox(
+            "Inspect Location:",
+            options=loc_labels,
+            index=default_dest_idx if default_dest_idx < len(loc_labels) else 0,
+            key="3d_inspect_loc",
+            help="Select a campus facility to highlight and view accessibility attributes.",
+        )
+        selected_inspect_id = loc_options[inspect_label]
 
-    inspect_loc = active_cmap.get_location(selected_inspect_id) or {}
-    floor_num = int(inspect_loc.get("floor", 0))
-    category = str(inspect_loc.get("category", "office")).title()
-    building = str(inspect_loc.get("building", "Academic Complex"))
-    dept = str(inspect_loc.get("department", "FET Complex"))
-    is_step_free = bool(inspect_loc.get("wheelchair_accessible", True))
+        inspect_loc = active_cmap.get_location(selected_inspect_id) or {}
+        loc_acc_3d = acc_engine.check_location_accessibility(selected_inspect_id)
+        floor_num = int(inspect_loc.get("floor", 0))
+        category = str(inspect_loc.get("category", "office")).title()
+        building = str(inspect_loc.get("building", "Academic Complex"))
+        dept = str(inspect_loc.get("department", "FET Complex"))
+        is_step_free = bool(inspect_loc.get("wheelchair_accessible", True))
 
-    floor_display = "Outdoor Grounds" if floor_num == -1 else f"Floor {floor_num} ({FLOOR_NAMES.get(floor_num, '')})"
+        floor_display = "Outdoor Grounds" if floor_num == -1 else f"Floor {floor_num} ({FLOOR_NAMES.get(floor_num, '')})"
 
-    verif_status = inspect_loc.get("verification_status", "IMAGE_DERIVED")
-    badge_colors = {
-        "VERIFIED": ("#10B981", "rgba(16, 185, 129, 0.18)"),
-        "IMAGE_DERIVED": ("#38BDF8", "rgba(56, 189, 248, 0.18)"),
-        "APPROXIMATE": ("#F5B942", "rgba(245, 185, 66, 0.18)"),
-        "UNVERIFIED": ("#94A3B8", "rgba(148, 163, 184, 0.18)"),
-    }
-    badge_fg, badge_bg = badge_colors.get(verif_status, ("#94A3B8", "rgba(148, 163, 184, 0.18)"))
+        verif_status = inspect_loc.get("verification_status", "IMAGE_DERIVED")
+        badge_colors = {
+            "VERIFIED": ("#10B981", "rgba(16, 185, 129, 0.18)"),
+            "IMAGE_DERIVED": ("#38BDF8", "rgba(56, 189, 248, 0.18)"),
+            "APPROXIMATE": ("#F5B942", "rgba(245, 185, 66, 0.18)"),
+            "UNVERIFIED": ("#94A3B8", "rgba(148, 163, 184, 0.18)"),
+        }
+        badge_fg, badge_bg = badge_colors.get(verif_status, ("#94A3B8", "rgba(148, 163, 184, 0.18)"))
 
-    verif_source = inspect_loc.get("verification_source", "Floor Plan Layout Analysis")
-    last_verif = inspect_loc.get("last_verified", "2026-11-22")
-    conf_level = inspect_loc.get("confidence_level", "Medium")
-    verif_notes = inspect_loc.get("verification_notes", "Derived from reference imagery.")
-    search_keys = inspect_loc.get("search_keywords", inspect_loc.get("aliases", []))
-    keywords_str = ", ".join(search_keys) if search_keys else "None"
+        verif_source = inspect_loc.get("verification_source", "Floor Plan Layout Analysis")
+        last_verif = inspect_loc.get("last_verified", "2026-11-22")
+        conf_level = inspect_loc.get("confidence_level", "Medium")
+        verif_notes = inspect_loc.get("verification_notes", "Derived from reference imagery.")
+        search_keys = inspect_loc.get("search_keywords", inspect_loc.get("aliases", []))
+        keywords_str = ", ".join(search_keys) if search_keys else "None"
 
-    st.markdown(
-        f"""
-        <div style="font-size: 13px; line-height: 1.6; margin-top: 6px;">
-            <div><b>Facility:</b> <span style="color: {ACCENT_GREEN};">{inspect_loc.get('name', selected_inspect_id)}</span></div>
-            <div><b>Building:</b> {building}</div>
-            <div><b>Building Level:</b> {floor_display}</div>
-            <div><b>Category:</b> {category}</div>
-            <div><b>Department:</b> {dept}</div>
-            <div><b>Accessibility:</b> <span style="color: {'#35D99A' if is_step_free else '#F5B942'};">
-                {'✅ Step-Free Accessible' if is_step_free else '⚠️ Stair Access Only'}
-            </span></div>
-        </div>
-
-        <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.25); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-size: 11px; font-weight: 700; color: #9CAFA5; text-transform: uppercase; letter-spacing: 0.5px;">Data Reliability</span>
-                <span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_fg}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800;">
-                    {verif_status}
-                </span>
+        st.markdown(
+            f"""
+            <div style="font-size: 13px; line-height: 1.6; margin-top: 6px;">
+                <div><b>Facility:</b> <span style="color: {ACCENT_GREEN};">{inspect_loc.get('name', selected_inspect_id)}</span></div>
+                <div><b>Building:</b> {building}</div>
+                <div><b>Building Level:</b> {floor_display}</div>
+                <div><b>Category:</b> {category}</div>
+                <div><b>Department:</b> {dept}</div>
+                <div><b>Classification:</b> <span style="color: #35D99A;">{loc_acc_3d.display_classification or loc_acc_3d.classification}</span> ({loc_acc_3d.score}/100)</div>
+                <div><b>Connected Paths:</b> {loc_acc_3d.accessible_connections} Accessible / {loc_acc_3d.total_connections} Total</div>
             </div>
-            <div style="font-size: 11px; color: #9CAFA5; line-height: 1.5;">
-                <div><b>Source:</b> {verif_source}</div>
-                <div><b>Confidence:</b> {conf_level} &nbsp;|&nbsp; <b>Verified:</b> {last_verif}</div>
-                <div><b>Keywords / Aliases:</b> {keywords_str}</div>
-                <div style="margin-top: 4px; font-style: italic; color: #CBD5E1;">"{verif_notes}"</div>
+
+            <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.25); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 700; color: #9CAFA5; text-transform: uppercase; letter-spacing: 0.5px;">Data Reliability</span>
+                    <span style="background: {badge_bg}; color: {badge_fg}; border: 1px solid {badge_fg}; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800;">
+                        {verif_status}
+                    </span>
+                </div>
+                <div style="font-size: 11px; color: #9CAFA5; line-height: 1.5;">
+                    <div><b>Source:</b> {verif_source}</div>
+                    <div><b>Confidence:</b> {conf_level} &nbsp;|&nbsp; <b>Verified:</b> {last_verif}</div>
+                    <div><b>Keywords / Aliases:</b> {keywords_str}</div>
+                    <div style="margin-top: 4px; font-style: italic; color: #CBD5E1;">"{verif_notes}"</div>
+                </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
 
-    # 1-Click Quick Actions for Inspected Facility
-    c_fi1, c_fi2 = st.columns(2)
-    with c_fi1:
-        if st.button("🚩 Set as Start", key="3d_btn_inspect_start", use_container_width=True):
-            st.session_state["3d_route_start"] = inspect_label
-            st.rerun()
-    with c_fi2:
-        if st.button("🎯 Set as Dest", key="3d_btn_inspect_dest", use_container_width=True):
-            st.session_state["3d_route_dest"] = inspect_label
-            if "3d_dest_search_input" in st.session_state:
-                st.session_state["3d_dest_search_input"] = ""
-            st.rerun()
+        # 1-Click Quick Actions for Inspected Facility
+        c_fi1, c_fi2 = st.columns(2)
+        with c_fi1:
+            if st.button("🚩 Set as Start", key="3d_btn_inspect_start", width="stretch"):
+                st.session_state["3d_route_start"] = inspect_label
+                st.rerun()
+        with c_fi2:
+            if st.button("🎯 Set as Dest", key="3d_btn_inspect_dest", width="stretch"):
+                st.session_state["3d_route_dest"] = inspect_label
+                if "3d_dest_search_input" in st.session_state:
+                    st.session_state["3d_dest_search_input"] = ""
+                st.rerun()
 
-    if st.button("🗺️ Switch to 2D Architectural Map", key="btn_switch_2d_from_3d", use_container_width=True):
-        st.switch_page("pages/campus_map.py")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+        if st.button("🗺️ Switch to 2D Architectural Map", key="btn_switch_2d_from_3d", width="stretch"):
+            st.switch_page("pages/campus_map.py")
 
     # Active Verified Hazards Summary
     active_hazards = obs_manager.get_active_obstacles()
     if active_hazards:
-        st.markdown('<div class="ui-card" style="margin-top: 14px; border-color: rgba(248, 113, 113, 0.4);">', unsafe_allow_html=True)
-        st.markdown(f"#### ⚠️ Active Hazards ({len(active_hazards)})")
-        for haz in active_hazards[:3]:
-            u, v = haz.get("source_location_id"), haz.get("destination_location_id")
-            title = f"{u} ➔ {v}" if u and v else haz.get("location_id", "Campus Pathway")
-            st.markdown(
-                f"<div style='font-size: 12px; margin-bottom: 4px; color: #F87171;'>"
-                f"🚫 <b>{title}:</b> {haz.get('category')} ({haz.get('severity')})</div>",
-                unsafe_allow_html=True,
-            )
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(f"#### ⚠️ Active Hazards ({len(active_hazards)})")
+            for haz in active_hazards[:3]:
+                u, v = haz.get("source_location_id"), haz.get("destination_location_id")
+                title = f"{u} ➔ {v}" if u and v else haz.get("location_id", "Campus Pathway")
+                st.markdown(
+                    f"<div style='font-size: 12px; margin-bottom: 4px; color: #F87171;'>"
+                    f"🚫 <b>{title}:</b> {haz.get('obstacle_category', 'Obstacle')} ({haz.get('severity')})</div>",
+                    unsafe_allow_html=True,
+                )
 
 # Build authoritative scene payload based on model choice
 if is_jain_twin:
@@ -772,21 +765,26 @@ with col_viewport:
 if route_data and route_data.get("success"):
     st.markdown("---")
     st.markdown("### 🧭 Active Route Guidance & Navigational Performance")
+    route_acc_3d = acc_engine.evaluate_route_accessibility(route_data["path"])
 
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
-        render_kpi_card("Total Distance", f"{route_data['total_distance']:.1f} m", "Physical pathway length", PRIMARY_GREEN)
+        st.markdown(render_kpi_card("Total Distance", f"{route_data['total_distance']:.1f} m", "Physical pathway length", PRIMARY_GREEN), unsafe_allow_html=True)
     with m2:
-        render_kpi_card("Est. Time", f"{route_data['total_time']:.0f} s", f"~{(route_data['total_time']/60):.1f} min transit", ACCENT_GREEN)
+        st.markdown(render_kpi_card("Est. Time (Estimate)", f"~{route_data['total_time']:.0f} s", f"~{(route_data['total_time']/60):.1f} min transit", ACCENT_GREEN), unsafe_allow_html=True)
     with m3:
-        render_kpi_card("Route Segments", f"{route_data['edge_count']} Steps", f"{len(route_data['path'])} facilities traversed", INFO)
+        st.markdown(render_kpi_card("Route Segments", f"{route_data['edge_count']} Steps", f"{len(route_data['path'])} facilities traversed", INFO), unsafe_allow_html=True)
     with m4:
-        acc_text = "Wheelchair Step-Free" if route_data.get("is_accessible") else "Stair Navigation"
-        render_kpi_card("Accessibility", acc_text, "Barrier-free status", ACCENT_GREEN if route_data.get("is_accessible") else WARNING)
+        acc_text = route_acc_3d.display_classification or route_acc_3d.overall_classification
+        st.markdown(render_kpi_card("Accessibility", acc_text, f"Score: {route_acc_3d.accessibility_score}/100", ACCENT_GREEN if route_data.get("is_accessible") else WARNING), unsafe_allow_html=True)
     with m5:
         transitions = route_data.get("cross_floor_transitions", [])
         trans_text = f"{len(transitions)} Transition" if transitions else "Single Floor"
-        render_kpi_card("Floor Transfer", trans_text, "Elevator / Stairs connection", INFO)
+        st.markdown(render_kpi_card("Floor Transfer", trans_text, "Elevator / Stairs connection", INFO), unsafe_allow_html=True)
+
+    if route_acc_3d.warnings:
+        for w in route_acc_3d.warnings:
+            st.warning(f"⚠️ {w}")
 
     # Cross-Floor Alerts
     if transitions:
@@ -952,14 +950,14 @@ if db_manager and hasattr(db_manager, "get_navigation_history"):
 
     h1, h2, h3, h4 = st.columns(4)
     with h1:
-        render_kpi_card("Total Journeys", f"{stats['total_sessions']} Sessions", "Logged in navigation history", PRIMARY_GREEN)
+        st.markdown(render_kpi_card("Total Journeys", f"{stats['total_sessions']} Sessions", "Logged in navigation history", PRIMARY_GREEN), unsafe_allow_html=True)
     with h2:
-        render_kpi_card("Completed Routes", f"{stats['completed_sessions']} Arrived", f"{stats['completion_rate']:.0f}% completion rate", ACCENT_GREEN)
+        st.markdown(render_kpi_card("Completed Routes", f"{stats['completed_sessions']} Arrived", f"{stats['completion_rate']:.0f}% completion rate", ACCENT_GREEN), unsafe_allow_html=True)
     with h3:
-        render_kpi_card("Total Distance Navigated", f"{stats['total_distance_navigated']:.1f} m", "Physical distance traversed", INFO)
+        st.markdown(render_kpi_card("Total Distance Navigated", f"{stats['total_distance_navigated']:.1f} m", "Physical distance traversed", INFO), unsafe_allow_html=True)
     with h4:
         avg_dur = stats['average_duration_seconds']
-        render_kpi_card("Avg Transit Time", f"{avg_dur:.0f} s", f"~{(avg_dur/60):.1f} min per journey", WHITE)
+        st.markdown(render_kpi_card("Avg Transit Time", f"~{avg_dur:.0f} s", f"~{(avg_dur/60):.1f} min per journey", WHITE), unsafe_allow_html=True)
 
     if hist_records:
         with st.expander("🔍 View Recent Wayfinding Log", expanded=False):

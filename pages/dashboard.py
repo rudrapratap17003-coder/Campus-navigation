@@ -65,21 +65,21 @@ st.markdown(
 )
 
 # Campus Dataset Selection
-st.markdown('<div class="ui-card" style="padding: 10px 18px; margin-bottom: 16px;">', unsafe_allow_html=True)
-campus_choice = st.radio(
-    "🗺️ Select Campus Dataset for Analytics:",
-    options=[
-        "🏛️ JAIN Global Campus & FET 5-Floor Digital Twin (79 Nodes, 106 Pathways)",
-        "📐 Schematic Benchmark Model (15 Nodes, 17 Pathways)",
-    ],
-    index=0,
-    horizontal=True,
-    key="analytics_campus_choice",
-)
-st.markdown("</div>", unsafe_allow_html=True)
+with st.container(border=True):
+    campus_choice = st.radio(
+        "🗺️ Select Campus Dataset for Analytics:",
+        options=[
+            "🏛️ JAIN Global Campus & FET 5-Floor Digital Twin (79 Nodes, 106 Pathways)",
+            "📐 Schematic Benchmark Model (15 Nodes, 17 Pathways)",
+        ],
+        index=0,
+        horizontal=True,
+        key="analytics_campus_choice",
+    )
 
 is_jain = "JAIN" in campus_choice
-active_cmap = load_jain_campus_map() if is_jain else benchmark_cmap
+active_cmap = services.get("jain_campus_map") if (is_jain and services.get("jain_campus_map")) else (load_jain_campus_map() if is_jain else benchmark_cmap)
+obs_manager.sync_obstacles_to_campus_map(active_cmap)
 
 # Calculate live analytics from genuine database records and spatial graph
 acc_analytics = compute_accessibility_analytics(active_cmap, obs_manager)
@@ -108,7 +108,7 @@ with kpi_c2:
         render_kpi_card(
             title="Campus Pathways",
             value=acc_analytics["total_pathways"],
-            desc=f"{acc_analytics['step_free_pathways']} Step-Free ({acc_analytics['pathway_accessibility_percentage']}%)",
+            desc=f"{acc_analytics['step_free_pathways']} Step-Free ({acc_analytics['pathway_accessibility_percentage']}%) · Avg Score {acc_analytics['average_pathway_score']}/100 · {acc_analytics['ramp_pathways']} Ramps · {acc_analytics['elevator_pathways']} Elevators",
             border_accent=ACCENT_GREEN,
             value_color=WHITE,
         ),
@@ -118,9 +118,9 @@ with kpi_c2:
 with kpi_c3:
     st.markdown(
         render_kpi_card(
-            title="Data Verification",
+            title="Physical Verification",
             value=f"{admin_insights['verification_progress_percentage']}%",
-            desc=f"{admin_insights['verification_counts']['VERIFIED']} Audited · {admin_insights['verification_counts']['IMAGE_DERIVED']} Image-Derived",
+            desc=f"{admin_insights['verification_counts']['VERIFIED']} Physically Audited · {admin_insights['verification_counts']['IMAGE_DERIVED']} Floor-Plan Derived",
             border_accent="#38BDF8",
             value_color="#38BDF8",
         ),
@@ -129,12 +129,13 @@ with kpi_c3:
 
 with kpi_c4:
     gaps_count = acc_analytics["information_gaps_count"]
-    gaps_color = WARNING if gaps_count > 0 else PRIMARY_GREEN
+    pending_audit = admin_insights["pending_physical_verification_nodes"]
+    gaps_color = WARNING if (gaps_count > 0 or pending_audit > 0) else PRIMARY_GREEN
     st.markdown(
         render_kpi_card(
-            title="Information Gaps",
-            value=gaps_count,
-            desc="Nodes requiring on-site accessibility audit" if gaps_count > 0 else "All nodes verified",
+            title="Attribute Gaps / Audit Queue",
+            value=f"{gaps_count} / {pending_audit}",
+            desc=f"{gaps_count} Missing Attrs · {pending_audit} Pending Physical Survey",
             border_accent=gaps_color,
             value_color=gaps_color,
         ),
@@ -217,46 +218,177 @@ with c_ch1:
         3: "Floor 3",
         4: "Floor 4",
     }
-    df_floor = pd.DataFrame([
-        {"Floor Level": floor_labels.get(fl, f"Level {fl}"), "Obstacles": count}
-        for fl, count in floor_dist.items()
-    ])
-
-    fig_floor = px.bar(
-        df_floor,
-        x="Floor Level",
-        y="Obstacles",
-        color="Obstacles",
-        color_continuous_scale=["#16A36A", "#F5B942", "#EF4444"],
-        text="Obstacles",
-    )
-    apply_plotly_dark_theme(fig_floor, height=320)
-    fig_floor.update_layout(coloraxis_showscale=False)
-    st.plotly_chart(fig_floor, use_container_width=True)
+    total_floor_obs = sum(floor_dist.values())
+    if total_floor_obs == 0:
+        st.markdown(
+            """
+            <div class="ui-card" style="text-align: center; padding: 36px 18px;">
+                <div style="font-size: 2rem; margin-bottom: 6px;">🏢</div>
+                <div style="font-weight: 700; color: #F8FAFC;">No Floor-Specific Obstacles Recorded</div>
+                <div style="color: #9CAFA5; font-size: 12px; margin-top: 6px;">
+                    No obstacle reports currently reference locations in the selected campus dataset.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        df_floor = pd.DataFrame([
+            {"Floor Level": floor_labels.get(fl, f"Level {fl}"), "Obstacles": count}
+            for fl, count in floor_dist.items()
+        ])
+        fig_floor = px.bar(
+            df_floor,
+            x="Floor Level",
+            y="Obstacles",
+            color="Obstacles",
+            color_continuous_scale=["#16A36A", "#F5B942", "#EF4444"],
+            text="Obstacles",
+        )
+        apply_plotly_dark_theme(fig_floor, height=320)
+        fig_floor.update_layout(coloraxis_showscale=False)
+        st.plotly_chart(fig_floor, width="stretch")
+        other_cnt = obs_analytics.get("unmapped_other_dataset_reports", 0)
+        if other_cnt > 0:
+            st.caption(f"ℹ️ Plus {other_cnt} obstacle report(s) belonging to the alternate campus model.")
 
 with c_ch2:
     st.markdown("##### 📋 Obstacle Lifecycle Status Breakdown")
     status_counts = obs_analytics["status_counts"]
-    df_status = pd.DataFrame([
-        {"Status": s, "Reports": c}
-        for s, c in status_counts.items()
-    ])
-    status_colors = {
-        "Verified": ERROR,
-        "Pending": WARNING,
-        "Resolved": ACCENT_GREEN,
-        "Rejected": SECONDARY_TEXT,
-    }
-    fig_status = px.pie(
-        df_status,
-        names="Status",
-        values="Reports",
-        hole=0.6,
-        color="Status",
-        color_discrete_map=status_colors,
-    )
-    apply_plotly_dark_theme(fig_status, height=320)
-    st.plotly_chart(fig_status, use_container_width=True)
+    if sum(status_counts.values()) == 0:
+        st.markdown(
+            """
+            <div class="ui-card" style="text-align: center; padding: 36px 18px;">
+                <div style="font-size: 2rem; margin-bottom: 6px;">📋</div>
+                <div style="font-weight: 700; color: #F8FAFC;">No Obstacle Reports Logged</div>
+                <div style="color: #9CAFA5; font-size: 12px; margin-top: 6px;">
+                    Lifecycle breakdowns (Pending, Verified, Resolved, Rejected) will appear once reports are filed.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        df_status = pd.DataFrame([
+            {"Status": s, "Reports": c}
+            for s, c in status_counts.items()
+            if c > 0
+        ])
+        status_colors = {
+            "Verified": ERROR,
+            "Pending": WARNING,
+            "Resolved": ACCENT_GREEN,
+            "Rejected": SECONDARY_TEXT,
+        }
+        fig_status = px.pie(
+            df_status,
+            names="Status",
+            values="Reports",
+            hole=0.58,
+            color="Status",
+            color_discrete_map=status_colors,
+        )
+        apply_plotly_dark_theme(fig_status, height=320)
+        st.plotly_chart(fig_status, width="stretch")
+
+# --- CHARTS ROW 1B: SEVERITY, PATHWAY ACCESSIBILITY & VERIFICATION COVERAGE ---
+c_ch3, c_ch4, c_ch5 = st.columns(3)
+
+with c_ch3:
+    st.markdown("##### 🚨 Obstacles by Severity")
+    sev_counts = obs_analytics["severity_counts"]
+    if sum(sev_counts.values()) == 0:
+        st.markdown(
+            """
+            <div class="ui-card" style="text-align: center; padding: 32px 14px;">
+                <div style="font-size: 1.8rem; margin-bottom: 6px;">🚨</div>
+                <div style="font-weight: 700; color: #F8FAFC;">No Severity Records</div>
+                <div style="color: #9CAFA5; font-size: 12px; margin-top: 6px;">
+                    No active or historical obstacle reports exist yet.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        df_sev = pd.DataFrame([
+            {"Severity": k, "Reports": v}
+            for k, v in sev_counts.items()
+        ])
+        sev_colors = {"Low": ACCENT_GREEN, "Medium": INFO, "High": WARNING, "Critical": ERROR}
+        fig_sev = px.bar(
+            df_sev,
+            x="Severity",
+            y="Reports",
+            color="Severity",
+            color_discrete_map=sev_colors,
+            text="Reports",
+        )
+        apply_plotly_dark_theme(fig_sev, height=300)
+        fig_sev.update_layout(showlegend=False)
+        st.plotly_chart(fig_sev, width="stretch")
+
+with c_ch4:
+    st.markdown("##### ♿ Pathway Accessibility Distribution")
+    p_cls_counts = acc_analytics.get("pathway_classification_counts", {})
+    if sum(p_cls_counts.values()) == 0:
+        st.info("No pathway accessibility records available for the selected dataset.")
+    else:
+        df_pcls = pd.DataFrame([
+            {"Classification": k, "Pathways": v}
+            for k, v in p_cls_counts.items()
+            if v > 0
+        ])
+        cls_colors = {
+            "Fully Accessible": PRIMARY_GREEN,
+            "Accessible with Assistance": WARNING,
+            "Not Wheelchair Accessible": ERROR,
+            "Temporarily Blocked": "#DC2626",
+            "Unknown Accessibility": SECONDARY_TEXT,
+        }
+        fig_pcls = px.pie(
+            df_pcls,
+            names="Classification",
+            values="Pathways",
+            hole=0.55,
+            color="Classification",
+            color_discrete_map=cls_colors,
+        )
+        apply_plotly_dark_theme(fig_pcls, height=300)
+        st.plotly_chart(fig_pcls, width="stretch")
+
+with c_ch5:
+    st.markdown("##### 🔍 Location Verification Coverage")
+    v_counts = admin_insights.get("verification_counts", {})
+    if sum(v_counts.values()) == 0:
+        st.info("No location verification records found.")
+    else:
+        df_verif = pd.DataFrame([
+            {"Status": k, "Locations": v}
+            for k, v in v_counts.items()
+            if v > 0
+        ])
+        verif_colors = {
+            "VERIFIED": ACCENT_GREEN,
+            "IMAGE_DERIVED": INFO,
+            "APPROXIMATE": WARNING,
+            "UNVERIFIED": SECONDARY_TEXT,
+        }
+        fig_verif = px.bar(
+            df_verif,
+            x="Status",
+            y="Locations",
+            color="Status",
+            color_discrete_map=verif_colors,
+            text="Locations",
+        )
+        apply_plotly_dark_theme(fig_verif, height=300)
+        fig_verif.update_layout(showlegend=False)
+        st.plotly_chart(fig_verif, width="stretch")
+        st.caption(
+            f"Populated fields: {acc_analytics['populated_fields_percentage']}% · "
+            f"Physically audited: {admin_insights['verification_progress_percentage']}%"
+        )
 
 # --- CHARTS ROW 2: NAVIGATION TELEMETRY & WAYFINDING KPIS ---
 st.markdown("### 🚶 Wayfinding Telemetry & Destination Insights")
@@ -294,7 +426,7 @@ with c_nav1:
         )
         apply_plotly_dark_theme(fig_dests, height=320)
         fig_dests.update_layout(coloraxis_showscale=False)
-        st.plotly_chart(fig_dests, use_container_width=True)
+        st.plotly_chart(fig_dests, width="stretch")
 
 with c_nav2:
     st.markdown("##### ⏱️ Navigation Journey Telemetry")

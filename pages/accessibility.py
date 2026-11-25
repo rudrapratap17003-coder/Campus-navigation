@@ -52,9 +52,12 @@ is_jain = "JAIN" in acc_env_choice
 
 from modules.jain_digital_twin import load_jain_campus_map
 from modules.accessibility import AccessibilityEngine
+from modules.campus_map import validate_campus_graph
 cmap = load_jain_campus_map() if is_jain else services["campus_map"]
+services["obstacle_manager"].sync_obstacles_to_campus_map(cmap)
 acc_engine = AccessibilityEngine(cmap)
 summary = acc_engine.get_accessibility_summary()
+graph_report = validate_campus_graph(cmap)
 
 # Mandatory Disclaimer
 st.markdown(
@@ -149,6 +152,37 @@ with m3:
 with m4:
     st.metric("Dedicated Access Ramps", f"{summary['ramp_pathways']} Ramps")
 
+# --- GRAPH TOPOLOGY & INTEGRITY VALIDATION ---
+with st.expander(
+    f"🔎 Automated Campus Graph Integrity & Topology Validation — {'PASSED ✅' if graph_report.is_valid else 'ISSUES DETECTED ⚠️'}",
+    expanded=True,
+):
+    g1, g2, g3, g4, g5, g6 = st.columns(6)
+    with g1:
+        st.metric("Total Nodes", graph_report.total_nodes)
+    with g2:
+        st.metric("Valid Edges", f"{graph_report.valid_edges} / {graph_report.total_edges}")
+    with g3:
+        st.metric("Duplicate Edges", len(graph_report.duplicate_edges))
+    with g4:
+        st.metric("Components", graph_report.connected_components)
+    with g5:
+        st.metric("Wheelchair Components", graph_report.wheelchair_connected_components)
+    with g6:
+        st.metric("Missing Floor Links", len(graph_report.missing_floor_transitions))
+
+    if graph_report.is_valid:
+        st.success(
+            f"All {graph_report.total_nodes} nodes, {graph_report.total_edges} pathways, vertical floor transitions, "
+            "and accessibility attributes passed topological integrity checks."
+        )
+    else:
+        st.warning(
+            f"Detected issues — Invalid edges: {len(graph_report.invalid_edges)}, "
+            f"Unreachable nodes: {len(graph_report.unreachable_locations)}, "
+            f"Metadata issues: {len(graph_report.invalid_accessibility_metadata)}."
+        )
+
 st.markdown("---")
 
 # --- DETAILED PATHWAYS TABLE ---
@@ -176,7 +210,7 @@ for u, v, data in cmap.graph.edges(data=True):
     )
 
 df_pathways = pd.DataFrame(pathway_records)
-st.dataframe(df_pathways, use_container_width=True, hide_index=True)
+st.dataframe(df_pathways, width="stretch", hide_index=True)
 
 st.markdown("---")
 
@@ -191,16 +225,18 @@ inspected_id = loc_options[selected_loc_label]
 
 loc_assessment = acc_engine.check_location_accessibility(inspected_id)
 
-col_info1, col_info2, col_info3 = st.columns(3)
+col_info1, col_info2, col_info3, col_info4 = st.columns(4)
 with col_info1:
     st.metric("Location Score", f"{loc_assessment.score} / 100")
 with col_info2:
-    st.metric("Classification", loc_assessment.classification)
+    st.metric("Classification", loc_assessment.display_classification or loc_assessment.classification)
 with col_info3:
     st.metric(
         "Accessible Connections",
         f"{loc_assessment.accessible_connections} / {loc_assessment.total_connections}",
     )
+with col_info4:
+    st.metric("Data Verification", loc_assessment.verification_status)
 
 amenities = []
 if loc_assessment.has_accessible_restroom:

@@ -75,9 +75,24 @@ class ObstacleManager:
         # Tracking active reports per edge/node: Key -> Set[report_id]
         self._edge_active_reports: Dict[Tuple[str, str], Set[str]] = defaultdict(set)
         self._node_active_reports: Dict[str, Set[str]] = defaultdict(set)
+        self._additional_graphs: List[nx.Graph] = []
 
         # Synchronize any existing active verified reports from database into the graph
         self.sync_active_obstacles_with_graph()
+
+    def register_campus_map(self, campus_map: Union[CampusMap, nx.Graph]) -> None:
+        """Register an additional campus graph (e.g. JAIN Digital Twin) for validation and obstacle sync."""
+        g = campus_map.graph if isinstance(campus_map, CampusMap) else campus_map
+        if g is not self.graph and g not in self._additional_graphs:
+            self._additional_graphs.append(g)
+            self.sync_obstacles_to_campus_map(g)
+
+    def sync_obstacles_to_campus_map(self, target: Union[CampusMap, nx.Graph]) -> None:
+        """Synchronize all active verified obstacles from the database onto a specific CampusMap or nx.Graph."""
+        g = target.graph if isinstance(target, CampusMap) else target
+        active_reports = self.get_active_obstacles()
+        for report in active_reports:
+            self._apply_report_to_single_graph(g, report)
 
     def _normalize_edge_key(self, u: str, v: str) -> Tuple[str, str]:
         """Normalize an undirected edge key symmetrically."""
@@ -121,28 +136,30 @@ class ObstacleManager:
                 "Report must specify either a location_id or both source_location_id and destination_location_id."
             )
 
+        candidate_graphs = [self.graph] + list(self._additional_graphs)
+
         if is_pathway:
             src = str(source_location_id)
             dst = str(destination_location_id)
             if src == dst:
                 raise ValueError(f"Self-loop pathway obstacle ({src} -> {dst}) is invalid.")
 
-            if src not in self.graph:
+            if not any(src in g for g in candidate_graphs):
                 raise ValueError(
                     f"Source location '{src}' does not exist in the campus network graph."
                 )
-            if dst not in self.graph:
+            if not any(dst in g for g in candidate_graphs):
                 raise ValueError(
                     f"Destination location '{dst}' does not exist in the campus network graph."
                 )
-            if not self.graph.has_edge(src, dst):
+            if not any(g.has_edge(src, dst) for g in candidate_graphs):
                 raise ValueError(
                     f"Pathway connection between '{src}' and '{dst}' does not exist in campus map."
                 )
             return "pathway"
 
         loc = str(location_id)
-        if loc not in self.graph:
+        if not any(loc in g for g in candidate_graphs):
             raise ValueError(f"Location ID '{loc}' does not exist in the campus network graph.")
         return "location"
 
@@ -374,57 +391,60 @@ class ObstacleManager:
         )
         return self.update_report_status(report_id, "Rejected", notes, actor_user=actor_user)
 
-    def apply_obstacle_to_graph(self, report: Dict[str, Any]) -> None:
-        """Apply temporary blocked operational status to the live campus graph without data loss."""
+    def _apply_report_to_single_graph(self, g: nx.Graph, report: Dict[str, Any]) -> None:
+        """Apply blocked operational state for one verified report onto a given NetworkX graph."""
         rep_id = report["report_id"]
         target_type = report.get("target_type")
 
         if target_type == "pathway":
             src = report.get("source_location_id")
             dst = report.get("destination_location_id")
-            if not src or not dst or not self.graph.has_edge(src, dst):
+            if not src or not dst or not g.has_edge(src, dst):
                 return
 
             edge_key = self._normalize_edge_key(src, dst)
-            # Store original operational status if not already saved
             if edge_key not in self._original_edge_states:
-                edge_data = self.graph.get_edge_data(src, dst) or {}
+                edge_data = g.get_edge_data(src, dst) or {}
                 self._original_edge_states[edge_key] = {
                     "status": edge_data.get("status", "open")
                 }
 
-            # Apply blocked status to graph edge
-            self.graph[src][dst]["status"] = "blocked"
+            g[src][dst]["status"] = "blocked"
             self._edge_active_reports[edge_key].add(rep_id)
 
         elif target_type == "location":
             loc_id = report.get("location_id")
-            if not loc_id or loc_id not in self.graph:
+            if not loc_id or loc_id not in g:
                 return
 
             if loc_id not in self._original_node_states:
                 self._original_node_states[loc_id] = {
-                    "status": self.graph.nodes[loc_id].get("status", "open")
+                    "status": g.nodes[loc_id].get("status", "open")
                 }
 
-            self.graph.nodes[loc_id]["status"] = "blocked"
+            g.nodes[loc_id]["status"] = "blocked"
             self._node_active_reports[loc_id].add(rep_id)
 
-            # Also temporarily block all incident edges connected to the unavailable node
-            for neighbor in list(self.graph.neighbors(loc_id)):
+            for neighbor in list(g.neighbors(loc_id)):
                 edge_key = self._normalize_edge_key(loc_id, neighbor)
                 if edge_key not in self._original_edge_states:
-                    edge_data = self.graph.get_edge_data(loc_id, neighbor) or {}
+                    edge_data = g.get_edge_data(loc_id, neighbor) or {}
                     self._original_edge_states[edge_key] = {
                         "status": edge_data.get("status", "open")
                     }
-                self.graph[loc_id][neighbor]["status"] = "blocked"
+                g[loc_id][neighbor]["status"] = "blocked"
                 self._edge_active_reports[edge_key].add(rep_id)
 
+    def apply_obstacle_to_graph(self, report: Dict[str, Any]) -> None:
+        """Apply temporary blocked operational status to live campus graphs without data loss."""
+        for g in [self.graph] + list(self._additional_graphs):
+            self._apply_report_to_single_graph(g, report)
+
     def remove_obstacle_from_graph(self, report: Dict[str, Any]) -> None:
-        """Remove an obstacle from the graph and restore original operational status if no other reports remain."""
+        """Remove an obstacle from all tracked graphs and restore original status if no other reports remain."""
         rep_id = report["report_id"]
         target_type = report.get("target_type")
+        all_graphs = [self.graph] + list(self._additional_graphs)
 
         if target_type == "pathway":
             src = report.get("source_location_id")
@@ -436,11 +456,12 @@ class ObstacleManager:
             if rep_id in self._edge_active_reports.get(edge_key, set()):
                 self._edge_active_reports[edge_key].remove(rep_id)
 
-            # If no other active verified reports affect this edge, restore original status
             if len(self._edge_active_reports.get(edge_key, set())) == 0:
                 original = self._original_edge_states.pop(edge_key, {"status": "open"})
-                if self.graph.has_edge(src, dst):
-                    self.graph[src][dst]["status"] = original.get("status", "open")
+                restored_status = original.get("status", "open")
+                for g in all_graphs:
+                    if g.has_edge(src, dst):
+                        g[src][dst]["status"] = restored_status
 
         elif target_type == "location":
             loc_id = report.get("location_id")
@@ -452,24 +473,25 @@ class ObstacleManager:
 
             if len(self._node_active_reports.get(loc_id, set())) == 0:
                 original_node = self._original_node_states.pop(loc_id, {"status": "open"})
-                if loc_id in self.graph:
-                    self.graph.nodes[loc_id]["status"] = original_node.get("status", "open")
+                restored_node_status = original_node.get("status", "open")
+                for g in all_graphs:
+                    if loc_id in g:
+                        g.nodes[loc_id]["status"] = restored_node_status
 
-            # Restore incident edges if no other reports block them
-            if loc_id in self.graph:
-                for neighbor in list(self.graph.neighbors(loc_id)):
-                    edge_key = self._normalize_edge_key(loc_id, neighbor)
-                    if rep_id in self._edge_active_reports.get(edge_key, set()):
-                        self._edge_active_reports[edge_key].remove(rep_id)
-                    if len(self._edge_active_reports.get(edge_key, set())) == 0:
-                        if edge_key in self._original_edge_states:
-                            original_edge = self._original_edge_states.pop(
-                                edge_key, {"status": "open"}
-                            )
-                            if self.graph.has_edge(loc_id, neighbor):
-                                self.graph[loc_id][neighbor]["status"] = original_edge.get(
-                                    "status", "open"
-                                )
+            for g in all_graphs:
+                if loc_id in g:
+                    for neighbor in list(g.neighbors(loc_id)):
+                        edge_key = self._normalize_edge_key(loc_id, neighbor)
+                        if rep_id in self._edge_active_reports.get(edge_key, set()):
+                            self._edge_active_reports[edge_key].remove(rep_id)
+                        if len(self._edge_active_reports.get(edge_key, set())) == 0:
+                            original_edge = self._original_edge_states.get(edge_key, {"status": "open"})
+                            if g.has_edge(loc_id, neighbor):
+                                g[loc_id][neighbor]["status"] = original_edge.get("status", "open")
+            # Clear unused original edge states once restored across all graphs
+            for key in list(self._original_edge_states.keys()):
+                if len(self._edge_active_reports.get(key, set())) == 0:
+                    self._original_edge_states.pop(key, None)
 
     def sync_active_obstacles_with_graph(self) -> None:
         """Query all verified active reports and apply their temporary blocked state to the campus graph."""

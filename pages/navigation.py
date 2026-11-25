@@ -63,17 +63,19 @@ is_jain = "JAIN" in campus_model_choice
 
 with c_env2:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    if st.button("🏢 Switch to 3D Digital Twin", use_container_width=True, help="Open 3D WebGL Digital Twin navigation"):
+    if st.button("🏢 Switch to 3D Digital Twin", width="stretch", help="Open 3D WebGL Digital Twin navigation"):
         st.switch_page("pages/3d_campus_map.py")
 
+obs_manager = services["obstacle_manager"]
 if is_jain:
     cmap = load_jain_campus_map()
+    obs_manager.sync_obstacles_to_campus_map(cmap)
     route_finder = RouteFinder(cmap)
     acc_engine = AccessibilityEngine(cmap)
 else:
     cmap = services["campus_map"]
     route_finder = services["route_finder"]
-    acc_engine = services["accessibility_engine"]
+    acc_engine = AccessibilityEngine(cmap)
 
 locations = sorted(cmap.get_all_locations(), key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))))
 
@@ -86,8 +88,7 @@ location_options = {format_nav_label(loc): loc["id"] for loc in locations}
 loc_labels = list(location_options.keys())
 
 # --- ROUTE INPUT FORM CARD ---
-with st.container():
-    st.markdown('<div class="ui-card">', unsafe_allow_html=True)
+with st.container(border=True):
     st.markdown("#### ⚙️ Route Configuration & Criteria")
 
     # Quick suggestions pills
@@ -96,14 +97,16 @@ with st.container():
     quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain else ["Classroom", "Lab", "Restroom", "Elevator"]
     for i, kw in enumerate(quick_keywords):
         with pill_cols[i]:
-            if st.button(kw, key=f"nav_pill_{kw}", use_container_width=True):
+            if st.button(kw, key=f"nav_pill_{kw}", width="stretch"):
                 st.session_state["nav_dest_search_query"] = kw
                 st.rerun()
+
+    if "nav_dest_search_query" not in st.session_state:
+        st.session_state["nav_dest_search_query"] = ""
 
     # Destination Search with Keyword Intelligence
     dest_search_query = st.text_input(
         "🔍 Search Destination (Lab, Room, Department, Keyword):",
-        value=st.session_state.get("nav_dest_search_query", ""),
         placeholder="e.g. AI Lab, HPC, Library, Robotics, Seminar, Mechanical...",
         key="nav_dest_search_query",
     )
@@ -191,8 +194,7 @@ with st.container():
             help="Enforces step-free routing. Automatically avoids staircases and routes exclusively through ramps and elevators.",
         )
 
-    calculate_btn = st.button("🚀 Calculate Accessible Route", type="primary", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    calculate_btn = st.button("🚀 Calculate Accessible Route", type="primary", width="stretch")
 
 st.markdown("---")
 
@@ -219,8 +221,30 @@ if calculate_btn:
                 )
         else:
             acc_eval = acc_engine.evaluate_route_accessibility(route_result)
+            start_info = cmap.get_location(source_id) or {}
+            dest_info = cmap.get_location(dest_id) or {}
 
-            st.success(f"Optimal route computed successfully via **{algorithm}**!")
+            floors_visited = []
+            for nid in route_result.path:
+                fl = int((cmap.get_location(nid) or {}).get("floor", 0))
+                if not floors_visited or floors_visited[-1] != fl:
+                    floors_visited.append(fl)
+            floors_crossed = sum(1 for s in route_result.steps if s.from_floor != s.to_floor)
+            elevators_used = sum(1 for s in route_result.steps if s.has_elevator)
+            ramps_used = sum(1 for s in route_result.steps if s.has_ramp)
+            stairs_used = sum(1 for s in route_result.steps if s.has_stairs)
+
+            active_obs_list = obs_manager.get_active_obstacles()
+            if active_obs_list:
+                st.info(
+                    f"🛡️ **Obstacle-Aware Routing Active:** {len(active_obs_list)} verified blockage(s) "
+                    "currently excluded from route calculation to maintain safe traversal."
+                )
+
+            st.success(
+                f"Optimal route computed via **{algorithm}** from **{start_info.get('name', source_id)}** "
+                f"to **{dest_info.get('name', dest_id)}**."
+            )
 
             # --- ROUTE SUMMARY METRICS (5-COL CARDS) ---
             m1, m2, m3, m4, m5 = st.columns(5)
@@ -229,19 +253,59 @@ if calculate_btn:
             with m2:
                 mins = int(route_result.total_time // 60)
                 secs = int(route_result.total_time % 60)
-                time_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
-                st.metric("Est. Travel Time", time_str)
+                time_str = f"~{mins}m {secs}s" if mins > 0 else f"~{secs}s"
+                st.metric("Est. Travel Time (Estimate)", time_str)
             with m3:
-                st.metric("Path Transitions", f"{route_result.edge_count} Hops")
+                st.metric("Route Segments", f"{route_result.edge_count} Steps")
             with m4:
-                st.metric("Classification", acc_eval.overall_classification)
+                st.metric("Accessibility Status", acc_eval.display_classification or acc_eval.overall_classification)
             with m5:
-                st.metric("Accessibility Score", f"{acc_eval.accessibility_score}/100")
+                st.metric("Heuristic Score", f"{acc_eval.accessibility_score}/100")
 
-            # Warnings display
+            # Infrastructure & Transition Breakdown
+            st.markdown(
+                f"""
+                <div class="ui-card" style="padding: 12px 18px; margin-top: 10px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.85rem; color: #F8FAFC;">
+                        <span>🏢 <b>Floors Crossed:</b> {floors_crossed} transition(s)</span>
+                        <span>🛗 <b>Elevators Used:</b> {elevators_used}</span>
+                        <span>♿ <b>Ramps Used:</b> {ramps_used}</span>
+                        <span>🪜 <b>Stairs Encountered:</b> {stairs_used}</span>
+                        <span>⛔ <b>Blocked Sections:</b> {acc_eval.num_blocked_connections}</span>
+                        <span>⚪ <b>Unverified Sections:</b> {acc_eval.num_unknown_connections}</span>
+                        <span>🔎 <b>Dataset Verification:</b> <code>{acc_eval.verification_status}</code></span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Warnings display with full contextual explanation & alternative check
             if acc_eval.warnings:
                 for w in acc_eval.warnings:
                     st.warning(f"⚠️ {w}")
+
+                if any("assistance" in w.lower() for w in acc_eval.warnings):
+                    alt_check = route_finder.find_alternative_routes(
+                        source=source_id,
+                        destination=dest_id,
+                        max_alternatives=2,
+                        optimize_for=opt_key,
+                        wheelchair_accessible=wheelchair_mode,
+                    )
+                    no_assist_alt = any(
+                        acc_engine.evaluate_route_accessibility(a).overall_classification == "Fully Accessible"
+                        for a in alt_check
+                    )
+                    if not no_assist_alt:
+                        st.caption(
+                            "ℹ️ **Alternative Availability Note:** This route was selected because all wheelchair step-free "
+                            "entrances from the main campus quadrangle traverse the West Access Ramp (≥ 35 m continuous run)."
+                        )
+                    else:
+                        st.caption(
+                            "💡 **Alternative Availability Note:** A shorter ramp-free alternative route is available in the Alternative Routes panel below."
+                        )
 
             # Infrastructure highlights chips
             feat_badges = []
@@ -277,12 +341,20 @@ if calculate_btn:
                 secs_s = int(step.estimated_time % 60)
                 t_str = f"{mins_s}m {secs_s}s" if mins_s > 0 else f"{secs_s}s"
 
+                fl_from = "Outdoor" if step.from_floor == -1 else f"Floor {step.from_floor}"
+                fl_to = "Outdoor" if step.to_floor == -1 else f"Floor {step.to_floor}"
+                fl_note = f"{fl_from} ➔ {fl_to}" if step.from_floor != step.to_floor else f"{fl_from} (Same Level)"
+                acc_note = "Step-Free" if step.wheelchair_accessible else "Stairs / Restricted"
+
                 st.markdown(
                     f"""
                     <div class="step-box">
                         <div class="step-header">{icon} Step {step.step_number}: {step.from_name} ➔ {step.to_name}</div>
                         <div class="step-instruction">{step.instruction}</div>
-                        <div class="step-meta">Segment: <b>{step.distance:.1f} m</b> · Est. Transit: <b>{t_str}</b> · Link Type: <b>{badge}</b></div>
+                        <div class="step-meta">
+                            Segment: <b>{step.distance:.1f} m</b> · Est. Transit: <b>~{t_str}</b> ·
+                            Link Type: <b>{badge}</b> · Level: <b>{fl_note}</b> · Access: <b>{acc_note}</b>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,

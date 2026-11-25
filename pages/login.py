@@ -80,7 +80,7 @@ if current_user:
             """,
             unsafe_allow_html=True,
         )
-        if st.button("🚪 Terminate Session & Sign Out", type="primary", use_container_width=True):
+        if st.button("🚪 Terminate Session & Sign Out", type="primary", width="stretch"):
             logout_user()
             st.info("You have been signed out.")
             st.rerun()
@@ -119,7 +119,7 @@ else:
                 password = st.text_input("Master Password (min 8 chars):", type="password", placeholder="••••••••")
                 confirm_pwd = st.text_input("Confirm Master Password:", type="password", placeholder="••••••••")
 
-                submitted = st.form_submit_button("Initialize Administrator Account", type="primary", use_container_width=True)
+                submitted = st.form_submit_button("Initialize Administrator Account", type="primary", width="stretch")
 
                 if submitted:
                     if not full_name.strip() or not username.strip():
@@ -167,7 +167,7 @@ else:
                     st.markdown("<div style='font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #F8FAFC;'>Authenticate to Your Session</div>", unsafe_allow_html=True)
                     username = st.text_input("Username:", placeholder="Enter your username")
                     password = st.text_input("Password:", type="password", placeholder="Enter your password")
-                    submitted = st.form_submit_button("Sign In to Portal", type="primary", use_container_width=True)
+                    submitted = st.form_submit_button("Sign In to Portal", type="primary", width="stretch")
 
                     if submitted:
                         if not username.strip() or not password:
@@ -203,7 +203,7 @@ else:
                     reg_password = st.text_input("Password (min 8 chars, letters & numbers):", type="password")
                     reg_confirm = st.text_input("Confirm Password:", type="password")
 
-                    reg_submitted = st.form_submit_button("Create Campus Account", type="primary", use_container_width=True)
+                    reg_submitted = st.form_submit_button("Create Campus Account", type="primary", width="stretch")
 
                     if reg_submitted:
                         if not reg_name.strip() or not reg_username.strip():

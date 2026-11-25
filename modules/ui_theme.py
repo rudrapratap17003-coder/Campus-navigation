@@ -9,6 +9,7 @@ import streamlit as st
 from database.db_manager import DatabaseManager
 from modules.accessibility import AccessibilityEngine
 from modules.campus_map import CampusMap, load_campus_map
+from modules.jain_digital_twin import load_jain_campus_map
 from modules.obstacle_manager import ObstacleManager
 from modules.route_finder import RouteFinder
 
@@ -67,23 +68,31 @@ def get_app_services() -> Dict[str, Any]:
 
     if "campus_map" not in st.session_state:
         campus_map = load_campus_map()
+        jain_campus_map = load_jain_campus_map()
         db_manager = DatabaseManager()
         obstacle_manager = ObstacleManager(db_manager=db_manager, campus_map=campus_map)
+        obstacle_manager.register_campus_map(jain_campus_map)
         route_finder = RouteFinder(campus_map)
         accessibility_engine = AccessibilityEngine(campus_map)
 
         st.session_state.campus_map = campus_map
+        st.session_state.jain_campus_map = jain_campus_map
         st.session_state.db_manager = db_manager
         st.session_state.obstacle_manager = obstacle_manager
         st.session_state.route_finder = route_finder
         st.session_state.accessibility_engine = accessibility_engine
+        st.session_state.jain_route_finder = RouteFinder(jain_campus_map)
+        st.session_state.jain_accessibility_engine = AccessibilityEngine(jain_campus_map)
 
     return {
         "campus_map": st.session_state.campus_map,
+        "jain_campus_map": st.session_state.get("jain_campus_map"),
         "db_manager": st.session_state.db_manager,
         "obstacle_manager": st.session_state.obstacle_manager,
         "route_finder": st.session_state.route_finder,
         "accessibility_engine": st.session_state.accessibility_engine,
+        "jain_route_finder": st.session_state.get("jain_route_finder"),
+        "jain_accessibility_engine": st.session_state.get("jain_accessibility_engine"),
     }
 
 
@@ -211,6 +220,18 @@ def apply_custom_theme() -> None:
             background: linear-gradient(90deg, rgba(22, 163, 106, 0.25) 0%, rgba(53, 217, 154, 0.05) 100%) !important;
             border-left: 3px solid #35D99A !important;
             font-weight: 600 !important;
+        }
+
+        /* Native bordered st.container(border=True) dark glassmorphism styling */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background: rgba(18, 40, 32, 0.72) !important;
+            border: 1px solid rgba(53, 217, 154, 0.16) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(167, 243, 208, 0.08) !important;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
+        }
+        [data-testid="stVerticalBlockBorderWrapper"]:hover {
+            border-color: rgba(53, 217, 154, 0.32) !important;
         }
 
         /* =====================================================================
@@ -344,6 +365,14 @@ def apply_custom_theme() -> None:
         div.stButton > button:active {
             transform: scale(0.98) !important;
         }
+        div.stButton > button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        [role="button"]:focus-visible {
+            outline: 2px solid #35D99A !important;
+            outline-offset: 2px !important;
+        }
 
         /* Streamlit native metric overrides */
         [data-testid="stMetric"] {
@@ -475,9 +504,23 @@ def apply_custom_theme() -> None:
         /* Mobile Breakpoint: 360px to 480px (Phones) */
         @media (max-width: 480px) {
             .main .block-container {
-                padding-left: 0.8rem !important;
-                padding-right: 0.8rem !important;
-                padding-top: 1.0rem !important;
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+                padding-top: 0.9rem !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+            }
+            .hero-banner {
+                padding: 14px 16px !important;
+            }
+            .hero-title {
+                font-size: 1.3rem !important;
+            }
+            [data-testid="stMetric"] {
+                padding: 10px 12px !important;
+            }
+            [data-testid="stMetricValue"] {
+                font-size: 1.3rem !important;
             }
             .ui-card {
                 padding: 12px 14px !important;
@@ -640,7 +683,7 @@ def render_sidebar_user_pill() -> None:
                 """,
                 unsafe_allow_html=True,
             )
-            if st.button("🚪 Sign Out", key="sidebar_logout_btn", use_container_width=True):
+            if st.button("🚪 Sign Out", key="sidebar_logout_btn", width="stretch"):
                 logout_user()
                 st.rerun()
         else:

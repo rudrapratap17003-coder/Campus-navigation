@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import networkx as nx
 
 from database.db_manager import DatabaseManager
+from modules.accessibility import AccessibilityClassification, AccessibilityEngine
 from modules.campus_map import CampusMap
 from modules.obstacle_manager import ObstacleManager
 
@@ -48,41 +49,26 @@ def compute_accessibility_analytics(
             unknown_locs += 1
             gaps_locs.append(loc["id"])
 
-    # Pathways analysis
-    edges = list(campus_map.graph.edges(data=True))
-    total_pathways = len(edges)
-    step_free_pathways = 0
-    staircase_pathways = 0
-    elevator_pathways = 0
-    blocked_pathways = 0
-
-    blocked_edges_set = set()
+    # Single source of truth: AccessibilityEngine evaluation on synchronized graph
+    working_cmap = campus_map.clone()
     if obstacle_manager is not None:
-        blocked_edges_set = {
-            (h.get("source_location_id"), h.get("destination_location_id"))
-            for h in obstacle_manager.get_active_obstacles()
-            if h.get("source_location_id") and h.get("destination_location_id")
-        }
+        obstacle_manager.sync_obstacles_to_campus_map(working_cmap)
 
-    for u, v, data in edges:
-        is_blocked = (
-            data.get("status") == "blocked"
-            or (u, v) in blocked_edges_set
-            or (v, u) in blocked_edges_set
-        )
-        if is_blocked:
-            blocked_pathways += 1
+    acc_engine = AccessibilityEngine(working_cmap)
+    summary = acc_engine.get_accessibility_summary()
+    cls_counts = summary["classification_counts"]
 
-        if data.get("has_elevator", False):
-            elevator_pathways += 1
-            step_free_pathways += 1
-        elif data.get("has_stairs", False):
-            staircase_pathways += 1
-        elif data.get("wheelchair_accessible", True):
-            step_free_pathways += 1
+    total_pathways = summary["total_pathways"]
+    step_free_pathways = summary["accessible_pathways"]
+    elevator_pathways = summary["elevator_pathways"]
+    staircase_pathways = summary["stairs_pathways"]
+    ramp_pathways = summary["ramp_pathways"]
+    blocked_pathways = cls_counts.get(AccessibilityClassification.TEMPORARILY_BLOCKED.value, 0)
+    unknown_pathways = cls_counts.get(AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value, 0)
 
+    populated_fields_pct = round(((total_locs - unknown_locs) / total_locs * 100), 1) if total_locs > 0 else 0.0
     acc_loc_pct = round((accessible_locs / total_locs * 100), 1) if total_locs > 0 else 0.0
-    acc_path_pct = round((step_free_pathways / total_pathways * 100), 1) if total_pathways > 0 else 0.0
+    acc_path_pct = summary["network_accessibility_percentage"]
 
     return {
         "total_locations": total_locs,
@@ -94,8 +80,13 @@ def compute_accessibility_analytics(
         "step_free_pathways": step_free_pathways,
         "staircase_pathways": staircase_pathways,
         "elevator_pathways": elevator_pathways,
+        "ramp_pathways": ramp_pathways,
         "temporarily_blocked_pathways": blocked_pathways,
+        "unknown_accessibility_pathways": unknown_pathways,
         "pathway_accessibility_percentage": acc_path_pct,
+        "average_pathway_score": summary["average_pathway_score"],
+        "pathway_classification_counts": cls_counts,
+        "populated_fields_percentage": populated_fields_pct,
         "information_gaps_count": len(gaps_locs),
         "information_gap_node_ids": gaps_locs,
     }
@@ -128,6 +119,7 @@ def compute_obstacle_analytics(
         for loc in campus_map.get_all_locations():
             loc_floor_map[loc["id"]] = int(loc.get("floor", 0))
 
+    unmapped_other_dataset_reports = 0
     for r in reports:
         stt = r.get("status", "Pending")
         status_counts[stt] = status_counts.get(stt, 0) + 1
@@ -147,6 +139,8 @@ def compute_obstacle_analytics(
         if loc_id and loc_id in loc_floor_map:
             fl = loc_floor_map[loc_id]
             floor_distribution[fl] = floor_distribution.get(fl, 0) + 1
+        elif loc_id:
+            unmapped_other_dataset_reports += 1
 
         # Resolution time calculation
         if stt == "Resolved" and r.get("reported_at") and r.get("updated_at"):
@@ -174,6 +168,7 @@ def compute_obstacle_analytics(
         "status_counts": status_counts,
         "severity_counts": severity_counts,
         "floor_distribution": floor_distribution,
+        "unmapped_other_dataset_reports": unmapped_other_dataset_reports,
         "average_resolution_time_hours": avg_resolution_hours,
         "frequently_blocked_pathways": top_blocked,
     }
@@ -268,6 +263,15 @@ def compute_administrative_insights(
 
     total_locs = len(campus_map.get_all_locations())
     verified_pct = round(verif_counts["VERIFIED"] / total_locs * 100, 1) if total_locs > 0 else 0.0
+    pending_physical_verif_nodes = total_locs - verif_counts["VERIFIED"]
+
+    # Pathway verification breakdown
+    path_verif_counts = {"VERIFIED": 0, "IMAGE_DERIVED": 0, "APPROXIMATE": 0, "UNVERIFIED": 0}
+    for _, _, edata in campus_map.graph.edges(data=True):
+        pv = edata.get("verification_status", "UNVERIFIED")
+        path_verif_counts[pv] = path_verif_counts.get(pv, 0) + 1
+    total_paths = campus_map.graph.number_of_edges()
+    path_verified_pct = round(path_verif_counts["VERIFIED"] / total_paths * 100, 1) if total_paths > 0 else 0.0
 
     # Operational action items
     action_items: List[str] = []
@@ -276,14 +280,21 @@ def compute_administrative_insights(
     if obs["active_verified_obstacles"] > 0:
         action_items.append(f"Coordinate field repair for {obs['active_verified_obstacles']} active pathway barrier(s).")
     if acc["information_gaps_count"] > 0:
-        action_items.append(f"Audit {acc['information_gaps_count']} node(s) lacking verified wheelchair accessibility criteria.")
+        action_items.append(f"Audit {acc['information_gaps_count']} node(s) lacking populated wheelchair accessibility attributes.")
     if verified_pct < 20.0:
-        action_items.append("Schedule on-site physical survey to upgrade IMAGE_DERIVED floor plan nodes to VERIFIED status.")
+        action_items.append(
+            f"Schedule on-site physical survey to upgrade {pending_physical_verif_nodes} non-verified node(s) "
+            f"(currently {verified_pct}% physically verified vs {acc['populated_fields_percentage']}% attribute-populated)."
+        )
 
     return {
         "campus_accessibility_score": acc["location_accessibility_percentage"],
+        "average_pathway_score": acc["average_pathway_score"],
         "verification_progress_percentage": verified_pct,
+        "pathway_verification_percentage": path_verified_pct,
+        "pending_physical_verification_nodes": pending_physical_verif_nodes,
         "verification_counts": verif_counts,
+        "pathway_verification_counts": path_verif_counts,
         "pending_obstacle_reviews": obs["pending_reports"],
         "active_maintenance_barriers": obs["active_verified_obstacles"],
         "action_items": action_items,

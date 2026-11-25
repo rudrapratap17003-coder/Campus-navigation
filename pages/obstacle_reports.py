@@ -26,7 +26,8 @@ services = get_app_services()
 
 obs_manager = services["obstacle_manager"]
 benchmark_cmap = services["campus_map"]
-jain_cmap = load_jain_campus_map()
+jain_cmap = services.get("jain_campus_map") or load_jain_campus_map()
+obs_manager.register_campus_map(jain_cmap)
 cmap = benchmark_cmap
 
 current_user = get_current_user()
@@ -158,11 +159,11 @@ if is_staff_or_admin:
             for v in verified_list:
                 with st.expander(f"Active Obstacle #{v['report_id']} - {v['obstacle_category']} ({v['severity']})", expanded=False):
                     if v["target_type"] == "pathway":
-                        s_loc = cmap.get_location(v["source_location_id"])
-                        d_loc = cmap.get_location(v["destination_location_id"])
+                        s_loc = cmap.get_location(v["source_location_id"]) or jain_cmap.get_location(v["source_location_id"])
+                        d_loc = cmap.get_location(v["destination_location_id"]) or jain_cmap.get_location(v["destination_location_id"])
                         tgt_name = f"Pathway: {s_loc['name'] if s_loc else v['source_location_id']} ↔ {d_loc['name'] if d_loc else v['destination_location_id']}"
                     else:
-                        loc = cmap.get_location(v["location_id"])
+                        loc = cmap.get_location(v["location_id"]) or jain_cmap.get_location(v["location_id"])
                         tgt_name = f"Location: {loc['name'] if loc else v['location_id']}"
 
                     st.markdown(f"**Target:** `{tgt_name}` | <span class='badge badge-verified'>Active Blockage</span>", unsafe_allow_html=True)
@@ -266,7 +267,7 @@ else:
         )
 
     df_reports = pd.DataFrame(table_data)
-    st.dataframe(df_reports, use_container_width=True, hide_index=True)
+    st.dataframe(df_reports, width="stretch", hide_index=True)
 
 # =============================================================================
 # REPORT SUBMISSION FORM WITH DUPLICATE DETECTION WARNING

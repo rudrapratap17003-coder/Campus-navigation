@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import streamlit as st
 
+from modules.accessibility import AccessibilityEngine
 from modules.campus_map import CampusMap
 from modules.destination_search import get_search_suggestions, search_destinations
 from modules.indoor_map import (
@@ -38,7 +39,6 @@ services = get_app_services()
 
 benchmark_cmap = services["campus_map"]
 benchmark_rf = services["route_finder"]
-acc_engine = services["accessibility_engine"]
 obs_manager = services["obstacle_manager"]
 
 st.markdown(
@@ -89,16 +89,18 @@ is_jain = "JAIN" in campus_model_choice
 
 with c_env2:
     st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-    if st.button("🏢 Switch to 3D Digital Twin", use_container_width=True, help="Open the 3D WebGL Digital Twin visualization"):
+    if st.button("🏢 Switch to 3D Digital Twin", width="stretch", help="Open the 3D WebGL Digital Twin visualization"):
         st.switch_page("pages/3d_campus_map.py")
 
-# Load appropriate CampusMap and RouteFinder
+# Load appropriate CampusMap, RouteFinder, and AccessibilityEngine from Single Source of Truth
 if is_jain:
     cmap = load_jain_campus_map()
+    obs_manager.sync_obstacles_to_campus_map(cmap)
     route_finder = RouteFinder(cmap)
 else:
     cmap = benchmark_cmap
     route_finder = benchmark_rf
+acc_engine = AccessibilityEngine(cmap)
 
 floors = get_floors_in_campus(cmap)
 all_locations = sorted(cmap.get_all_locations(), key=lambda x: (int(x.get("floor", 0)), str(x.get("name", ""))))
@@ -115,8 +117,8 @@ loc_labels = list(loc_label_to_id.keys())
 ctrl_c1, ctrl_c2 = st.columns([1.1, 2.0], gap="medium")
 
 with ctrl_c1:
-    st.markdown('<div class="ui-card" style="height: 100%;">', unsafe_allow_html=True)
-    st.markdown("##### 🏢 Building Floor Filter")
+    with st.container(border=True):
+        st.markdown("##### 🏢 Building Floor Filter")
 
     if is_jain:
         floor_options = [
@@ -168,111 +170,110 @@ with ctrl_c1:
         elif "Floor 1" in selected_floor_str:
             floor_filter = 1
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
 with ctrl_c2:
-    st.markdown('<div class="ui-card">', unsafe_allow_html=True)
-    st.markdown("##### 🧭 2D Route Planning Console")
+    with st.container(border=True):
+        st.markdown("##### 🧭 2D Route Planning Console")
 
-    # Keyword suggestions pills
-    st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
-    pill_cols = st.columns(4)
-    quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain else ["Classroom", "Lab", "Restroom", "Elevator"]
-    for i, kw in enumerate(quick_keywords):
-        with pill_cols[i]:
-            if st.button(kw, key=f"map_pill_{kw}", use_container_width=True):
-                st.session_state["map_dest_search_query"] = kw
-                st.rerun()
+        # Keyword suggestions pills
+        st.markdown("<div style='font-size: 11px; color: #9CAFA5; margin-bottom: 4px;'><b>Quick Destination Suggestions:</b></div>", unsafe_allow_html=True)
+        pill_cols = st.columns(4)
+        quick_keywords = ["HPC Lab", "Library", "Dean", "Robotics"] if is_jain else ["Classroom", "Lab", "Restroom", "Elevator"]
+        for i, kw in enumerate(quick_keywords):
+            with pill_cols[i]:
+                if st.button(kw, key=f"map_pill_{kw}", width="stretch"):
+                    st.session_state["map_dest_search_query"] = kw
+                    st.rerun()
 
-    # Destination Search with Keyword Intelligence
-    dest_search_query = st.text_input(
-        "🔍 Search Destination (Lab, Room, Department, Keyword):",
-        value=st.session_state.get("map_dest_search_query", ""),
-        placeholder="e.g. AI Lab, HPC, Library, Dean, Robotics, Seminar, Sports...",
-        key="map_dest_search_query",
-    )
+        if "map_dest_search_query" not in st.session_state:
+            st.session_state["map_dest_search_query"] = ""
 
-    matched_dest_id = None
-    if dest_search_query.strip() and is_jain:
-        search_matches = search_destinations(dest_search_query, cmap, limit=10)
-        if search_matches:
-            st.caption(f"✨ Found {len(search_matches)} match(es) for '{dest_search_query}'")
-            search_options = {
-                f"[{'Outdoor' if m.floor == -1 else f'Floor {m.floor}'}] {m.name} ({m.location_id})": m.location_id
-                for m in search_matches
-            }
-            sel_match_label = st.selectbox(
-                "Select Matched Facility:",
-                options=list(search_options.keys()),
-                index=0,
-                key="map_matched_dest_select",
-            )
-            matched_dest_id = search_options[sel_match_label]
-        else:
-            st.caption("ℹ️ No exact keyword matches found.")
-
-    rc1, rc2 = st.columns(2)
-    with rc1:
-        default_start_idx = 0
-        if is_jain:
-            for idx, label in enumerate(loc_labels):
-                if "OUT_GATE_MAIN" in label:
-                    default_start_idx = idx
-                    break
-        start_sel = st.selectbox(
-            "Origin Location:",
-            options=loc_labels,
-            index=default_start_idx if default_start_idx < len(loc_labels) else 0,
-            key="map_start_loc",
+        # Destination Search with Keyword Intelligence
+        dest_search_query = st.text_input(
+            "🔍 Search Destination (Lab, Room, Department, Keyword):",
+            placeholder="e.g. AI Lab, HPC, Library, Dean, Robotics, Seminar, Sports...",
+            key="map_dest_search_query",
         )
-        map_source = loc_label_to_id[start_sel]
 
-    with rc2:
-        if matched_dest_id:
-            map_dest = matched_dest_id
-            st.markdown(f"<div style='font-size: 12px; color: #35D99A; margin-top: 28px;'><b>Selected Target:</b> {matched_dest_id}</div>", unsafe_allow_html=True)
-        else:
-            default_dest_idx = min(len(loc_labels) - 1, 13)
+        matched_dest_id = None
+        if dest_search_query.strip() and is_jain:
+            search_matches = search_destinations(dest_search_query, cmap, limit=10)
+            if search_matches:
+                st.caption(f"✨ Found {len(search_matches)} match(es) for '{dest_search_query}'")
+                search_options = {
+                    f"[{'Outdoor' if m.floor == -1 else f'Floor {m.floor}'}] {m.name} ({m.location_id})": m.location_id
+                    for m in search_matches
+                }
+                sel_match_label = st.selectbox(
+                    "Select Matched Facility:",
+                    options=list(search_options.keys()),
+                    index=0,
+                    key="map_matched_dest_select",
+                )
+                matched_dest_id = search_options[sel_match_label]
+            else:
+                st.caption("ℹ️ No exact keyword matches found.")
+
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            default_start_idx = 0
             if is_jain:
                 for idx, label in enumerate(loc_labels):
-                    if "FET_4F_HPC_CLUSTER" in label:
-                        default_dest_idx = idx
+                    if "OUT_GATE_MAIN" in label:
+                        default_start_idx = idx
                         break
-            dest_sel = st.selectbox(
-                "Destination Location:",
+            start_sel = st.selectbox(
+                "Origin Location:",
                 options=loc_labels,
-                index=default_dest_idx,
-                key="map_dest_loc",
+                index=default_start_idx if default_start_idx < len(loc_labels) else 0,
+                key="map_start_loc",
             )
-            map_dest = loc_label_to_id[dest_sel]
+            map_source = loc_label_to_id[start_sel]
 
-    ro1, ro2, ro3 = st.columns([1.2, 1.2, 1.0])
-    with ro1:
-        map_algo = st.selectbox(
-            "Algorithm:",
-            options=["Dijkstra's Algorithm", "Breadth-First Search (BFS)"],
-            index=0,
-            key="map_algo_choice",
-        )
-    with ro2:
-        map_opt = st.selectbox(
-            "Optimization:",
-            options=["Shortest Distance", "Fastest Time"],
-            index=0,
-            disabled=("BFS" in map_algo),
-            key="map_opt_choice",
-        )
-    with ro3:
-        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
-        map_wheelchair = st.checkbox(
-            "♿ Wheelchair",
-            value=True,
-            key="map_wheelchair_check",
-            help="Prohibits staircases, enforcing step-free routing through elevators and access ramps.",
-        )
+        with rc2:
+            if matched_dest_id:
+                map_dest = matched_dest_id
+                st.markdown(f"<div style='font-size: 12px; color: #35D99A; margin-top: 28px;'><b>Selected Target:</b> {matched_dest_id}</div>", unsafe_allow_html=True)
+            else:
+                default_dest_idx = min(len(loc_labels) - 1, 13)
+                if is_jain:
+                    for idx, label in enumerate(loc_labels):
+                        if "FET_4F_HPC_CLUSTER" in label:
+                            default_dest_idx = idx
+                            break
+                dest_sel = st.selectbox(
+                    "Destination Location:",
+                    options=loc_labels,
+                    index=default_dest_idx,
+                    key="map_dest_loc",
+                )
+                map_dest = loc_label_to_id[dest_sel]
 
-    calc_route_click = st.button("🚀 Find & Visualize Route", type="primary", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+        ro1, ro2, ro3 = st.columns([1.2, 1.2, 1.0])
+        with ro1:
+            map_algo = st.selectbox(
+                "Algorithm:",
+                options=["Dijkstra's Algorithm", "Breadth-First Search (BFS)"],
+                index=0,
+                key="map_algo_choice",
+            )
+        with ro2:
+            map_opt = st.selectbox(
+                "Optimization:",
+                options=["Shortest Distance", "Fastest Time"],
+                index=0,
+                disabled=("BFS" in map_algo),
+                key="map_opt_choice",
+            )
+        with ro3:
+            st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+            map_wheelchair = st.checkbox(
+                "♿ Wheelchair",
+                value=True,
+                key="map_wheelchair_check",
+                help="Prohibits staircases, enforcing step-free routing through elevators and access ramps.",
+            )
+
+        calc_route_click = st.button("🚀 Find & Visualize Route", type="primary", width="stretch")
 
 # Maintain route in session state so floor switching doesn't wipe active calculated route
 if "active_map_route" not in st.session_state:
@@ -390,7 +391,7 @@ with inspect_col:
             </div>
             <hr style="margin: 8px 0; border-color: rgba(53, 217, 154, 0.15);">
             <div style="font-size: 0.85rem; line-height: 1.7;">
-                <span style="color: #9CAFA5;">Classification:</span> <b style="color: #35D99A;">{loc_acc.classification}</b><br>
+                <span style="color: #9CAFA5;">Classification:</span> <b style="color: #35D99A;">{loc_acc.display_classification or loc_acc.classification}</b><br>
                 <span style="color: #9CAFA5;">Accessibility Score:</span> <b style="color: #F8FAFC;">{loc_acc.score} / 100</b><br>
                 <span style="color: #9CAFA5;">Connected Pathways:</span> <b style="color: #F8FAFC;">{loc_acc.accessible_connections} Accessible / {loc_acc.total_connections} Total</b>
             </div>
@@ -402,11 +403,11 @@ with inspect_col:
     # 1-Click Action Buttons
     c_act1, c_act2 = st.columns(2)
     with c_act1:
-        if st.button("🚩 Set as Start", key="map_btn_inspect_start", use_container_width=True):
+        if st.button("🚩 Set as Start", key="map_btn_inspect_start", width="stretch"):
             st.session_state["map_start_loc"] = selected_loc_label
             st.rerun()
     with c_act2:
-        if st.button("🎯 Set as Dest", key="map_btn_inspect_dest", use_container_width=True):
+        if st.button("🎯 Set as Dest", key="map_btn_inspect_dest", width="stretch"):
             st.session_state["map_dest_loc"] = selected_loc_label
             if "map_dest_search_query" in st.session_state:
                 st.session_state["map_dest_search_query"] = ""
@@ -436,21 +437,59 @@ with inspect_col:
         for cp in connected_paths:
             target = cp["target_location"]
             attrs = cp["attributes"]
-            status_tag = "🔴 Blocked" if attrs.get("status") in ("blocked", "closed") else "🟢 Open"
-            acc_tag = "♿ Accessible" if attrs.get("wheelchair_accessible", True) and not attrs.get("has_stairs") else "🪜 Stairs"
+            status_tag = "🔴 Blocked" if str(attrs.get("status", "open")).lower() in ("blocked", "closed", "maintenance", "under_maintenance") else "🟢 Open"
+            wa_val = attrs.get("wheelchair_accessible")
+            if attrs.get("has_elevator"):
+                acc_tag = "🛗 Elevator"
+            elif attrs.get("has_stairs") and wa_val is not True:
+                acc_tag = "🪜 Stairs"
+            elif wa_val is True:
+                acc_tag = "♿ Accessible"
+            elif wa_val is False:
+                acc_tag = "🔴 Inaccessible"
+            else:
+                acc_tag = "⚪ Unknown"
             st.markdown(
                 f"- **{target.get('name')}** [`{cp['to_location_id']}`]: {attrs.get('distance')}m · {status_tag} · {acc_tag}"
             )
 
 with map_col:
     st.markdown("### 🗺️ Schematic Architectural Floor Plan")
+    mc1, mc2, mc3 = st.columns([1.4, 1.3, 1.0])
+    with mc1:
+        acc_filter_choice = st.selectbox(
+            "Pathway Layer Filter:",
+            options=["All Pathways", "Wheelchair Step-Free Only", "Highlight Stairs & Barriers"],
+            index=0,
+            key="map_acc_layer_filter",
+        )
+    with mc2:
+        label_mode_choice = st.selectbox(
+            "Marker Label Mode:",
+            options=["Auto (Clean Landmarks)", "Show All Facility Labels"],
+            index=0,
+            key="map_label_density_mode",
+        )
+    with mc3:
+        st.markdown("<div style='height: 26px;'></div>", unsafe_allow_html=True)
+        st.caption("🖱️ Drag to Pan · Scroll to Zoom · Double-Click to Reset")
+
+    acc_mode_key = (
+        "wheelchair_only"
+        if "Wheelchair" in acc_filter_choice
+        else ("barriers_highlight" if "Barriers" in acc_filter_choice else "all")
+    )
+    show_all_lbl = "Show All" in label_mode_choice
+
     fig_map = create_indoor_map_figure(
         campus_map=cmap,
         floor_filter=floor_filter,
         highlight_route=highlight_path,
         selected_location_id=inspected_loc_id,
+        show_all_labels=True if (show_all_lbl or floor_filter is not None) else False,
+        accessibility_mode=acc_mode_key,
     )
-    st.plotly_chart(fig_map, use_container_width=True)
+    st.plotly_chart(fig_map, width="stretch", config={"scrollZoom": True, "displayModeBar": True})
 
 # --- MAP LEGENDS ---
 st.markdown("---")

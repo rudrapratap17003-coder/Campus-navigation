@@ -33,6 +33,25 @@ class AccessibilityClassification(str, Enum):
     UNKNOWN_ACCESSIBILITY = "Unknown Accessibility"
 
 
+def resolve_display_classification(classification: str, verification_status: str) -> str:
+    """Map internal heuristic classification + verification metadata to standardized display label."""
+    if classification == AccessibilityClassification.TEMPORARILY_BLOCKED.value:
+        return "Temporarily Blocked"
+    if classification == AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value:
+        return "Inaccessible"
+    if classification == AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value:
+        return "Unknown"
+    if classification == AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value:
+        return "Accessible with Assistance"
+    if classification == AccessibilityClassification.FULLY_ACCESSIBLE.value:
+        if verification_status == "VERIFIED":
+            return "Verified Accessible"
+        if verification_status in ("IMAGE_DERIVED", "APPROXIMATE"):
+            return "Imported Accessible"
+        return "Imported Accessible (Unverified)"
+    return classification
+
+
 @dataclass
 class PathAccessibilityAssessment:
     """Detailed accessibility assessment for a single pathway/connection."""
@@ -49,6 +68,8 @@ class PathAccessibilityAssessment:
     has_elevator: bool
     status: str
     warnings: List[str] = field(default_factory=list)
+    verification_status: str = "UNVERIFIED"
+    display_classification: str = ""
 
 
 @dataclass
@@ -70,6 +91,9 @@ class LocationAccessibilityAssessment:
     warnings: List[str] = field(default_factory=list)
     success: bool = True
     error_message: Optional[str] = None
+    unknown_connections: int = 0
+    verification_status: str = "UNVERIFIED"
+    display_classification: str = ""
 
 
 @dataclass
@@ -89,6 +113,10 @@ class RouteAccessibilityAssessment:
     segment_evaluations: List[PathAccessibilityAssessment] = field(default_factory=list)
     success: bool = True
     error_message: Optional[str] = None
+    verification_status: str = "UNVERIFIED"
+    display_classification: str = ""
+    num_unknown_connections: int = 0
+    num_blocked_connections: int = 0
 
 
 class AccessibilityEngine:
@@ -154,31 +182,56 @@ class AccessibilityEngine:
             PathAccessibilityAssessment with classification, score, and warnings.
         """
         if edge_data is None:
-            edge_data = self._get_edge_data(source, destination) or {}
+            edge_data = self._get_edge_data(source, destination)
+            if edge_data is None:
+                return PathAccessibilityAssessment(
+                    source=source,
+                    destination=destination,
+                    classification=AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value,
+                    score=0.0,
+                    distance=0.0,
+                    estimated_time=0.0,
+                    wheelchair_accessible=None,
+                    has_stairs=False,
+                    has_ramp=False,
+                    has_elevator=False,
+                    status="missing",
+                    warnings=[f"Pathway '{source}' ↔ '{destination}' does not exist in active campus graph."],
+                    verification_status="UNVERIFIED",
+                    display_classification="Unknown",
+                )
 
         warnings: List[str] = []
         status = str(edge_data.get("status", "open")).lower()
         dist = float(edge_data.get("distance", 0.0))
         est_time = float(edge_data.get("estimated_time", 0.0))
+        verif_status = str(edge_data.get("verification_status", "UNVERIFIED"))
+
+        u_name = str(self._get_node_data(source).get("name", source))
+        v_name = str(self._get_node_data(destination).get("name", destination))
 
         wheelchair_val = edge_data.get("wheelchair_accessible")
         has_stairs = bool(edge_data.get("has_stairs", False))
         has_ramp = bool(edge_data.get("has_ramp", False))
         has_elevator = bool(edge_data.get("has_elevator", False))
-        requires_assistance = bool(
+        steep_incline = bool(edge_data.get("steep_incline", False))
+        manual_flag = bool(
             edge_data.get("accessible_with_assistance", False)
             or edge_data.get("requires_assistance", False)
-            or (has_ramp and edge_data.get("steep_incline", False))
-            or (has_ramp and dist >= 35.0)
         )
+        long_ramp = has_ramp and dist >= 35.0
+        requires_assistance = manual_flag or steep_incline or long_ramp
 
         # 1. Check if temporarily blocked
         if status in ("blocked", "closed", "maintenance", "under_maintenance"):
-            warnings.append(f"Pathway is currently closed or blocked due to status '{status}'.")
+            warnings.append(
+                f"Pathway '{u_name}' ↔ '{v_name}' ({source} ↔ {destination}) is currently closed or blocked (status: '{status}')."
+            )
+            cls_val = AccessibilityClassification.TEMPORARILY_BLOCKED.value
             return PathAccessibilityAssessment(
                 source=source,
                 destination=destination,
-                classification=AccessibilityClassification.TEMPORARILY_BLOCKED.value,
+                classification=cls_val,
                 score=0.0,
                 distance=dist,
                 estimated_time=est_time,
@@ -188,15 +241,20 @@ class AccessibilityEngine:
                 has_elevator=has_elevator,
                 status=status,
                 warnings=warnings,
+                verification_status=verif_status,
+                display_classification=resolve_display_classification(cls_val, verif_status),
             )
 
         # 2. Check for unknown accessibility
         if wheelchair_val is None and not has_ramp and not has_elevator and not has_stairs:
-            warnings.append("Pathway accessibility information is missing or unverified.")
+            warnings.append(
+                f"Pathway '{u_name}' ↔ '{v_name}' ({source} ↔ {destination}) accessibility information is missing or unverified."
+            )
+            cls_val = AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value
             return PathAccessibilityAssessment(
                 source=source,
                 destination=destination,
-                classification=AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value,
+                classification=cls_val,
                 score=50.0,
                 distance=dist,
                 estimated_time=est_time,
@@ -206,15 +264,20 @@ class AccessibilityEngine:
                 has_elevator=has_elevator,
                 status=status,
                 warnings=warnings,
+                verification_status=verif_status,
+                display_classification=resolve_display_classification(cls_val, verif_status),
             )
 
         # 3. Check for staircase barrier without elevator/ramp
         if (has_stairs and not has_elevator and not has_ramp) or wheelchair_val is False:
-            warnings.append("Pathway contains stairs or is marked inaccessible for wheelchair users.")
+            warnings.append(
+                f"Pathway '{u_name}' ↔ '{v_name}' ({source} ↔ {destination}) contains stairs or is marked inaccessible for wheelchairs."
+            )
+            cls_val = AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value
             return PathAccessibilityAssessment(
                 source=source,
                 destination=destination,
-                classification=AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value,
+                classification=cls_val,
                 score=15.0,
                 distance=dist,
                 estimated_time=est_time,
@@ -224,18 +287,32 @@ class AccessibilityEngine:
                 has_elevator=has_elevator,
                 status=status,
                 warnings=warnings,
+                verification_status=verif_status,
+                display_classification=resolve_display_classification(cls_val, verif_status),
             )
 
         # 4. Check for accessible with assistance
         if requires_assistance:
-            warnings.append("Pathway is accessible for wheelchairs but may require manual assistance.")
+            reasons = []
+            if long_ramp:
+                reasons.append(f"extended ramp run ({dist:.1f} m >= 35.0 m heuristic threshold)")
+            if steep_incline:
+                reasons.append("steep incline gradient")
+            if manual_flag:
+                reasons.append("manual assistance flag in pathway metadata")
+            reason_str = ", ".join(reasons) if reasons else "assistance requirement"
+            warnings.append(
+                f"Segment '{u_name}' ↔ '{v_name}' ({source} ↔ {destination}) is wheelchair passable "
+                f"but may require manual assistance due to {reason_str} (data status: {verif_status})."
+            )
             score = 75.0
             if has_ramp:
                 score += 5.0
+            cls_val = AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value
             return PathAccessibilityAssessment(
                 source=source,
                 destination=destination,
-                classification=AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value,
+                classification=cls_val,
                 score=min(85.0, score),
                 distance=dist,
                 estimated_time=est_time,
@@ -245,20 +322,22 @@ class AccessibilityEngine:
                 has_elevator=has_elevator,
                 status=status,
                 warnings=warnings,
+                verification_status=verif_status,
+                display_classification=resolve_display_classification(cls_val, verif_status),
             )
 
         # 5. Fully accessible
         score = 100.0
         if has_elevator:
-            # Elevator transition
             score = 100.0
         elif has_ramp:
             score = 100.0
 
+        cls_val = AccessibilityClassification.FULLY_ACCESSIBLE.value
         return PathAccessibilityAssessment(
             source=source,
             destination=destination,
-            classification=AccessibilityClassification.FULLY_ACCESSIBLE.value,
+            classification=cls_val,
             score=score,
             distance=dist,
             estimated_time=est_time,
@@ -268,6 +347,8 @@ class AccessibilityEngine:
             has_elevator=has_elevator,
             status=status,
             warnings=warnings,
+            verification_status=verif_status,
+            display_classification=resolve_display_classification(cls_val, verif_status),
         )
 
     def check_location_accessibility(self, location_id: str) -> LocationAccessibilityAssessment:
@@ -303,6 +384,7 @@ class AccessibilityEngine:
         floor = int(node_data.get("floor", 0))
         building = str(node_data.get("building", ""))
         category = str(node_data.get("category", "")).lower()
+        verif_status = str(node_data.get("verification_status", "UNVERIFIED"))
 
         warnings: List[str] = []
         has_accessible_restroom = category == "restroom" and "accessible" in name.lower()
@@ -312,6 +394,8 @@ class AccessibilityEngine:
         neighbors = list(self.graph.neighbors(location_id))
         total_connections = len(neighbors)
         accessible_connections = 0
+        unknown_connections = 0
+        blocked_connections = 0
         connection_scores: List[float] = []
 
         for neighbor in neighbors:
@@ -323,27 +407,40 @@ class AccessibilityEngine:
                 AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value,
             ):
                 accessible_connections += 1
+            elif assessment.classification == AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value:
+                unknown_connections += 1
+            elif assessment.classification == AccessibilityClassification.TEMPORARILY_BLOCKED.value:
+                blocked_connections += 1
 
         if total_connections == 0:
-            classification = AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value
+            classification = AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value if node_data.get("wheelchair_accessible") is None else AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value
             score = 0.0
-            warnings.append("Location is completely isolated with zero connected pathways.")
+            warnings.append("Location is currently isolated with zero connected pathways.")
         else:
             avg_conn_score = sum(connection_scores) / total_connections
             score = avg_conn_score
 
-            # Amenity bonus
-            if has_accessible_restroom or is_elevator_hub or has_ramp_access:
+            # Amenity bonus only when location has at least one accessible connection
+            if accessible_connections > 0 and (has_accessible_restroom or is_elevator_hub or has_ramp_access):
                 score = min(100.0, score + 10.0)
 
-            if accessible_connections == total_connections and total_connections > 0:
+            if accessible_connections == total_connections:
                 classification = AccessibilityClassification.FULLY_ACCESSIBLE.value
             elif accessible_connections > 0:
                 classification = AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value
-                warnings.append("Some adjacent paths contain stairs or accessibility restrictions.")
+                if unknown_connections > 0:
+                    warnings.append(f"{unknown_connections} adjacent pathway(s) have unknown/unverified accessibility.")
+                if total_connections - accessible_connections - unknown_connections > 0:
+                    warnings.append("Some adjacent pathways contain stairs, barriers, or temporary closures.")
+            elif unknown_connections == total_connections:
+                classification = AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value
+                warnings.append("All connected pathways lack verified accessibility information.")
+            elif blocked_connections == total_connections:
+                classification = AccessibilityClassification.TEMPORARILY_BLOCKED.value
+                warnings.append("All connected pathways are temporarily blocked.")
             else:
                 classification = AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value
-                warnings.append("All connected pathways from this location have stairs or barriers.")
+                warnings.append("All connected pathways from this location have stairs or confirmed barriers.")
 
         return LocationAccessibilityAssessment(
             location_id=location_id,
@@ -360,6 +457,9 @@ class AccessibilityEngine:
             has_ramp_access=has_ramp_access,
             warnings=warnings,
             success=True,
+            unknown_connections=unknown_connections,
+            verification_status=verif_status,
+            display_classification=resolve_display_classification(classification, verif_status),
         )
 
     def calculate_accessibility_score(
@@ -480,6 +580,8 @@ class AccessibilityEngine:
         segment_evaluations: List[PathAccessibilityAssessment] = []
         num_accessible = 0
         num_inaccessible = 0
+        num_unknown = 0
+        num_blocked = 0
         has_ramp = False
         has_elevator = False
         total_dist = 0.0
@@ -490,18 +592,21 @@ class AccessibilityEngine:
         has_stairs_seg = False
         has_assistance_seg = False
         has_unknown_seg = False
+        verif_statuses: List[str] = []
 
         for i in range(len(path) - 1):
             u, v = path[i], path[i + 1]
             edge_data = self._get_edge_data(u, v)
 
             if edge_data is None:
-                warnings.append(f"Connection between '{u}' and '{v}' does not exist in graph.")
-                has_inaccessible_val = True
+                warnings.append(f"Connection between '{u}' and '{v}' does not exist in active graph.")
+                num_inaccessible += 1
+                has_unknown_seg = True
                 continue
 
             assessment = self.check_path_accessibility(u, v, edge_data)
             segment_evaluations.append(assessment)
+            verif_statuses.append(assessment.verification_status)
 
             total_dist += assessment.distance
             total_time += assessment.estimated_time
@@ -518,34 +623,56 @@ class AccessibilityEngine:
                 has_assistance_seg = True
             elif assessment.classification == AccessibilityClassification.TEMPORARILY_BLOCKED.value:
                 num_inaccessible += 1
+                num_blocked += 1
                 has_blocked_seg = True
             elif assessment.classification == AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value:
                 num_inaccessible += 1
                 has_stairs_seg = True
             elif assessment.classification == AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value:
+                num_unknown += 1
                 has_unknown_seg = True
 
             for w in assessment.warnings:
                 if w not in warnings:
                     warnings.append(w)
 
-        # Determine overall route classification
+        score = self.calculate_accessibility_score(path)
+
+        # Determine overall verification status (conservative weakest-link)
+        if not verif_statuses:
+            route_verif = "UNVERIFIED"
+        elif all(s == "VERIFIED" for s in verif_statuses):
+            route_verif = "VERIFIED"
+        elif any(s == "UNVERIFIED" for s in verif_statuses):
+            route_verif = "UNVERIFIED"
+        elif any(s == "APPROXIMATE" for s in verif_statuses):
+            route_verif = "APPROXIMATE"
+        else:
+            route_verif = "IMAGE_DERIVED"
+
+        # Determine overall route classification with clear explanations
         if has_blocked_seg:
             overall_classification = AccessibilityClassification.TEMPORARILY_BLOCKED.value
-            warnings.append("Route cannot be traversed because one or more pathways are blocked.")
+            warnings.append("Route cannot be traversed because one or more pathways are temporarily blocked.")
         elif has_stairs_seg:
             overall_classification = AccessibilityClassification.NOT_WHEELCHAIR_ACCESSIBLE.value
-            warnings.append("Route contains steps or stairs and is not wheelchair accessible.")
+            warnings.append("Route contains stairs and is not wheelchair accessible; toggle Wheelchair mode to reroute via elevator.")
         elif has_unknown_seg:
             overall_classification = AccessibilityClassification.UNKNOWN_ACCESSIBILITY.value
-            warnings.append("Route contains unverified segments with unknown accessibility.")
+            warnings.append("Route contains unverified segments with missing accessibility metadata.")
         elif has_assistance_seg:
             overall_classification = AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value
-            warnings.append("Route is accessible but may require assistance on ramps or long corridors.")
+            assist_segs = [
+                f"{se.source} ↔ {se.destination} ({se.distance:.1f} m)"
+                for se in segment_evaluations
+                if se.classification == AccessibilityClassification.ACCESSIBLE_WITH_ASSISTANCE.value
+            ]
+            warnings.append(
+                f"Overall heuristic score is {score}/100 across {len(segment_evaluations)} segments, "
+                f"but manual-assistance advisory applies to: {', '.join(assist_segs)}."
+            )
         else:
             overall_classification = AccessibilityClassification.FULLY_ACCESSIBLE.value
-
-        score = self.calculate_accessibility_score(path)
 
         return RouteAccessibilityAssessment(
             path=path,
@@ -560,6 +687,10 @@ class AccessibilityEngine:
             warnings=warnings,
             segment_evaluations=segment_evaluations,
             success=True,
+            verification_status=route_verif,
+            display_classification=resolve_display_classification(overall_classification, route_verif),
+            num_unknown_connections=num_unknown,
+            num_blocked_connections=num_blocked,
         )
 
     def get_accessibility_summary(self) -> Dict[str, Any]:

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import copy
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 
@@ -318,12 +319,15 @@ class CampusMap:
             distance = float(conn["distance"])
             est_time = float(conn.get("estimated_time", distance * 0.8))
 
+            raw_wa = conn.get("wheelchair_accessible")
+            wa_val: Optional[bool] = bool(raw_wa) if isinstance(raw_wa, bool) else None
+
             edge_attrs = conn.copy()
             edge_attrs.update({
                 "weight": distance,
                 "distance": distance,
                 "estimated_time": est_time,
-                "wheelchair_accessible": bool(conn.get("wheelchair_accessible", True)),
+                "wheelchair_accessible": wa_val,
                 "has_stairs": bool(conn.get("has_stairs", False)),
                 "has_ramp": bool(conn.get("has_ramp", False)),
                 "has_elevator": bool(conn.get("has_elevator", False)),
@@ -398,6 +402,198 @@ class CampusMap:
             "is_connected": nx.is_connected(self._graph) if len(self._graph) > 0 else False,
             "density": nx.density(self._graph) if len(self._graph) > 0 else 0.0,
         }
+
+    def validate_graph(self) -> "GraphValidationReport":
+        """Run comprehensive graph topology, transition, and metadata validation."""
+        return validate_campus_graph(self)
+
+
+@dataclass
+class GraphValidationReport:
+    """Comprehensive topology, transition, weight, and accessibility integrity report."""
+
+    total_nodes: int
+    total_edges: int
+    valid_edges: int
+    invalid_edges: List[str] = field(default_factory=list)
+    duplicate_edges: List[Tuple[str, str]] = field(default_factory=list)
+    connected_components: int = 0
+    unreachable_locations: List[str] = field(default_factory=list)
+    wheelchair_connected_components: int = 0
+    wheelchair_unreachable_locations: List[str] = field(default_factory=list)
+    missing_floor_transitions: List[str] = field(default_factory=list)
+    invalid_accessibility_metadata: List[str] = field(default_factory=list)
+    invalid_pathway_weights: List[str] = field(default_factory=list)
+    unknown_accessibility_edges: List[Tuple[str, str]] = field(default_factory=list)
+    blocked_edges: List[Tuple[str, str]] = field(default_factory=list)
+    is_valid: bool = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize report to a dictionary for UI, logging, or JSON output."""
+        return {
+            "total_nodes": self.total_nodes,
+            "total_edges": self.total_edges,
+            "valid_edges": self.valid_edges,
+            "invalid_edges_count": len(self.invalid_edges),
+            "invalid_edges": self.invalid_edges,
+            "duplicate_edges_count": len(self.duplicate_edges),
+            "duplicate_edges": self.duplicate_edges,
+            "connected_components": self.connected_components,
+            "unreachable_locations": self.unreachable_locations,
+            "wheelchair_connected_components": self.wheelchair_connected_components,
+            "wheelchair_unreachable_locations": self.wheelchair_unreachable_locations,
+            "missing_floor_transitions": self.missing_floor_transitions,
+            "invalid_accessibility_metadata": self.invalid_accessibility_metadata,
+            "invalid_pathway_weights": self.invalid_pathway_weights,
+            "unknown_accessibility_edges": self.unknown_accessibility_edges,
+            "blocked_edges": self.blocked_edges,
+            "is_valid": self.is_valid,
+        }
+
+
+def validate_campus_graph(campus_map: CampusMap) -> GraphValidationReport:
+    """Validate topology, weights, transitions, and accessibility metadata of a CampusMap."""
+    graph = campus_map.graph
+    loc_ids = set(campus_map.locations.keys())
+    total_nodes = graph.number_of_nodes()
+    total_edges = graph.number_of_edges()
+
+    invalid_edges: List[str] = []
+    duplicate_edges: List[Tuple[str, str]] = []
+    invalid_accessibility_metadata: List[str] = []
+    invalid_pathway_weights: List[str] = []
+    unknown_accessibility_edges: List[Tuple[str, str]] = []
+    blocked_edges: List[Tuple[str, str]] = []
+
+    # 1. Check raw connections for duplicates and missing endpoints
+    seen_pairs: Set[Tuple[str, str]] = set()
+    for idx, conn in enumerate(campus_map.connections):
+        u = conn.get("source")
+        v = conn.get("destination")
+        if u not in loc_ids or v not in loc_ids:
+            invalid_edges.append(f"Raw connection[{idx}] references missing endpoint: {u} -> {v}")
+            continue
+        if u == v:
+            invalid_edges.append(f"Raw connection[{idx}] is a self-loop on {u}")
+            continue
+        pair = (min(u, v), max(u, v))
+        if pair in seen_pairs:
+            duplicate_edges.append(pair)
+        seen_pairs.add(pair)
+
+    # 2. Check graph edge weights, statuses, and accessibility attributes
+    valid_edge_count = 0
+    wg = nx.Graph()
+    for nid in graph.nodes():
+        wg.add_node(nid)
+
+    for u, v, data in graph.edges(data=True):
+        edge_ok = True
+        dist = data.get("distance")
+        est_time = data.get("estimated_time", 0.0)
+        if not isinstance(dist, (int, float)) or isinstance(dist, bool) or dist <= 0:
+            invalid_pathway_weights.append(f"{u} <-> {v}: invalid distance ({dist})")
+            invalid_edges.append(f"{u} <-> {v}: non-positive/invalid distance")
+            edge_ok = False
+        if not isinstance(est_time, (int, float)) or isinstance(est_time, bool) or est_time < 0:
+            invalid_pathway_weights.append(f"{u} <-> {v}: negative/invalid estimated_time ({est_time})")
+            edge_ok = False
+
+        wa = data.get("wheelchair_accessible")
+        has_stairs = bool(data.get("has_stairs", False))
+        has_ramp = bool(data.get("has_ramp", False))
+        has_elevator = bool(data.get("has_elevator", False))
+        status = str(data.get("status", "open")).lower()
+
+        if wa is None and not has_stairs and not has_ramp and not has_elevator:
+            unknown_accessibility_edges.append((u, v))
+            invalid_accessibility_metadata.append(f"{u} <-> {v}: missing accessibility classification")
+        elif not isinstance(wa, bool) and wa is not None:
+            invalid_accessibility_metadata.append(f"{u} <-> {v}: non-boolean wheelchair_accessible ({wa!r})")
+            edge_ok = False
+
+        if has_stairs and wa is True and not has_elevator and not has_ramp:
+            invalid_accessibility_metadata.append(f"{u} <-> {v}: contradictory has_stairs=True and wheelchair_accessible=True")
+            edge_ok = False
+
+        if status in ("blocked", "closed", "maintenance", "under_maintenance"):
+            blocked_edges.append((u, v))
+        elif wa is True and not has_stairs:
+            wg.add_edge(u, v, **data)
+
+        if edge_ok:
+            valid_edge_count += 1
+
+    # 3. Overall graph connectivity & unreachable nodes
+    comps = list(nx.connected_components(graph)) if total_nodes > 0 else []
+    unreachable: List[str] = []
+    if len(comps) > 1:
+        main_comp = max(comps, key=len)
+        for comp in comps:
+            if comp is not main_comp:
+                unreachable.extend(sorted(comp))
+
+    # 4. Wheelchair subgraph connectivity
+    w_comps = list(nx.connected_components(wg)) if total_nodes > 0 else []
+    w_unreachable: List[str] = []
+    if len(w_comps) > 1:
+        w_main = max(w_comps, key=len)
+        for comp in w_comps:
+            if comp is not w_main:
+                w_unreachable.extend(sorted(comp))
+
+    # 5. Floor transition continuity check per indoor building
+    missing_transitions: List[str] = []
+    building_floors: Dict[str, Set[int]] = {}
+    for loc in campus_map.get_all_locations():
+        fl = int(loc.get("floor", 0))
+        bldg = str(loc.get("building", "Main"))
+        if fl >= 0:
+            building_floors.setdefault(bldg, set()).add(fl)
+
+    for bldg, floors in building_floors.items():
+        sorted_floors = sorted(floors)
+        for idx in range(len(sorted_floors) - 1):
+            f_low = sorted_floors[idx]
+            f_high = sorted_floors[idx + 1]
+            if f_high - f_low == 1:
+                has_link = False
+                for u, v in graph.edges():
+                    lu = campus_map.get_location(u) or {}
+                    lv = campus_map.get_location(v) or {}
+                    fu, fv = int(lu.get("floor", 0)), int(lv.get("floor", 0))
+                    if {fu, fv} == {f_low, f_high}:
+                        has_link = True
+                        break
+                if not has_link:
+                    missing_transitions.append(f"{bldg}: missing vertical link between Floor {f_low} and Floor {f_high}")
+
+    is_valid = (
+        len(invalid_edges) == 0
+        and len(duplicate_edges) == 0
+        and len(unreachable) == 0
+        and len(missing_transitions) == 0
+        and len(invalid_accessibility_metadata) == 0
+        and len(invalid_pathway_weights) == 0
+    )
+
+    return GraphValidationReport(
+        total_nodes=total_nodes,
+        total_edges=total_edges,
+        valid_edges=valid_edge_count,
+        invalid_edges=invalid_edges,
+        duplicate_edges=duplicate_edges,
+        connected_components=len(comps),
+        unreachable_locations=sorted(unreachable),
+        wheelchair_connected_components=len(w_comps),
+        wheelchair_unreachable_locations=sorted(w_unreachable),
+        missing_floor_transitions=missing_transitions,
+        invalid_accessibility_metadata=invalid_accessibility_metadata,
+        invalid_pathway_weights=invalid_pathway_weights,
+        unknown_accessibility_edges=unknown_accessibility_edges,
+        blocked_edges=blocked_edges,
+        is_valid=is_valid,
+    )
 
 
 def load_campus_map(file_path: Optional[Union[str, Path]] = None) -> CampusMap:

@@ -108,7 +108,7 @@ with tab_users:
                 "Updated (UTC)": u.get("updated_at", "")[:19].replace("T", " "),
             })
         df_users = pd.DataFrame(user_rows)
-        st.dataframe(df_users, use_container_width=True, hide_index=True)
+        st.dataframe(df_users, width="stretch", hide_index=True)
 
     st.markdown("---")
     st.markdown("### 🔧 Modify User Role or Account Status")
@@ -268,4 +268,4 @@ with tab_audit:
                 "Notes": a["notes"] or "",
             })
         df_audit = pd.DataFrame(audit_rows)
-        st.dataframe(df_audit, use_container_width=True, hide_index=True)
+        st.dataframe(df_audit, width="stretch", hide_index=True)

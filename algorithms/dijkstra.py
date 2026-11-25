@@ -155,13 +155,13 @@ def dijkstra_shortest_path(
             edge_data = graph.get_edge_data(current, neighbor) or {}
 
             # Check edge status
-            status = edge_data.get("status", "open")
-            if status in ("blocked", "closed"):
+            status = str(edge_data.get("status", "open")).lower()
+            if status in ("blocked", "closed", "maintenance", "under_maintenance"):
                 continue
 
-            # Accessibility check
+            # Accessibility check: conservative policy excludes stairs and unverified/unknown paths
             if wheelchair_accessible:
-                if not edge_data.get("wheelchair_accessible", True):
+                if edge_data.get("wheelchair_accessible") is not True:
                     continue
                 if edge_data.get("has_stairs", False):
                     continue

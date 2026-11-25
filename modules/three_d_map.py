@@ -1024,12 +1024,18 @@ def render_three_d_scene_html(scene_data: Dict[str, Any], height: int = 700) -> 
       const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
       camera.position.set(34, 30, 36);
 
-      const renderer = new THREE.WebGLRenderer({{
-        canvas: canvas,
-        antialias: true,
-        alpha: false,
-        powerPreference: 'high-performance'
-      }});
+      let renderer;
+      try {{
+        renderer = new THREE.WebGLRenderer({{
+          canvas: canvas,
+          antialias: true,
+          alpha: false,
+          powerPreference: 'high-performance'
+        }});
+      }} catch (webglErr) {{
+        container.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:32px;text-align:center;color:#F8FAFC;background:#07130F;border:1px solid rgba(245,185,66,0.4);border-radius:12px;"><div style="font-size:2rem;margin-bottom:10px;">⚠️</div><div style="font-weight:700;font-size:1.1rem;margin-bottom:8px;">3D WebGL Rendering Unavailable</div><div style="color:#9CAFA5;font-size:0.88rem;max-width:460px;">WebGL could not initialize in this browser. Please use the interactive 2D Campus Map for complete step-free routing.</div></div>';
+        throw webglErr;
+      }}
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
